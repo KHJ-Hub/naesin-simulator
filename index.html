@@ -35,11 +35,11 @@
       <section class="panel" id="simulator-panel">
         <div class="panel-heading"><div><p class="eyebrow">STEP 1</p><h2>성적 입력</h2><p>실제 성적 또는 예상 성적을 학기별로 입력해보세요.</p></div><div class="segmented" id="record-type-tabs"><button class="active" data-record-type="actual">실제 성적</button><button data-record-type="simulation">예상 성적</button></div></div>
         <div class="semester-tabs" id="semester-tabs"></div>
-        <div class="entry-layout"><div><div class="section-title"><h3 id="active-semester-title">1학년 1학기</h3><span id="entry-count" class="pill">0개 과목</span></div><div id="grade-list" class="grade-list"></div><button id="add-grade" class="add-button">＋ 과목 추가</button></div><aside class="side-help"><h3>입력 안내</h3><ul><li>등급은 1~9등급으로 입력합니다.</li><li>학점이 클수록 평균에 더 크게 반영됩니다.</li><li>예상 성적은 실제 성적과 별도로 저장됩니다.</li></ul></aside></div>
+        <div class="entry-layout"><div><div class="section-title"><h3 id="active-semester-title">1학년 1학기</h3><span id="entry-count" class="pill">0개 과목</span></div><div id="grade-list" class="grade-list"></div><div id="course-selection" class="course-selection"></div><button id="calculate-button" class="primary-button">내신 계산하기</button></div><aside class="side-help"><h3>입력 안내</h3><ul><li>등급은 2022 개정 교육과정 1~5등급으로 선택합니다.</li><li>과목명·학점은 학교 과목 목록에서 자동으로 적용됩니다.</li><li>입력 후 <strong>내신 계산하기</strong>를 눌러 결과를 갱신합니다.</li></ul></aside></div>
       </section>
 
       <section class="dashboard-grid">
-        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 2</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="9" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 학점 가중 평균 사용</label></div><div id="goal-result" class="goal-result"></div></section>
+        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 3</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 학점 가중 평균 사용</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
         <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">나의 흐름</p><h2>학기별 변화</h2></div></div><div id="semester-summary" class="bar-list"></div></section>
       </section>
 

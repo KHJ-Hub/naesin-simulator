@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateAverage, calculateSemesterAverages, calculateSubjectGroupAverages, calculateRequiredRemainingAverage } from '../src/grade-calculator.mjs';
+import { calculateAverage, calculateSemesterAverages, calculateSubjectGroupAverages, calculateRequiredRemainingAverage, validRecord } from '../src/grade-calculator.mjs';
 
 const records = [
   { semesterId: '1-1', subjectName: '국어', subjectGroup: '국어', credit: 4, gradeValue: 1 },
@@ -16,5 +16,10 @@ test('학기별·교과별 평균을 계산한다', () => {
 test('유효하지 않은 성적은 평균에서 제외한다', () => assert.equal(calculateAverage([...records, { subjectName: '', credit: 4, gradeValue: 1 }]), 1.78));
 test('목표 내신에 필요한 잔여 평균을 계산한다', () => {
   const actual = [{ subjectName: '국어', credit: 4, gradeValue: 2 }];
-  assert.equal(calculateRequiredRemainingAverage(actual, [{ subjectName: '수학', credit: 4, gradeValue: 1 }], 1.5), 1);
+  assert.equal(calculateRequiredRemainingAverage(actual, [{ subjectName: '수학', credit: 4 }], 1.5), 1);
+});
+
+test('5등급제 범위를 벗어난 등급과 목표는 제외한다', () => {
+  assert.equal(validRecord({ subjectName: '국어', credit: 4, gradeValue: 6 }), false);
+  assert.equal(calculateRequiredRemainingAverage([{ subjectName: '국어', credit: 4, gradeValue: 2 }], [{ subjectName: '수학', credit: 4 }], 5.1), null);
 });
