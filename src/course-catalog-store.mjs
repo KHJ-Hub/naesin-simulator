@@ -18,10 +18,26 @@ function loadCourses() {
 }
 let courses = loadCourses();
 
+const FIRST_GRADE_GROUP_ORDER = new Map([
+  ['국어', 0], ['수학', 1], ['영어', 2], ['사회', 3], ['과학', 4],
+]);
+
+/** 화면 표시용 정렬. 1학년만 교과군 순서를 적용하고, 2·3학년은 원본 순서를 보존한다. */
+export function sortCoursesForDisplay(items) {
+  return [...items].sort((a, b) => {
+    if (Number(a.grade) === 1 && Number(b.grade) === 1) {
+      const groupOrderA = FIRST_GRADE_GROUP_ORDER.get(a.subjectGroup) ?? 5;
+      const groupOrderB = FIRST_GRADE_GROUP_ORDER.get(b.subjectGroup) ?? 5;
+      if (groupOrderA !== groupOrderB) return groupOrderA - groupOrderB;
+    }
+    return (Number(a.displayOrder ?? 0) - Number(b.displayOrder ?? 0));
+  });
+}
+
 export function catalogCourses({ includeInactive = true } = {}) { return cloneCourses(includeInactive ? courses : courses.filter((course) => course.active !== false && course.enabled !== false)); }
 export function catalogCourseById(id) { return courses.find((course) => course.id === id) ?? null; }
-export function coursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR) { return courses.filter((course) => course.entryYear === entryYear && course.semesterId === semesterId && course.active !== false && course.enabled !== false).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)); }
-export function commonCourses(entryYear = ACTIVE_ENTRY_YEAR, classNumber = null) { return courses.filter((course) => course.entryYear === entryYear && course.autoGenerate && course.active !== false && course.enabled !== false && (!course.classConditions?.length || course.classConditions.includes(String(classNumber)))).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)); }
+export function coursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR) { return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear && course.semesterId === semesterId && course.active !== false && course.enabled !== false)); }
+export function commonCourses(entryYear = ACTIVE_ENTRY_YEAR, classNumber = null) { return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear && course.autoGenerate && course.active !== false && course.enabled !== false && (!course.classConditions?.length || course.classConditions.includes(String(classNumber))))); }
 export function saveCatalog(nextCourses) {
   courses = cloneCourses(nextCourses.filter(validCourse));
   globalThis.localStorage?.setItem(CATALOG_STORAGE_KEY, JSON.stringify({ version: 1, courses, savedAt: new Date().toISOString() }));

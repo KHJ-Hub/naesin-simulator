@@ -1,5 +1,5 @@
 import { ACTIVE_ENTRY_YEAR } from './course-catalog.mjs?v=20260914-grading-types2';
-import { catalogCourses, saveCatalog, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides } from './course-catalog-store.mjs?v=20260914-teacher-store';
+import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260914-teacher-store2';
 
 const $ = (selector) => document.querySelector(selector);
 let courses = catalogCourses();
@@ -7,7 +7,7 @@ let editingId = null;
 const filters = { year: String(ACTIVE_ENTRY_YEAR), grade: 'all', semester: 'all' };
 const makeId = () => `course-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 function toast(message) { $('#teacher-toast').textContent = message; clearTimeout(toast.timer); toast.timer = setTimeout(() => { $('#teacher-toast').textContent = ''; }, 2400); }
-function filteredCourses() { return courses.filter((course) => String(course.entryYear) === filters.year && (filters.grade === 'all' || String(course.grade) === filters.grade) && (filters.semester === 'all' || String(course.semester) === filters.semester)).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0) || a.subjectName.localeCompare(b.subjectName, 'ko')); }
+function filteredCourses() { return sortCoursesForDisplay(courses.filter((course) => String(course.entryYear) === filters.year && (filters.grade === 'all' || String(course.grade) === filters.grade) && (filters.semester === 'all' || String(course.semester) === filters.semester))); }
 function renderFilters() { const years = [...new Set([ACTIVE_ENTRY_YEAR, ...courses.map((course) => Number(course.entryYear))])].sort((a, b) => a - b); $('#filter-year').innerHTML = years.map((year) => `<option value="${year}">${year}학년도 입학생</option>`).join(''); $('#filter-year').value = filters.year; }
 function renderList() { const visible = filteredCourses(); $('#course-count').textContent = `${visible.length}개 과목 · 비활성 과목 포함`; $('#course-list').innerHTML = visible.length ? visible.map((course) => `<article class="teacher-course ${course.active !== false && course.enabled !== false ? '' : 'is-inactive'}"><div><strong>${escapeHtml(course.subjectName)}</strong><span>${course.grade}학년 ${course.semester}학기 · ${escapeHtml(course.subjectGroup)} · ${course.credit}학점</span><small>${course.requirement === 'common' ? '공통' : course.requirement === 'elective' ? '선택' : '학교 지정'} · ${course.gradingType} · 순서 ${course.displayOrder ?? 0}</small></div><div class="teacher-course-actions"><span class="status-chip">${course.active !== false && course.enabled !== false ? '개설 ON' : '개설 OFF'}</span><button class="quiet-button" data-edit="${escapeHtml(course.id)}">수정</button><button class="quiet-button" data-disable="${escapeHtml(course.id)}">${course.active !== false ? '비활성화' : '활성화'}</button></div></article>`).join('') : '<p class="empty-state">조건에 맞는 과목이 없습니다.</p>'; }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
