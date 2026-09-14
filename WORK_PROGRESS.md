@@ -15,12 +15,12 @@
 
 ## 진행 중
 
-- GitHub Pages 첫 배포 결과 확인
+- GitHub 저장소에서 Pages 기능이 아직 활성화되지 않아 첫 workflow가 `configure-pages` 단계에서 실패함
 
 ## 남은 작업
 
 - 저장소 Settings에서 Pages 소스를 GitHub Actions로 확인
-- Actions 성공 후 공개 URL HTTP 확인
+- Pages 활성화 후 Actions 재실행 및 공개 URL HTTP 확인
 
 ## 중요 결정사항
 
@@ -47,11 +47,13 @@
 - `npm test`: 4 passed
 - `node --check src/app.mjs`: 통과
 - `git diff --check`: 통과
+- GitHub Actions `Deploy to GitHub Pages`: `configure-pages` 실패 (Pages 미활성화로 확인)
+- 공개 URL: 현재 HTTP 404 (Pages 활성화 전)
 
 ## Git 상태
 
-- 첫 커밋 준비 완료, 아직 push 전
+- `d0b065f feat: create standalone grade simulator` pushed to `origin/main`
 
 ## 다음 작업 시작점
 
-커밋·푸시 후 GitHub Pages Actions와 `https://khj-hub.github.io/naesin-simulator/` HTTP 응답을 확인한다.
+GitHub 저장소 Settings → Pages → Source를 `GitHub Actions`로 저장한다. 이후 workflow 재실행과 `https://khj-hub.github.io/naesin-simulator/` HTTP 200을 확인한다.
