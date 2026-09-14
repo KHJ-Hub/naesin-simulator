@@ -15,12 +15,12 @@
 
 ## 진행 중
 
-- GitHub 저장소에서 Pages 기능이 아직 활성화되지 않아 첫 workflow가 `configure-pages` 단계에서 실패함
+- GitHub Pages 활성화 및 공개 URL 확인 완료
 
 ## 남은 작업
 
 - 저장소 Settings에서 Pages 소스를 GitHub Actions로 확인
-- Pages 활성화 후 Actions 재실행 및 공개 URL HTTP 확인
+- 선택적 개선: 실제 Chromium 기반 Playwright UI 자동화 추가
 
 ## 중요 결정사항
 
@@ -48,12 +48,14 @@
 - `node --check src/app.mjs`: 통과
 - `git diff --check`: 통과
 - GitHub Actions `Deploy to GitHub Pages`: `configure-pages` 실패 (Pages 미활성화로 확인)
-- 공개 URL: 현재 HTTP 404 (Pages 활성화 전)
+- GitHub Pages `pages build and deployment`: 성공 (`b47d452`)
+- 공개 URL: HTTP 200 확인 (`https://khj-hub.github.io/naesin-simulator/`)
+- `index.html`, `styles.css`, `src/app.mjs`, `src/grade-calculator.mjs`: 모두 HTTP 200
 
 ## Git 상태
 
-- `d0b065f feat: create standalone grade simulator` pushed to `origin/main`
+- `b47d452 docs: record pages activation requirement` pushed to `origin/main`
 
 ## 다음 작업 시작점
 
-GitHub 저장소 Settings → Pages → Source를 `GitHub Actions`로 저장한다. 이후 workflow 재실행과 `https://khj-hub.github.io/naesin-simulator/` HTTP 200을 확인한다.
+공개 URL에서 성적 입력과 JSON 백업/복구를 사용자 브라우저로 확인한다.
