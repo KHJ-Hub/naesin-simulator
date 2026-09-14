@@ -93,5 +93,5 @@
 - `node tests/grade-calculator.test.mjs`: 5 passed
 - `node tests/course-catalog.test.mjs`: 3 passed
 - `git diff --check`: 통과
-- 공개 GitHub Pages: HTTP 200 및 실제 브라우저에서 1학년 1학기 공통 8과목 렌더링 확인. 새 카탈로그 반영 뒤 등급 미산출 과목 UI도 배포 후 재확인한다.
+- 공개 GitHub Pages: HTTP 200 및 실제 브라우저에서 1학년 1학기 공통 8과목 렌더링 확인. `과학탐구실험1`은 등급 선택 없이 `등급 미산출`과 A~C 성취도만 표시되고, 브라우저 콘솔 오류가 없음을 확인했다.
 - GitHub Pages의 장기 모듈 캐시가 이전 `app.mjs`를 재사용하지 않도록 엔트리 모듈 버전 쿼리를 갱신했다.
