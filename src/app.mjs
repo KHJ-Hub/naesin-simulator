@@ -8,7 +8,7 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260914-quickinput3';
-import { commonCourses, courseById, coursesForSemester, recordFromCourse } from './course-catalog.mjs?v=20260914-catalog2026';
+import { commonCourses, courseById, coursesForSemester, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types2';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
@@ -51,7 +51,7 @@ function normalizeRecord(record = {}) {
   const configured = courseById(record.courseId);
   if (configured) {
     const normalized = recordFromCourse(configured, typeof record.id === 'string' && record.id ? record.id : makeId());
-    return { ...normalized, gradeValue: normalized.fiveLevelEligible ? record.gradeValue ?? '' : '', achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '' };
+    return { ...normalized, gradeValue: ['grade', 'both'].includes(normalized.gradingType) ? record.gradeValue ?? '' : '', achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '' };
   }
   return {
     id: typeof record.id === 'string' && record.id ? record.id : makeId(),
@@ -59,12 +59,12 @@ function normalizeRecord(record = {}) {
     subjectName: String(record.subjectName ?? '').slice(0, 80),
     subjectGroup: ['국어', '수학', '영어', '사회', '과학', '기타'].includes(record.subjectGroup) ? record.subjectGroup : '기타',
     credit: record.credit ?? '', gradeValue: record.gradeValue ?? '',
-    achievement: ['A', 'B', 'C'].includes(record.achievement) ? record.achievement : '', requirement: 'legacy', gradingType: 'five-level',
+    achievement: ['A', 'B', 'C'].includes(record.achievement) ? record.achievement : '', requirement: 'legacy', gradingType: 'grade', achievementScale: 'none',
   };
 }
 function allowedAchievements(record) {
-  if (record.gradingType === 'pass') return ['P'];
-  if (record.gradingType === 'achievement-a-e-no-rank') return ['A', 'B', 'C', 'D', 'E'];
+  if (record.achievementScale === 'pass') return ['P'];
+  if (record.achievementScale === 'a-e') return ['A', 'B', 'C', 'D', 'E'];
   return ['A', 'B', 'C'];
 }
 function normalizeState(saved = {}) {
@@ -108,7 +108,7 @@ function quickAverage(type, semesterId) { return Number(state.quickAverages?.[ty
 function detailedRows(type, semesterId) { return records(type).filter((record) => record.semesterId === semesterId); }
 function detailedStatus(type, semesterId) {
   const rows = detailedRows(type, semesterId);
-  const gradedRows = rows.filter((record) => record.fiveLevelEligible !== false);
+  const gradedRows = rows.filter((record) => ['grade', 'both'].includes(record.gradingType));
   const valid = gradedRows.filter((record) => Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5);
   return { rows, gradedRows, valid, complete: gradedRows.length > 0 && valid.length === gradedRows.length };
 }
@@ -181,9 +181,11 @@ function renderGradeList() {
     <div class="grade-row" data-id="${record.id}">
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
-      ${record.fiveLevelEligible ? `<label><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : `<div class="grade-status"><span>등급</span><strong>${record.gradingType === 'pass' ? '이수(P)' : '등급 미산출'}</strong></div>`}
-      <label><span>${record.gradingType === 'pass' ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} 성취도"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
-      ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
+      <div class="grade-fields">
+        ${gradingInputs(record.gradingType).grade ? `<label class="grade-input"><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : ''}
+        ${gradingInputs(record.gradingType).achievement ? `<label class="achievement-input"><span>${record.achievementScale === 'pass' ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} 성취도"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
+      </div>
+      ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger grade-delete" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
     </div>`).join('');
 }
 function renderCourseSelection() {
