@@ -13,17 +13,14 @@ import { commonCourses, courseById, coursesForSemester, gradingInputs, recordFro
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
-  simulation: [],
   student: { name: '', className: '', number: '' },
   targetAverage: '',
   weighted: true,
   activeSemester: SEMESTERS[0].id,
-  recordType: 'actual',
   calculated: false,
-  simulationCalculated: false,
   goalCalculated: false,
-  quickAverages: { actual: {}, simulation: {} },
-  inputModes: { actual: {}, simulation: {} },
+  quickAverages: {},
+  inputModes: {},
 });
 
 function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -41,7 +38,7 @@ const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (!saved || !Array.isArray(saved.actual) || !Array.isArray(saved.simulation)) return defaultState();
+    if (!saved || !Array.isArray(saved.actual)) return defaultState();
     return normalizeState(saved);
   } catch {
     return defaultState();
@@ -74,64 +71,58 @@ function normalizeState(saved = {}) {
   return {
     ...base,
     actual: [...savedActual, ...commonActual],
-    simulation: Array.isArray(saved.simulation) ? saved.simulation.map(normalizeRecord) : [],
     student: { name: String(saved.student?.name ?? '').slice(0, 30), className: String(saved.student?.className ?? '').slice(0, 30), number: String(saved.student?.number ?? '').slice(0, 20) },
     targetAverage: String(saved.targetAverage ?? ''), weighted: saved.weighted !== false,
     activeSemester: SEMESTERS.some((semester) => semester.id === saved.activeSemester) ? saved.activeSemester : base.activeSemester,
-    recordType: ['actual', 'simulation'].includes(saved.recordType) ? saved.recordType : base.recordType,
-    calculated: Boolean(saved.calculated), simulationCalculated: Boolean(saved.simulationCalculated), goalCalculated: Boolean(saved.goalCalculated),
+    calculated: Boolean(saved.calculated), goalCalculated: Boolean(saved.goalCalculated),
     quickAverages: normalizeQuickAverages(saved.quickAverages),
     inputModes: normalizeInputModes(saved.inputModes),
   };
 }
 function normalizeQuickAverages(saved = {}) {
-  return ['actual', 'simulation'].reduce((result, type) => {
-    result[type] = {};
-    SEMESTERS.forEach(({ id }) => {
-      const value = Number(saved?.[type]?.[id]);
-      if (validAverageInput(value)) result[type][id] = Number(value.toFixed(2));
-    });
-    return result;
-  }, {});
+  const result = {};
+  SEMESTERS.forEach(({ id }) => {
+    const value = Number(saved?.actual?.[id] ?? saved?.[id]);
+    if (validAverageInput(value)) result[id] = Number(value.toFixed(2));
+  });
+  return result;
 }
 function normalizeInputModes(saved = {}) {
-  return ['actual', 'simulation'].reduce((result, type) => {
-    result[type] = {};
-    SEMESTERS.forEach(({ id }) => { result[type][id] = saved?.[type]?.[id] === 'quick' ? 'quick' : 'detailed'; });
-    return result;
-  }, {});
+  const result = {};
+  SEMESTERS.forEach(({ id }) => { result[id] = saved?.actual?.[id] === 'quick' || saved?.[id] === 'quick' ? 'quick' : 'detailed'; });
+  return result;
 }
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function records(type = state.recordType) { return state[type] ?? []; }
+function records() { return state.actual; }
 function semesterLabel(id) { return SEMESTERS.find((item) => item.id === id)?.label ?? id; }
-function quickAverage(type, semesterId) { return Number(state.quickAverages?.[type]?.[semesterId]); }
-function detailedRows(type, semesterId) { return records(type).filter((record) => record.semesterId === semesterId); }
-function detailedStatus(type, semesterId) {
-  const rows = detailedRows(type, semesterId);
+function quickAverage(semesterId) { return Number(state.quickAverages?.[semesterId]); }
+function detailedRows(semesterId) { return records().filter((record) => record.semesterId === semesterId); }
+function detailedStatus(semesterId) {
+  const rows = detailedRows(semesterId);
   const gradedRows = rows.filter((record) => ['grade', 'both'].includes(record.gradingType));
   const valid = gradedRows.filter((record) => Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5);
   return { rows, gradedRows, valid, complete: gradedRows.length > 0 && valid.length === gradedRows.length };
 }
-function effectiveRecords(type = 'actual') {
+function effectiveRecords() {
   const output = [];
   SEMESTERS.forEach(({ id }) => {
-    const status = detailedStatus(type, id);
-    const quick = quickAverage(type, id);
+    const status = detailedStatus(id);
+    const quick = quickAverage(id);
     if (status.complete) output.push(...status.valid);
-    else if (Number.isFinite(quick) && quick >= 1 && quick <= 5) output.push({ id: `quick-${type}-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 평균`, subjectGroup: '', credit: 1, gradeValue: quick, source: 'quick' });
+    else if (Number.isFinite(quick) && quick >= 1 && quick <= 5) output.push({ id: `quick-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 평균`, subjectGroup: '', credit: 1, gradeValue: quick, source: 'quick' });
     else output.push(...status.valid);
   });
   return output;
 }
-function usesQuickAverage(type = 'actual') { return SEMESTERS.some(({ id }) => !detailedStatus(type, id).complete && Number.isFinite(quickAverage(type, id))); }
+function usesQuickAverage() { return SEMESTERS.some(({ id }) => !detailedStatus(id).complete && Number.isFinite(quickAverage(id))); }
 function fallbackRemainingSemesters() {
-  const completed = SEMESTERS.map(({ id }, index) => (detailedStatus('actual', id).complete || validAverageInput(quickAverage('actual', id)) ? index : -1)).filter((index) => index >= 0);
+  const completed = SEMESTERS.map(({ id }, index) => (detailedStatus(id).complete || validAverageInput(quickAverage(id)) ? index : -1)).filter((index) => index >= 0);
   if (!completed.length) return [];
   return SEMESTERS.slice(Math.max(...completed) + 1).map(({ id }) => ({ id: `remaining-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 남은 학기`, subjectGroup: '', credit: 1 }));
 }
-function modeLabel(type, semesterId) {
-  const status = detailedStatus(type, semesterId);
-  const quick = Number.isFinite(quickAverage(type, semesterId));
+function modeLabel(semesterId) {
+  const status = detailedStatus(semesterId);
+  const quick = Number.isFinite(quickAverage(semesterId));
   if (status.complete && quick) return '상세 사용 · 간편값은 보관됨';
   if (status.complete) return '상세 입력 사용 중';
   if (quick) return status.gradedRows.length ? '간편 입력 사용 중 · 상세 미완료' : '간편 입력 사용 중';
@@ -150,24 +141,23 @@ function renderSemesterTabs() {
   $('#semester-tabs').innerHTML = SEMESTERS.map((semester) => `<button class="tab-button ${state.activeSemester === semester.id ? 'active' : ''}" data-semester="${semester.id}">${semester.label}</button>`).join('');
 }
 function renderTypeTabs() {
-  document.querySelectorAll('[data-record-type]').forEach((button) => button.classList.toggle('active', button.dataset.recordType === state.recordType));
+  return;
 }
 function renderInputMode() {
-  const type = state.recordType;
   const semesterId = state.activeSemester;
-  const mode = state.inputModes?.[type]?.[semesterId] ?? 'detailed';
-  $('#input-mode-status').textContent = modeLabel(type, semesterId);
+  const mode = state.inputModes?.[semesterId] ?? 'detailed';
+  $('#input-mode-status').textContent = modeLabel(semesterId);
   $('#semester-input-mode').innerHTML = `<button class="${mode === 'quick' ? 'active' : ''}" data-input-mode="quick">간편 입력</button><button class="${mode === 'detailed' ? 'active' : ''}" data-input-mode="detailed">과목별 상세 입력</button>`;
-  const value = Number.isFinite(quickAverage(type, semesterId)) ? quickAverage(type, semesterId).toFixed(2) : '';
+  const value = Number.isFinite(quickAverage(semesterId)) ? quickAverage(semesterId).toFixed(2) : '';
   $('#quick-entry').hidden = mode !== 'quick';
   $('#quick-entry').innerHTML = mode === 'quick' ? `<label>이 학기 평균 내신 <input id="quick-average" class="input" type="number" min="1" max="5" step="0.01" value="${value}" placeholder="예: 2.14" /></label><p class="muted">1.00~5.00 범위로 입력하면 과목별 입력 없이도 전체 계산과 목표 시뮬레이션에 반영됩니다.</p>` : '';
 }
 function renderGradeList() {
   const list = records().filter((record) => record.semesterId === state.activeSemester);
   $('#active-semester-title').textContent = semesterLabel(state.activeSemester);
-  const mode = state.inputModes?.[state.recordType]?.[state.activeSemester] ?? 'detailed';
+  const mode = state.inputModes?.[state.activeSemester] ?? 'detailed';
   if (mode === 'quick') {
-    $('#entry-count').textContent = Number.isFinite(quickAverage(state.recordType, state.activeSemester)) ? '평균 입력 완료' : '평균 미입력';
+    $('#entry-count').textContent = Number.isFinite(quickAverage(state.activeSemester)) ? '평균 입력 완료' : '평균 미입력';
     $('#grade-list').innerHTML = '<div class="empty-state">간편 입력 중에는 과목별 등급을 입력하지 않습니다. 필요하면 과목별 상세 입력으로 전환하세요.</div>';
     return;
   }
@@ -190,8 +180,8 @@ function renderGradeList() {
 }
 function renderCourseSelection() {
   const container = $('#course-selection');
-  if ((state.inputModes?.[state.recordType]?.[state.activeSemester] ?? 'detailed') === 'quick') { container.innerHTML = ''; return; }
-  if (state.recordType === 'actual' && state.activeSemester.startsWith('1-')) { container.innerHTML = '<p class="muted">1학년 공통 과목은 자동으로 생성됩니다.</p>'; return; }
+  if ((state.inputModes?.[state.activeSemester] ?? 'detailed') === 'quick') { container.innerHTML = ''; return; }
+  if (state.activeSemester.startsWith('1-')) { container.innerHTML = '<p class="muted">1학년 공통 과목은 자동으로 생성됩니다.</p>'; return; }
   const used = new Set(records().filter((record) => record.semesterId === state.activeSemester).map((record) => record.courseId));
   const available = coursesForSemester(state.activeSemester).filter((course) => !used.has(course.id));
   container.innerHTML = available.length ? `<label>학교 개설 과목 <select id="course-picker" class="input"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button id="add-grade" class="add-button">선택 과목 추가</button>` : '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
@@ -200,21 +190,18 @@ function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char
 function validRows(type) { return records(type).filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }
 
 function renderSummary() {
-  const actual = state.calculated ? effectiveRecords('actual') : [];
-  const simulation = state.calculated && state.simulationCalculated ? effectiveRecords('simulation') : [];
-  const combined = [...actual, ...simulation];
+  const actual = state.calculated ? effectiveRecords() : [];
   const current = calculateOverallAverage(actual, state.weighted);
-  const expected = combined.length ? calculateOverallAverage(combined, state.weighted) : null;
   const cards = [
     ['현재 실제 내신', fmt(current), '실제 성적 기준'],
-    ['예상 내신', fmt(expected), simulation.length ? '예상 성적 포함' : '예상 성적을 입력해 보세요'],
-    ['반영 학점', `${calculateTotalCredits(actual).toFixed(1)}학점`, state.calculated ? `입력 완료 ${actual.length}과목` : '내신 계산 후 표시'],
+    ['반영 학점', `${calculateTotalCredits(actual).toFixed(1)}학점`, state.calculated ? `입력 완료 ${actual.length}항목` : '내신 계산 후 표시'],
+    ['입력 학기', `${actual.length ? new Set(actual.map((item) => item.semesterId)).size : 0}개`, '실제 성적 기준'],
     ['목표 내신', state.targetAverage ? Number(state.targetAverage).toFixed(2) : '-', '목표를 입력해 보세요'],
   ];
   $('#summary-cards').innerHTML = cards.map(([title, value, note]) => `<article class="summary-card"><span>${title}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
 }
 function renderSemesterSummary() {
-  const averages = calculateSemesterAverages(state.calculated ? effectiveRecords('actual') : [], state.weighted);
+  const averages = calculateSemesterAverages(state.calculated ? effectiveRecords() : [], state.weighted);
   $('#semester-summary').innerHTML = averages.map((semester) => {
     const average = semester.average;
     const width = average == null ? 0 : Math.max(0, Math.min(100, (10 - average) * 12.5));
@@ -222,12 +209,12 @@ function renderSemesterSummary() {
   }).join('');
 }
 function renderSubjectSummary() {
-  if (usesQuickAverage('actual')) {
+  if (usesQuickAverage()) {
     $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.</div>';
     return;
   }
-  const summary = calculateSubjectGroupAverages(state.calculated ? effectiveRecords('actual') : [], state.weighted);
-  const overall = calculateOverallAverage(state.calculated ? effectiveRecords('actual') : [], state.weighted);
+  const summary = calculateSubjectGroupAverages(state.calculated ? effectiveRecords() : [], state.weighted);
+  const overall = calculateOverallAverage(state.calculated ? effectiveRecords() : [], state.weighted);
   const advice = (average) => {
     if (!Number.isFinite(overall)) return '';
     const gap = average - overall;
@@ -236,7 +223,7 @@ function renderSubjectSummary() {
   $('#subject-summary').innerHTML = summary.length ? summary.map(({ subjectGroup, average }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong><small>${advice(average)}</small></div>`).join('') : '<div class="empty-state">내신 계산 후 교과별 분석이 표시됩니다.</div>';
 }
 function goalDetails() {
-  const target = Number(state.targetAverage); const actual = effectiveRecords('actual'); const expected = effectiveRecords('simulation'); const remaining = expected.length ? expected : fallbackRemainingSemesters();
+  const target = Number(state.targetAverage); const actual = effectiveRecords(); const remaining = fallbackRemainingSemesters();
   if (!state.calculated || !state.goalCalculated || !Number.isFinite(target) || target < 1 || target > 5 || !actual.length) return null;
   const required = calculateRequiredRemainingAverage(actual, remaining, target, state.weighted);
   return required == null ? null : { required };
@@ -245,23 +232,23 @@ function renderGoal() {
   const result = $('#goal-result');
   const details = goalDetails();
   if (!details) {
-    result.innerHTML = '<p class="muted">내신 계산 후 목표(1.00~5.00)와 남은 과목을 입력하고 목표 시뮬레이션을 눌러 주세요.</p>';
+    result.innerHTML = '<p class="muted">내신 계산 후 목표(1.00~5.00)를 입력하면 남은 학기 기준 필요 평균을 계산합니다.</p>';
     return;
   }
   const difficulty = describeGoalDifficulty(details.required);
-  const actual = effectiveRecords('actual'); const remaining = effectiveRecords('simulation').length ? effectiveRecords('simulation') : fallbackRemainingSemesters();
+  const actual = effectiveRecords(); const remaining = fallbackRemainingSemesters();
   const actualCredits = calculateTotalCredits(actual); const remainingCredits = calculateTotalCredits(remaining, false);
   const highest = (actual.reduce((sum, item) => sum + Number(item.gradeValue) * (state.weighted ? Number(item.credit) : 1), 0) + (state.weighted ? remainingCredits : remaining.length)) / (state.weighted ? actualCredits + remainingCredits : actual.length + remaining.length);
-  const scenarios = details.required >= 1 && details.required <= 5 ? ['균형형', '초반 집중형', '후반 상승형'].map((name) => `<li><strong>${name}</strong> · 남은 학기 평균 ${fmt(details.required)}등급 기준 · 예상 최종 ${fmt(Number(state.targetAverage))}</li>`).join('') : '';
+  const scenarios = details.required >= 1 && details.required <= 5 ? ['균형형', '초반 집중형', '후반 상승형'].map((name) => `<li><strong>${name}</strong> · 남은 학기 평균 ${fmt(details.required)}등급 기준 · 목표 최종 ${fmt(Number(state.targetAverage))}</li>`).join('') : '';
   result.innerHTML = `<div class="goal-number">${details.required >= 1 && details.required <= 5 ? fmt(details.required) : '-'}</div><div><strong>남은 전체 학기에 필요한 평균 등급</strong><p>${difficulty}</p>${details.required < 1 || details.required > 5 ? `<p>남은 모든 과목을 1등급으로 가정한 최고 가능 최종 내신: <strong>${fmt(highest)}</strong></p>` : `<ul class="scenario-list">${scenarios}</ul>`}</div><small>성적 수치 시뮬레이션이며 대학 합격 가능성을 의미하지 않습니다.</small>`;
 }
 function reportRows(rows) { return rows.length ? rows.map((record) => `<tr><td>${escapeHtml(semesterLabel(record.semesterId))}</td><td>${escapeHtml(record.subjectName)}</td><td>${escapeHtml(record.subjectGroup)}</td><td>${escapeHtml(record.credit)}</td><td>${escapeHtml(record.gradeValue)}</td><td>${escapeHtml(record.achievement || '-')}</td></tr>`).join('') : '<tr><td colspan="6">입력된 성적이 없습니다.</td></tr>'; }
 function renderPrintReport() {
-  const actual = effectiveRecords('actual'); const simulation = effectiveRecords('simulation'); const quickNotice = usesQuickAverage('actual') ? '<p class="print-note">간편 입력 학기가 포함되어 교과별 평균은 제공하지 않습니다. 교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.</p>' : ''; const subjects = usesQuickAverage('actual') ? [] : calculateSubjectGroupAverages(actual, state.weighted); const semesters = calculateSemesterAverages(actual, state.weighted).filter((item) => item.average != null); const goal = goalDetails();
-  $('#print-report').innerHTML = `<div class="print-page"><h1>학생 내신 · 학업 설계 결과표</h1><p class="print-note">성적 계산을 위한 참고 자료이며 대학 합격 가능성을 의미하지 않습니다.</p>${quickNotice}<dl class="print-student"><div><dt>이름</dt><dd>${escapeHtml(state.student.name || '-')}</dd></div><div><dt>학년·반</dt><dd>${escapeHtml(state.student.className || '-')}</dd></div><div><dt>번호</dt><dd>${escapeHtml(state.student.number || '-')}</dd></div><div><dt>작성일</dt><dd>${new Date().toLocaleDateString('ko-KR')}</dd></div></dl><section><h2>성적 요약</h2><div class="print-summary"><div><span>전체 평균</span><strong>${fmt(calculateOverallAverage(actual, state.weighted))}</strong></div><div><span>반영 학점</span><strong>${calculateTotalCredits(actual).toFixed(1)}학점</strong></div><div><span>목표 내신</span><strong>${state.targetAverage ? fmt(Number(state.targetAverage)) : '-'}</strong></div><div><span>남은 학기 필요 평균</span><strong>${goal ? fmt(goal.required) : '-'}</strong></div></div></section><section><h2>학기별 성적</h2><table><thead><tr><th>학기</th><th>평균 등급</th></tr></thead><tbody>${semesters.length ? semesters.map((item) => `<tr><td>${escapeHtml(item.label)}</td><td>${fmt(item.average)}</td></tr>`).join('') : '<tr><td colspan="2">입력된 실제 성적이 없습니다.</td></tr>'}</tbody></table></section><section><h2>교과별 평균</h2><table><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects.length ? subjects.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td></tr>`).join('') : `<tr><td colspan="2">${usesQuickAverage('actual') ? '교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.' : '입력된 실제 성적이 없습니다.'}</td></tr>`}</tbody></table></section><section><h2>실제 성적</h2><table><thead><tr><th>학기</th><th>과목</th><th>교과군</th><th>학점</th><th>등급</th><th>성취도</th></tr></thead><tbody>${reportRows(actual)}</tbody></table></section><section><h2>예상 성적 시뮬레이션</h2><p>예상 성적 포함 평균: <strong>${fmt(simulation.length ? calculateOverallAverage([...actual, ...simulation], state.weighted) : null)}</strong></p><table><thead><tr><th>학기</th><th>과목</th><th>교과군</th><th>학점</th><th>등급</th><th>성취도</th></tr></thead><tbody>${reportRows(simulation)}</tbody></table></section></div>`;
+  const actual = effectiveRecords(); const quickNotice = usesQuickAverage() ? '<p class="print-note">간편 입력 학기가 포함되어 교과별 평균은 제공하지 않습니다. 교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.</p>' : ''; const subjects = usesQuickAverage() ? [] : calculateSubjectGroupAverages(actual, state.weighted); const semesters = calculateSemesterAverages(actual, state.weighted).filter((item) => item.average != null); const goal = goalDetails();
+  $('#print-report').innerHTML = `<div class="print-page"><h1>학생 내신 · 학업 설계 결과표</h1><p class="print-note">성적 계산을 위한 참고 자료이며 대학 합격 가능성을 의미하지 않습니다.</p>${quickNotice}<dl class="print-student"><div><dt>이름</dt><dd>${escapeHtml(state.student.name || '-')}</dd></div><div><dt>학년·반</dt><dd>${escapeHtml(state.student.className || '-')}</dd></div><div><dt>번호</dt><dd>${escapeHtml(state.student.number || '-')}</dd></div><div><dt>작성일</dt><dd>${new Date().toLocaleDateString('ko-KR')}</dd></div></dl><section><h2>성적 요약</h2><div class="print-summary"><div><span>전체 평균</span><strong>${fmt(calculateOverallAverage(actual, state.weighted))}</strong></div><div><span>반영 학점</span><strong>${calculateTotalCredits(actual).toFixed(1)}학점</strong></div><div><span>목표 내신</span><strong>${state.targetAverage ? fmt(Number(state.targetAverage)) : '-'}</strong></div><div><span>남은 학기 필요 평균</span><strong>${goal ? fmt(goal.required) : '-'}</strong></div></div></section><section><h2>학기별 성적</h2><table><thead><tr><th>학기</th><th>평균 등급</th></tr></thead><tbody>${semesters.length ? semesters.map((item) => `<tr><td>${escapeHtml(item.label)}</td><td>${fmt(item.average)}</td></tr>`).join('') : '<tr><td colspan="2">입력된 실제 성적이 없습니다.</td></tr>'}</tbody></table></section><section><h2>교과별 평균</h2><table><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects.length ? subjects.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td></tr>`).join('') : `<tr><td colspan="2">${usesQuickAverage() ? '교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.' : '입력된 실제 성적이 없습니다.'}</td></tr>`}</tbody></table></section><section><h2>실제 성적</h2><table><thead><tr><th>학기</th><th>과목</th><th>교과군</th><th>학점</th><th>등급</th><th>성취도</th></tr></thead><tbody>${reportRows(actual)}</tbody></table></section></div>`;
 }
 function render() {
-  renderTypeTabs(); renderSemesterTabs(); renderInputMode(); renderGradeList(); renderCourseSelection(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+  renderSemesterTabs(); renderInputMode(); renderGradeList(); renderCourseSelection(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
   $('#target-average').value = state.targetAverage;
   $('#weighted-toggle').checked = Boolean(state.weighted);
   $('#student-name').value = state.student.name; $('#student-class').value = state.student.className; $('#student-number').value = state.student.number;
@@ -275,27 +262,22 @@ $('#semester-tabs').addEventListener('click', (event) => {
 $('#semester-input-mode').addEventListener('click', (event) => {
   const button = event.target.closest('[data-input-mode]');
   if (!button) return;
-  state.inputModes[state.recordType][state.activeSemester] = button.dataset.inputMode;
+  state.inputModes[state.activeSemester] = button.dataset.inputMode;
   saveState(); render();
 });
 $('#quick-entry').addEventListener('input', (event) => {
   if (event.target.id !== 'quick-average') return;
   const value = Number(event.target.value);
-  if (event.target.value === '') delete state.quickAverages[state.recordType][state.activeSemester];
-  else if (validAverageInput(value)) state.quickAverages[state.recordType][state.activeSemester] = Number(value.toFixed(2));
-  state.calculated = false; state.simulationCalculated = false; state.goalCalculated = false; saveState();
-  $('#input-mode-status').textContent = modeLabel(state.recordType, state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
-});
-$('#record-type-tabs').addEventListener('click', (event) => {
-  const button = event.target.closest('[data-record-type]');
-  if (!button) return;
-  state.recordType = button.dataset.recordType; saveState(); render();
+  if (event.target.value === '') delete state.quickAverages[state.activeSemester];
+  else if (validAverageInput(value)) state.quickAverages[state.activeSemester] = Number(value.toFixed(2));
+  state.calculated = false; state.goalCalculated = false; saveState();
+  $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
 });
 $('#course-selection').addEventListener('click', (event) => {
   if (event.target.id !== 'add-grade') return;
   const course = courseById($('#course-picker')?.value);
   if (!course) { showToast('학교 개설 과목에서 선택해 주세요.', 'error'); return; }
-  records().push(recordFromCourse(course, makeId())); state.calculated = false; state.simulationCalculated = false; state.goalCalculated = false; saveState(); render();
+  records().push(recordFromCourse(course, makeId())); state.calculated = false; state.goalCalculated = false; saveState(); render();
 });
 $('#grade-list').addEventListener('input', (event) => {
   const row = event.target.closest('[data-id]');
@@ -305,16 +287,16 @@ $('#grade-list').addEventListener('input', (event) => {
   if (!record) return;
   record[field] = ['credit', 'gradeValue'].includes(field) ? event.target.value : event.target.value;
   if (field === 'gradeValue' && event.target.value && (Number(event.target.value) < 1 || Number(event.target.value) > 5)) { record[field] = ''; showToast('등급은 1~5등급만 입력할 수 있어요.', 'error'); }
-  state.calculated = false; state.simulationCalculated = false; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.recordType, state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+  state.calculated = false; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
 });
 $('#grade-list').addEventListener('change', (event) => event.target.dispatchEvent(new Event('input', { bubbles: true })));
 $('#grade-list').addEventListener('click', (event) => {
   if (event.target.dataset.action !== 'delete') return;
   const row = event.target.closest('[data-id]');
-  state[state.recordType] = records().filter((item) => item.id !== row.dataset.id); state.calculated = false; state.simulationCalculated = false; state.goalCalculated = false;
+  state.actual = records().filter((item) => item.id !== row.dataset.id); state.calculated = false; state.goalCalculated = false;
   saveState(); render();
 });
-$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.recordType, state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${records('actual').length - validRows('actual').length}개입니다.`); });
+$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${records().length - validRows().length}개입니다.`); });
 $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculated = true; saveState(); renderGoal(); renderPrintReport(); });
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; saveState(); renderSummary(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
@@ -328,7 +310,7 @@ $('#import-input').addEventListener('change', async (event) => {
   const file = event.target.files?.[0]; if (!file) return;
   try {
     const imported = JSON.parse(await file.text());
-    if (!Array.isArray(imported.actual) || !Array.isArray(imported.simulation)) throw new Error('형식 오류');
+    if (!Array.isArray(imported.actual)) throw new Error('형식 오류');
     state = normalizeState(imported); saveState(); render(); showToast('데이터를 불러왔습니다.');
   } catch (error) { console.error(error); showToast('백업 파일 형식을 확인해 주세요.', 'error'); }
   event.target.value = '';
