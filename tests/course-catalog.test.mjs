@@ -12,3 +12,10 @@ test('성취도만 처리하는 과목을 구분한다', () => {
   assert.equal(lab.fiveLevelEligible, false);
   assert.equal(lab.gradingType, 'achievement-a-c');
 });
+test('일반 융합 선택은 A~E 성취도만, 보건은 P 이수 처리한다', () => {
+  const socialIssue = coursesForSemester('2-1').find((item) => item.subjectName === '사회문제 탐구');
+  const health = commonCourses(2026, 1).find((item) => item.subjectName === '보건');
+  assert.equal(socialIssue.gradingType, 'achievement-a-e-no-rank');
+  assert.equal(socialIssue.fiveLevelEligible, false);
+  assert.equal(health.gradingType, 'pass');
+});

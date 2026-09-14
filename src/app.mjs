@@ -46,7 +46,10 @@ function loadState() {
 }
 function normalizeRecord(record = {}) {
   const configured = courseById(record.courseId);
-  if (configured) return { ...recordFromCourse(configured, typeof record.id === 'string' && record.id ? record.id : makeId()), gradeValue: record.gradeValue ?? '', achievement: ['A', 'B', 'C'].includes(record.achievement) ? record.achievement : '' };
+  if (configured) {
+    const normalized = recordFromCourse(configured, typeof record.id === 'string' && record.id ? record.id : makeId());
+    return { ...normalized, gradeValue: normalized.fiveLevelEligible ? record.gradeValue ?? '' : '', achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '' };
+  }
   return {
     id: typeof record.id === 'string' && record.id ? record.id : makeId(),
     semesterId: SEMESTERS.some((semester) => semester.id === record.semesterId) ? record.semesterId : SEMESTERS[0].id,
@@ -55,6 +58,11 @@ function normalizeRecord(record = {}) {
     credit: record.credit ?? '', gradeValue: record.gradeValue ?? '',
     achievement: ['A', 'B', 'C'].includes(record.achievement) ? record.achievement : '', requirement: 'legacy', gradingType: 'five-level',
   };
+}
+function allowedAchievements(record) {
+  if (record.gradingType === 'pass') return ['P'];
+  if (record.gradingType === 'achievement-a-e-no-rank') return ['A', 'B', 'C', 'D', 'E'];
+  return ['A', 'B', 'C'];
 }
 function normalizeState(saved = {}) {
   const base = defaultState();
@@ -102,8 +110,8 @@ function renderGradeList() {
     <div class="grade-row" data-id="${record.id}">
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
-      <label><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>
-      <label><span>성취도</span><select data-field="achievement"><option value="">-</option>${['A','B','C'].map((value) => `<option ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+      ${record.fiveLevelEligible ? `<label><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : `<div class="grade-status"><span>등급</span><strong>${record.gradingType === 'pass' ? '이수(P)' : '등급 미산출'}</strong></div>`}
+      <label><span>${record.gradingType === 'pass' ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} 성취도"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
       ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
     </div>`).join('');
 }
