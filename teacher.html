@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>선생님용 과목 관리 · 내신 시뮬레이터</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="teacher-shell">
+    <header class="teacher-header"><div><p class="eyebrow">배정고 학업 설계 도구</p><h1>선생님용 과목 관리</h1><p class="muted">학생 화면에는 활성화된 과목만 표시됩니다. 이 페이지 주소는 학생 화면에 연결하지 않습니다.</p></div><a class="secondary-button teacher-back" href="./index.html">학생 화면</a></header>
+    <section class="teacher-panel teacher-filters"><div><label>입학생 연도<select id="filter-year" class="input"></select></label><label>학년<select id="filter-grade" class="input"><option value="all">전체 학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></label><label>학기<select id="filter-semester" class="input"><option value="all">전체 학기</option><option value="1">1학기</option><option value="2">2학기</option></select></label></div><button id="add-course" class="primary-button">과목 추가</button></section>
+    <section class="teacher-panel"><div class="teacher-list-heading"><div><h2>과목 목록</h2><p id="course-count" class="muted"></p></div><button id="reset-catalog" class="quiet-button">기본 카탈로그로 되돌리기</button></div><div id="course-list" class="teacher-course-list"></div></section>
+    <section id="course-editor" class="teacher-panel" hidden><div class="teacher-list-heading"><h2 id="editor-title">과목 추가</h2><button id="cancel-edit" class="quiet-button">취소</button></div><form id="course-form" class="teacher-form"><input id="course-id" type="hidden" /><label>입학생 연도<input id="course-year" class="input" type="number" min="2022" max="2100" required /></label><label>학년<select id="course-grade" class="input"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></label><label>학기<select id="course-semester" class="input"><option value="1">1학기</option><option value="2">2학기</option></select></label><label class="teacher-wide">과목명<input id="course-name" class="input" maxlength="80" required /></label><label>교과군<input id="course-group" class="input" maxlength="30" required /></label><label>학점<input id="course-credit" class="input" type="number" min="0.5" max="20" step="0.5" required /></label><label>성적 처리 방식<select id="course-grading" class="input"><option value="grade">등급</option><option value="achievement">성취도</option><option value="both">등급+성취도</option></select></label><label>공통/선택<select id="course-requirement" class="input"><option value="common">공통</option><option value="elective">선택</option><option value="school-designated">학교 지정</option></select></label><label>표시 순서<input id="course-order" class="input" type="number" min="0" step="1" required /></label><label class="teacher-check"><input id="course-active" type="checkbox" checked /> 개설 표시(active)</label><label class="teacher-check"><input id="course-enabled" type="checkbox" checked /> 학생 선택 가능(enabled)</label><div class="teacher-form-actions"><button type="submit" class="primary-button">저장</button><button type="button" id="cancel-edit-bottom" class="quiet-button">취소</button></div></form></section>
+    <p id="teacher-toast" class="teacher-toast" role="status" aria-live="polite"></p>
+  </main>
+  <script type="module" src="./src/teacher-app.mjs?v=20260914-teacher1"></script>
+</body>
+</html>

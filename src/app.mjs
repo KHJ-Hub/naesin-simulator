@@ -8,7 +8,8 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260914-quickinput3';
-import { commonCourses, courseById, coursesForSemester, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types2';
+import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store';
+import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types2';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
