@@ -35,7 +35,7 @@
       <section class="panel" id="simulator-panel">
         <div class="panel-heading"><div><p class="eyebrow">STEP 1</p><h2>성적 입력</h2><p>실제 성적 또는 예상 성적을 학기별로 입력해보세요.</p></div><div class="segmented" id="record-type-tabs"><button class="active" data-record-type="actual">실제 성적</button><button data-record-type="simulation">예상 성적</button></div></div>
         <div class="semester-tabs" id="semester-tabs"></div>
-        <div class="entry-layout"><div><div class="section-title"><h3 id="active-semester-title">1학년 1학기</h3><span id="entry-count" class="pill">0개 과목</span></div><div id="grade-list" class="grade-list"></div><div id="course-selection" class="course-selection"></div><button id="calculate-button" class="primary-button">내신 계산하기</button></div><aside class="side-help"><h3>입력 안내</h3><ul><li>등급은 2022 개정 교육과정 1~5등급으로 선택합니다.</li><li>과목명·학점은 학교 과목 목록에서 자동으로 적용됩니다.</li><li>입력 후 <strong>내신 계산하기</strong>를 눌러 결과를 갱신합니다.</li></ul></aside></div>
+        <div class="entry-layout"><div><div class="section-title"><div><h3 id="active-semester-title">1학년 1학기</h3><p id="input-mode-status" class="muted"></p></div><span id="entry-count" class="pill">0개 과목</span></div><div id="semester-input-mode" class="segmented semester-input-mode" aria-label="학기별 입력 방식"></div><div id="quick-entry" class="quick-entry"></div><div id="grade-list" class="grade-list"></div><div id="course-selection" class="course-selection"></div><button id="calculate-button" class="primary-button">내신 계산하기</button></div><aside class="side-help"><h3>입력 안내</h3><ul><li>학기 평균을 바로 입력하거나 학교 과목별 등급을 입력할 수 있습니다.</li><li>상세 입력에서는 학점이 학교 과목 목록에서 자동으로 적용됩니다.</li><li>상세 입력이 완료되면 해당 학기의 간편 평균보다 우선 사용됩니다.</li></ul></aside></div>
       </section>
 
       <section class="dashboard-grid">
@@ -49,6 +49,6 @@
     </main>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260914-achievement2026"></script>
+    <script type="module" src="./src/app.mjs?v=20260914-quickinput"></script>
   </body>
 </html>

@@ -7,6 +7,10 @@ export const SEMESTERS = [
 ];
 export const MIN_GRADE = 1;
 export const MAX_GRADE = 5;
+export function validAverageInput(value) {
+  const average = Number(value);
+  return Number.isFinite(average) && average >= MIN_GRADE && average <= MAX_GRADE;
+}
 
 export function validRecord(record) {
   const grade = Number(record.gradeValue);
