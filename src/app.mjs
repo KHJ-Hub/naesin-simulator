@@ -6,8 +6,8 @@ import {
   calculateTotalCredits,
   calculateRequiredRemainingAverage,
   describeGoalDifficulty,
-} from './grade-calculator.mjs';
-import { commonCourses, courseById, coursesForSemester, recordFromCourse } from './course-catalog.mjs';
+} from './grade-calculator.mjs?v=20260914-5level';
+import { commonCourses, courseById, coursesForSemester, recordFromCourse } from './course-catalog.mjs?v=20260914-5level';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
