@@ -1,44 +1,25 @@
-/**
- * 학교 과목 카탈로그의 임시 정적 저장소입니다.
- * 향후 관리자 화면, CSV/Excel 일괄 등록, 서버 DB는 이 계층만 교체해 연결합니다.
- * 실제 운영 전 학교의 확정 교육과정·학점표로 목록을 검토해야 합니다.
- */
-export const COURSE_CATALOG_VERSION = 1;
+/** 2026 입학생 교육과정. 학교 안내책자(2026 선택과목안내자료 1학년) 기준. */
+export const COURSE_CATALOG_VERSION = 2;
+export const ACTIVE_ENTRY_YEAR = 2026;
+const rules = { five:['five-level',true,false], ae:['achievement-a-e-no-rank',false,true], ac:['achievement-a-c',false,true], pass:['pass',false,true] };
+const make = (id, subjectName, grade, semester, subjectGroup, credit, curriculumCategory, requirement='elective', rule='five', extra={}) => {
+  const [gradingType, fiveLevelEligible, achievementOnly] = rules[rule];
+  return { id, entryYear:2026, subjectName, grade, semester, semesterId:`${grade}-${semester}`, subjectGroup, credit, curriculumCategory, requirement, gradingType, fiveLevelEligible, achievementOnly, availability:requirement === 'elective' ? 'planned' : 'school-designated', classConditions:[], duplicateSelectionWarning:false, autoGenerate:false, ...extra };
+};
+const common = (id,n,s,g,c,r='five',x={}) => make(id,n,1,s,g,c,'common','school-designated',r,{autoGenerate:true,...x});
+const electives = (grade, semester, group, category, names, rule='five') => names.map((n) => make(`${grade}-${semester}-${n}`, n, grade, semester, group, 3, category, 'elective', rule));
 
-const course = (id, subjectName, grade, semester, subjectGroup, credit, requirement) => ({
-  id, subjectName, grade, semester, semesterId: `${grade}-${semester}`,
-  subjectGroup, credit, gradingType: 'five-level', requirement,
-});
-
-// 요청에 명시된 1학년 공통 과목을 기본값으로 둡니다. 학교 확정 목록으로 확장하세요.
 export const SCHOOL_COURSES = [
-  course('common-korean-1', '공통국어1', 1, 1, '국어', 4, 'common'),
-  course('common-math-1', '공통수학1', 1, 1, '수학', 4, 'common'),
-  course('common-english-1', '공통영어1', 1, 1, '영어', 3, 'common'),
-  course('common-korean-2', '공통국어2', 1, 2, '국어', 4, 'common'),
-  course('common-math-2', '공통수학2', 1, 2, '수학', 4, 'common'),
-  course('common-english-2', '공통영어2', 1, 2, '영어', 3, 'common'),
-
-  // 2·3학년은 학생이 학교 개설 목록에서 선택합니다.
-  course('literature', '문학', 2, 1, '국어', 4, 'elective'),
-  course('algebra', '대수', 2, 1, '수학', 4, 'elective'),
-  course('english-1', '영어Ⅰ', 2, 1, '영어', 3, 'elective'),
-  course('sociology', '사회와 문화', 2, 1, '사회', 3, 'elective'),
-  course('global-citizen-geography', '세계시민과 지리', 2, 1, '사회', 3, 'elective'),
-];
-
-export function coursesForSemester(semesterId) {
-  return SCHOOL_COURSES.filter((item) => item.semesterId === semesterId);
-}
-
-export function commonCourses() {
-  return SCHOOL_COURSES.filter((item) => item.requirement === 'common');
-}
-
-export function courseById(courseId) {
-  return SCHOOL_COURSES.find((item) => item.id === courseId) ?? null;
-}
-
-export function recordFromCourse(course, id) {
-  return { id, courseId: course.id, semesterId: course.semesterId, subjectName: course.subjectName, subjectGroup: course.subjectGroup, credit: course.credit, gradingType: course.gradingType, requirement: course.requirement, gradeValue: '', achievement: '' };
-}
+  common('common-korean-1','공통국어1',1,'국어',4), common('common-korean-2','공통국어2',2,'국어',4), common('common-math-1','공통수학1',1,'수학',4), common('common-math-2','공통수학2',2,'수학',4), common('common-english-1','공통영어1',1,'영어',4), common('common-english-2','공통영어2',2,'영어',4), common('history-1','한국사1',1,'사회',3), common('history-2','한국사2',2,'사회',3), common('social-1','통합사회1',1,'사회',4), common('social-2','통합사회2',2,'사회',4), common('science-1','통합과학1',1,'과학',4), common('science-2','통합과학2',2,'과학',4), common('lab-1','과학탐구실험1',1,'과학',1,'ac'), common('lab-2','과학탐구실험2',2,'과학',1,'ac'), common('pe-1','체육1',1,'체육',2,'ac'), common('pe-2','체육2',2,'체육',2,'ac'),
+  common('music-1','음악',1,'예술',2,'ac',{classConditions:['1','2','3']}), common('music-2','음악',2,'예술',2,'ac',{classConditions:['4','5','6']}), common('art-1','미술',1,'예술',2,'ac',{classConditions:['4','5','6']}), common('art-2','미술',2,'예술',2,'ac',{classConditions:['1','2','3']}), common('health-1','보건',1,'교양',2,'pass',{classConditions:['1','2','3']}), common('health-2','보건',2,'교양',2,'pass',{classConditions:['4','5','6']}), common('career-1','진로와 직업',1,'교양',2,'pass',{classConditions:['4','5','6']}), common('career-2','진로와 직업',2,'교양',2,'pass',{classConditions:['1','2','3']}),
+  make('sports-life-2','스포츠 생활2',2,1,'체육',2,'fusion','school-designated','ac'), make('sports-life-1','스포츠 생활1',2,2,'체육',2,'fusion','school-designated','ac'), make('sports-culture','스포츠 문화',3,1,'체육',2,'career','school-designated','ac'), make('sports-science','스포츠 과학',3,2,'체육',2,'career','school-designated','ac'), make('ecology','생태와 환경',3,2,'교양',2,'general','school-designated','pass'), make('psychology','인간과 심리',3,2,'교양',3,'career','school-designated','pass'),
+  make('art-create-a','미술 창작',2,1,'예술',3,'career','school-designated','ac',{classConditions:['1','2','3']}), make('music-create-a','음악 연주와 창작',2,1,'예술',3,'career','school-designated','ac',{classConditions:['4','5','6']}), make('music-create-b','음악 연주와 창작',2,2,'예술',3,'career','school-designated','ac',{classConditions:['1','2','3']}), make('art-create-b','미술 창작',2,2,'예술',3,'career','school-designated','ac',{classConditions:['4','5','6']}), make('japanese-a','일본어',2,1,'제2외국어',4,'general','school-designated','five',{classConditions:['1','2','3'], selectionGroup:'second-language'}), make('chinese-a','중국어',2,1,'제2외국어',4,'general','school-designated','five',{classConditions:['1','2','3'], selectionGroup:'second-language'}), make('japanese-b','일본어',2,2,'제2외국어',4,'general','school-designated','five',{classConditions:['4','5','6'], selectionGroup:'second-language'}), make('chinese-b','중국어',2,2,'제2외국어',4,'general','school-designated','five',{classConditions:['4','5','6'], selectionGroup:'second-language'}), make('info-a','정보',2,1,'정보',4,'general','school-designated','five',{classConditions:['4','5','6']}), make('info-b','정보',2,2,'정보',4,'general','school-designated','five',{classConditions:['1','2','3']}),
+  ...electives(2,1,'국어','general',['문학']), ...electives(2,1,'국어','fusion',['매체 의사소통']), ...electives(2,1,'수학','general',['대수','미적분Ⅰ']), ...electives(2,1,'영어','general',['영어Ⅰ']), ...electives(2,1,'사회','general',['세계시민과 지리','사회와 문화']), ...electives(2,1,'사회','fusion',['사회문제 탐구'],'ae'), ...electives(2,1,'과학','general',['물리학','생명과학']), ...electives(2,1,'과학','fusion',['과학의 역사와 문화','기후변화와 환경생태'],'ae'),
+  ...electives(2,2,'국어','general',['독서와 작문']), ...electives(2,2,'국어','career',['문학과 영상']), ...electives(2,2,'수학','general',['확률과 통계']), ...electives(2,2,'수학','career',['미적분Ⅱ']), ...electives(2,2,'영어','general',['영어Ⅱ']), ...electives(2,2,'영어','career',['영어 발표와 토론']), ...electives(2,2,'영어','fusion',['미디어 영어']), ...electives(2,2,'사회','general',['세계사','현대사회와 윤리']), ...electives(2,2,'사회','career',['정치','경제']), ...electives(2,2,'사회','fusion',['여행지리'],'ae'), ...electives(2,2,'과학','general',['화학','지구과학']), ...electives(2,2,'과학','fusion',['과학의 역사와 문화','기후변화와 환경생태'],'ae'),
+  ...electives(3,1,'국어','general',['화법과 언어']), ...electives(3,1,'국어','career',['주제 탐구 독서','문학과 영상']), ...electives(3,1,'수학','career',['기하','경제 수학']), ...electives(3,1,'수학','fusion',['수학 과제 탐구']), ...electives(3,1,'영어','general',['영어 독해와 작문']), ...electives(3,1,'영어','career',['영어 발표와 토론']), ...electives(3,1,'영어','fusion',['미디어 영어']), ...electives(3,1,'사회','career',['한국지리 탐구','법과 사회','윤리와 사상']), ...electives(3,1,'사회','fusion',['금융과 경제생활'],'ae'), ...electives(3,1,'과학','general',['물리학','생명과학']), ...electives(3,1,'과학','career',['역학과 에너지','전자기와 양자','물질과 에너지','화학 반응의 세계','세포와 물질 대사','생물의 유전','지구시스템과학','행성우주과학']), ...electives(3,1,'과학','fusion',['융합과학 탐구'],'ae'), ...electives(3,1,'제2외국어','career',['심화 일본어']), ...electives(3,1,'기술·가정/정보','career',['인공지능 기초']),
+  ...electives(3,2,'국어','career',['주제 탐구 독서']), ...electives(3,2,'국어','fusion',['독서 토론과 글쓰기','언어 생활 탐구']), ...electives(3,2,'수학','career',['인공지능 수학','고급 미적분']), ...electives(3,2,'영어','career',['영미 문학 읽기','심화 영어']), ...electives(3,2,'영어','fusion',['세계 문화와 영어']), ...electives(3,2,'사회','career',['국제 관계의 이해']), ...electives(3,2,'사회','fusion',['윤리문제 탐구'],'ae'), ...electives(3,2,'과학','general',['물리학','생명과학']), ...electives(3,2,'과학','fusion',['융합과학 탐구'],'ae'), ...electives(3,2,'제2외국어','career',['일본어 회화']), ...electives(3,2,'기술·가정/정보','fusion',['소프트웨어와 생활']),
+].map((item) => ({ ...item, duplicateSelectionWarning: ['주제 탐구 독서','물리학','생명과학','융합과학 탐구','미디어 영어','과학의 역사와 문화','기후변화와 환경생태'].includes(item.subjectName) }));
+export const coursesForSemester = (semesterId, entryYear=ACTIVE_ENTRY_YEAR) => SCHOOL_COURSES.filter((x) => x.entryYear === entryYear && x.semesterId === semesterId);
+export const commonCourses = (entryYear=ACTIVE_ENTRY_YEAR, classNumber=null) => SCHOOL_COURSES.filter((x) => x.entryYear === entryYear && x.autoGenerate && (!x.classConditions.length || x.classConditions.includes(String(classNumber))));
+export const courseById = (id) => SCHOOL_COURSES.find((x) => x.id === id) ?? null;
+export const recordFromCourse = (x,id) => ({ id,courseId:x.id,semesterId:x.semesterId,subjectName:x.subjectName,subjectGroup:x.subjectGroup,credit:x.credit,gradingType:x.gradingType,fiveLevelEligible:x.fiveLevelEligible,achievementOnly:x.achievementOnly,requirement:x.requirement,gradeValue:'',achievement:'' });

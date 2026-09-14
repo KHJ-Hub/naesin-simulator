@@ -25,6 +25,13 @@ const defaultState = () => ({
 
 function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 let state = loadState();
+function syncClassSpecificCourses() {
+  const classNumber = String(state.student?.className ?? '').match(/([1-6])\s*반/)?.[1];
+  if (!classNumber) return;
+  const enrolled = new Set(state.actual.map((record) => record.courseId));
+  commonCourses(2026, classNumber).filter((course) => !enrolled.has(course.id)).forEach((course) => state.actual.push(recordFromCourse(course, makeId())));
+}
+syncClassSpecificCourses();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
 
@@ -231,6 +238,6 @@ $('#reset-button').addEventListener('click', () => {
   state = defaultState(); saveState(); render(); showToast('저장된 데이터를 초기화했습니다.');
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
-document.querySelector('.student-form').addEventListener('input', (event) => { const fields = { 'student-name': 'name', 'student-class': 'className', 'student-number': 'number' }; const field = fields[event.target.id]; if (!field) return; state.student[field] = event.target.value; saveState(); renderPrintReport(); });
+document.querySelector('.student-form').addEventListener('input', (event) => { const fields = { 'student-name': 'name', 'student-class': 'className', 'student-number': 'number' }; const field = fields[event.target.id]; if (!field) return; state.student[field] = event.target.value; if (field === 'className') syncClassSpecificCourses(); saveState(); render(); });
 
 render();

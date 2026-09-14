@@ -19,6 +19,8 @@
 - 2022 개정 교육과정 5등급제(1~5등급) 계산 검증과 입력 선택 UI로 전환
 - `src/course-catalog.mjs`에 관리자 화면·일괄 등록으로 확장 가능한 학교 과목 카탈로그 계층 추가
 - 1학년 공통 과목 자동 생성, 2·3학년 학교 개설 과목 선택, 계산 버튼 기반 분석·목표 시뮬레이션 추가
+- 2026학년도 입학생 선택과목 안내 책자 기반으로 실제 3개년 과목·학점·학기·성적 처리 카탈로그 반영
+- 1학년 반별 학교 지정 과목 조건 및 5등급/성취도 A-E·A-C/P 처리 구분 반영
 
 ## 진행 중
 
@@ -49,6 +51,7 @@
 - `README.md`, `.gitignore`, `.github/workflows/deploy-pages.yml`
 - `tests/fixtures/browser-backup.json`: 개인정보가 아닌 브라우저 복구 검증용 예제 데이터
 - `src/course-catalog.mjs`: 학교 과목 카탈로그와 공통/선택 과목 조회 계층
+- `tests/course-catalog.test.mjs`: 2026 입학생 공통·반별 과목 및 성적 처리 검증
 
 ## DB 변경
 
@@ -62,6 +65,7 @@
 - `git diff --check`: 통과
 - 로컬 Chromium: 실제/예상 탭, 학기 탭, 성적 입력, 목표 계산, localStorage 유지, JSON 복구, 결과표 내용 확인 및 콘솔 오류 없음
 - 로컬 Chromium: 1학년 공통 과목 자동 생성, 2학년 과목 선택, 1~5등급 선택, 계산 버튼, 목표 시뮬레이션·시나리오 및 콘솔 오류 없음
+- `node tests/course-catalog.test.mjs`: 2 passed, `node tests/grade-calculator.test.mjs`: 5 passed
 - 공개 GitHub Pages: HTTP 200, 요약 카드 4개·학기 탭 5개·결과표 인쇄 버튼·A4 CSS 확인 및 콘솔 오류 없음
 - GitHub Actions `Deploy to GitHub Pages`: `705dba3` 성공. 이전 모듈 캐시와 새 HTML 혼합을 방지하도록 버전 쿼리로 엔트리·계산·카탈로그 모듈을 로드
 - 공개 GitHub Pages 최종 브라우저 확인: 1학년 공통 과목 자동 생성, 1~5등급 선택, 계산·목표 버튼, 학기 탭 렌더링 및 콘솔 오류 없음
