@@ -26,10 +26,11 @@
       <section class="panel student-panel">
         <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>인쇄 결과표에만 사용되며, 이 브라우저에만 저장됩니다.</p></div></div>
         <div class="student-form">
-          <label>이름 <input id="student-name" class="input" maxlength="30" autocomplete="name" placeholder="예: 홍길동" /></label>
-          <label>학년·반 <input id="student-class" class="input" maxlength="30" placeholder="예: 2학년 3반" /></label>
-          <label>번호 <input id="student-number" class="input" maxlength="20" inputmode="numeric" placeholder="예: 15" /></label>
+          <label>학번 <input id="student-id" class="input" type="text" maxlength="5" inputmode="numeric" autocomplete="off" placeholder="예: 10101" /></label>
+          <label>이름 <input id="student-name" class="input" type="text" maxlength="30" autocomplete="name" placeholder="예: 김민지" /></label>
         </div>
+        <p id="student-info-error" class="field-error" role="alert" aria-live="polite"></p>
+        <p id="student-info-summary" class="student-info-summary" aria-live="polite"></p>
       </section>
 
       <section class="panel" id="simulator-panel">
@@ -63,6 +64,6 @@
     </main>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260914-goal-simulation1"></script>
+    <script type="module" src="./src/app.mjs?v=20260914-student-info1"></script>
   </body>
 </html>

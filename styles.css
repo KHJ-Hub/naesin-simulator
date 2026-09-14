@@ -173,6 +173,8 @@ footer p { margin:3px; }
   .grade-fields { grid-template-columns:1fr; }
 }
 .admission-reference-panel { display:grid; gap:1.25rem; }
+.field-error { min-height:1.3em; margin:.6rem 0 0; color:#b4235a; font-size:.85rem; font-weight:700; }
+.student-info-summary { margin:.25rem 0 0; color:var(--accent-strong); font-weight:800; }
 .admission-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:.75rem; }
 .admission-filters label { display:grid; gap:.35rem; font-size:.85rem; color:var(--muted); }
 .admission-reference-result { display:grid; gap:1rem; }

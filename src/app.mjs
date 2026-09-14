@@ -15,7 +15,7 @@ import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, classifyAdmissi
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
-  student: { name: '', className: '', number: '' },
+  student: { studentId: '', studentName: '' },
   targetAverage: '',
   weighted: true,
   activeSemester: SEMESTERS[0].id,
@@ -27,13 +27,6 @@ const defaultState = () => ({
 
 function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 let state = loadState();
-function syncClassSpecificCourses() {
-  const classNumber = String(state.student?.className ?? '').match(/([1-6])\s*반/)?.[1];
-  if (!classNumber) return;
-  const enrolled = new Set(state.actual.map((record) => record.courseId));
-  commonCourses(2026, classNumber).filter((course) => !enrolled.has(course.id)).forEach((course) => state.actual.push(recordFromCourse(course, makeId())));
-}
-syncClassSpecificCourses();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
 const admissionFilters = { region: '', university: '', field: '', department: '', admissionType: '', category: '' };
@@ -76,7 +69,7 @@ function normalizeState(saved = {}) {
   return {
     ...base,
     actual: [...savedActual, ...commonActual],
-    student: { name: String(saved.student?.name ?? '').slice(0, 30), className: String(saved.student?.className ?? '').slice(0, 30), number: String(saved.student?.number ?? '').slice(0, 20) },
+    student: { studentId: String(saved.student?.studentId ?? saved.studentId ?? '').replace(/\D/g, '').slice(0, 5), studentName: String(saved.student?.studentName ?? saved.studentName ?? saved.student?.name ?? '').trim().slice(0, 30) },
     targetAverage: String(saved.targetAverage ?? ''), weighted: saved.weighted !== false,
     activeSemester: SEMESTERS.some((semester) => semester.id === saved.activeSemester) ? saved.activeSemester : base.activeSemester,
     calculated: Boolean(saved.calculated), goalCalculated: Boolean(saved.goalCalculated),
@@ -292,13 +285,17 @@ function renderGoal() {
 function reportRows(rows) { return rows.length ? rows.map((record) => `<tr><td>${escapeHtml(semesterLabel(record.semesterId))}</td><td>${escapeHtml(record.subjectName)}</td><td>${escapeHtml(record.subjectGroup)}</td><td>${escapeHtml(record.credit)}</td><td>${escapeHtml(record.gradeValue)}</td><td>${escapeHtml(record.achievement || '-')}</td></tr>`).join('') : '<tr><td colspan="6">입력된 성적이 없습니다.</td></tr>'; }
 function renderPrintReport() {
   const actual = effectiveRecords(); const quickNotice = usesQuickAverage() ? '<p class="print-note">간편 입력 학기가 포함되어 교과별 평균은 제공하지 않습니다. 교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.</p>' : ''; const subjects = usesQuickAverage() ? [] : calculateSubjectGroupAverages(actual, state.weighted); const semesters = calculateSemesterAverages(actual, state.weighted).filter((item) => item.average != null); const goal = goalDetails();
-  $('#print-report').innerHTML = `<div class="print-page"><h1>학생 내신 · 학업 설계 결과표</h1><p class="print-note">성적 계산을 위한 참고 자료이며 대학 합격 가능성을 의미하지 않습니다.</p>${quickNotice}<dl class="print-student"><div><dt>이름</dt><dd>${escapeHtml(state.student.name || '-')}</dd></div><div><dt>학년·반</dt><dd>${escapeHtml(state.student.className || '-')}</dd></div><div><dt>번호</dt><dd>${escapeHtml(state.student.number || '-')}</dd></div><div><dt>작성일</dt><dd>${new Date().toLocaleDateString('ko-KR')}</dd></div></dl><section><h2>성적 요약</h2><div class="print-summary"><div><span>전체 평균</span><strong>${fmt(calculateOverallAverage(actual, state.weighted))}</strong></div><div><span>반영 학점</span><strong>${calculateTotalCredits(actual).toFixed(1)}학점</strong></div><div><span>목표 내신</span><strong>${state.targetAverage ? fmt(Number(state.targetAverage)) : '-'}</strong></div><div><span>남은 학기 필요 평균</span><strong>${goal ? fmt(goal.required) : '-'}</strong></div></div></section><section><h2>학기별 성적</h2><table><thead><tr><th>학기</th><th>평균 등급</th></tr></thead><tbody>${semesters.length ? semesters.map((item) => `<tr><td>${escapeHtml(item.label)}</td><td>${fmt(item.average)}</td></tr>`).join('') : '<tr><td colspan="2">입력된 실제 성적이 없습니다.</td></tr>'}</tbody></table></section><section><h2>교과별 평균</h2><table><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects.length ? subjects.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td></tr>`).join('') : `<tr><td colspan="2">${usesQuickAverage() ? '교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.' : '입력된 실제 성적이 없습니다.'}</td></tr>`}</tbody></table></section><section><h2>실제 성적</h2><table><thead><tr><th>학기</th><th>과목</th><th>교과군</th><th>학점</th><th>등급</th><th>성취도</th></tr></thead><tbody>${reportRows(actual)}</tbody></table></section></div>`;
+  $('#print-report').innerHTML = `<div class="print-page"><h1>학생 내신 · 학업 설계 결과표</h1><p class="print-note">성적 계산을 위한 참고 자료이며 대학 합격 가능성을 의미하지 않습니다.</p>${quickNotice}<dl class="print-student"><div><dt>학번</dt><dd>${escapeHtml(state.student.studentId || '-')}</dd></div><div><dt>이름</dt><dd>${escapeHtml(state.student.studentName || '-')}</dd></div><div><dt>작성일</dt><dd>${new Date().toLocaleDateString('ko-KR')}</dd></div></dl><section><h2>성적 요약</h2><div class="print-summary"><div><span>전체 평균</span><strong>${fmt(calculateOverallAverage(actual, state.weighted))}</strong></div><div><span>반영 학점</span><strong>${calculateTotalCredits(actual).toFixed(1)}학점</strong></div><div><span>목표 내신</span><strong>${state.targetAverage ? fmt(Number(state.targetAverage)) : '-'}</strong></div><div><span>남은 학기 필요 평균</span><strong>${goal ? fmt(goal.required) : '-'}</strong></div></div></section><section><h2>학기별 성적</h2><table><thead><tr><th>학기</th><th>평균 등급</th></tr></thead><tbody>${semesters.length ? semesters.map((item) => `<tr><td>${escapeHtml(item.label)}</td><td>${fmt(item.average)}</td></tr>`).join('') : '<tr><td colspan="2">입력된 실제 성적이 없습니다.</td></tr>'}</tbody></table></section><section><h2>교과별 평균</h2><table><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects.length ? subjects.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td></tr>`).join('') : `<tr><td colspan="2">${usesQuickAverage() ? '교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.' : '입력된 실제 성적이 없습니다.'}</td></tr>`}</tbody></table></section><section><h2>실제 성적</h2><table><thead><tr><th>학기</th><th>과목</th><th>교과군</th><th>학점</th><th>등급</th><th>성취도</th></tr></thead><tbody>${reportRows(actual)}</tbody></table></section></div>`;
 }
 function render() {
   renderSemesterTabs(); renderInputMode(); renderGradeList(); renderCourseSelection(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderAdmissionReferences(); renderPrintReport();
   $('#target-average').value = state.targetAverage;
   $('#weighted-toggle').checked = Boolean(state.weighted);
-  $('#student-name').value = state.student.name; $('#student-class').value = state.student.className; $('#student-number').value = state.student.number;
+  $('#student-id').value = state.student.studentId; $('#student-name').value = state.student.studentName;
+  const validStudentId = /^\d{5}$/.test(state.student.studentId);
+  const validStudentName = Boolean(state.student.studentName.trim());
+  $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해주세요.' : '';
+  $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
 }
 
 $('#semester-tabs').addEventListener('click', (event) => {
@@ -374,6 +371,12 @@ $('#reset-button').addEventListener('click', () => {
   state = defaultState(); saveState(); render(); showToast('저장된 데이터를 초기화했습니다.');
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
-document.querySelector('.student-form').addEventListener('input', (event) => { const fields = { 'student-name': 'name', 'student-class': 'className', 'student-number': 'number' }; const field = fields[event.target.id]; if (!field) return; state.student[field] = event.target.value; if (field === 'className') syncClassSpecificCourses(); saveState(); render(); });
+document.querySelector('.student-form').addEventListener('input', (event) => {
+  if (event.target.id === 'student-id') { state.student.studentId = event.target.value.replace(/\D/g, '').slice(0, 5); event.target.value = state.student.studentId; }
+  if (event.target.id === 'student-name') { state.student.studentName = event.target.value.trimStart().replace(/\s+$/g, ''); event.target.value = state.student.studentName; }
+  const valid = /^\d{5}$/.test(state.student.studentId) && Boolean(state.student.studentName.trim());
+  if (valid) saveState();
+  render();
+});
 
 render();
