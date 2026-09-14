@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
+    <title>내신 시뮬레이터 · 학업 설계</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand"><span class="brand-icon">✨</span><div><p class="eyebrow">배정고 학업 설계 도구</p><h1>내신 시뮬레이터</h1></div></div>
+        <div class="top-actions"><button id="export-button" class="secondary-button">JSON 내보내기</button><label class="secondary-button file-button">JSON 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label><button id="reset-button" class="quiet-button">내 데이터 초기화</button></div>
+      </header>
+
+      <section class="notice-card"><strong>내 기기에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송하지 않고 이 브라우저에만 저장됩니다. 브라우저 데이터를 삭제하면 저장 내용도 사라질 수 있어요.</p></section>
+
+      <section class="hero-grid">
+        <div><p class="eyebrow">현재까지의 흐름을 한눈에</p><h2>내 성적을 기록하고<br /><span>다음 목표를 가볍게 실험해보세요.</span></h2><p class="hero-copy">실제 성적과 예상 성적을 나누어 관리하고, 학점 가중 평균으로 목표 내신을 계산합니다.</p></div>
+        <div class="hero-sparkle" aria-hidden="true">🌷<br /><span>차근차근<br />나의 속도로</span></div>
+      </section>
+
+      <section class="summary-grid" id="summary-cards"></section>
+
+      <section class="panel" id="simulator-panel">
+        <div class="panel-heading"><div><p class="eyebrow">STEP 1</p><h2>성적 입력</h2><p>실제 성적 또는 예상 성적을 학기별로 입력해보세요.</p></div><div class="segmented" id="record-type-tabs"><button class="active" data-record-type="actual">실제 성적</button><button data-record-type="simulation">예상 성적</button></div></div>
+        <div class="semester-tabs" id="semester-tabs"></div>
+        <div class="entry-layout"><div><div class="section-title"><h3 id="active-semester-title">1학년 1학기</h3><span id="entry-count" class="pill">0개 과목</span></div><div id="grade-list" class="grade-list"></div><button id="add-grade" class="add-button">＋ 과목 추가</button></div><aside class="side-help"><h3>입력 안내</h3><ul><li>등급은 1~9등급으로 입력합니다.</li><li>학점이 클수록 평균에 더 크게 반영됩니다.</li><li>예상 성적은 실제 성적과 별도로 저장됩니다.</li></ul></aside></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 2</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="9" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 학점 가중 평균 사용</label></div><div id="goal-result" class="goal-result"></div></section>
+        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">나의 흐름</p><h2>학기별 변화</h2></div></div><div id="semester-summary" class="bar-list"></div></section>
+      </section>
+
+      <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">교과별 확인</p><h2>교과군 평균</h2></div></div><div id="subject-summary" class="subject-grid"></div></section>
+
+      <footer><p>이 도구는 성적 계산을 위한 시뮬레이션이며 대학 합격 가능성을 의미하지 않습니다.</p><p>입력 데이터는 이 브라우저의 저장소에만 보관됩니다.</p></footer>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./src/app.mjs"></script>
+  </body>
+</html>
