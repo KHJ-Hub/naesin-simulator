@@ -1,35 +1,56 @@
-/**
- * 어디가 전년도 입시결과를 교체해 넣기 위한 별도 데이터 모듈.
- * 실제 대학 자료를 확인하기 전에는 빈 배열을 유지하며, 임의의 대학·컷을 생성하지 않는다.
- */
+import { admissionResults2026 } from './admission-results/admission-results-2026.mjs';
+
+/** 전년도 공개 입시결과를 현재 내신과 단순 비교하기 위한 설정이다. */
 export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
-  defaultYear: 2025,
+  defaultYear: 2026,
   bands: Object.freeze({
-    stable: Object.freeze({ label: '안정 참고', minDifference: 0.20 }),
-    adequate: Object.freeze({ label: '적정 참고', minDifference: -0.15 }),
-    challenge: Object.freeze({ label: '도전 참고', minDifference: Number.NEGATIVE_INFINITY }),
+    comfortable: Object.freeze({ label: '비교적 여유 있는 범위', minDifference: 0.20 }),
+    similar: Object.freeze({ label: '현재 내신과 비슷한 범위', minDifference: -0.20 }),
+    challenging: Object.freeze({ label: '조금 도전적인 범위', minDifference: Number.NEGATIVE_INFINITY }),
   }),
 });
 
-// 추후 어디가 원자료를 정제한 항목을 연도별로 추가한다.
-export const ADMISSION_REFERENCE_DATA = [];
+// 연도별 모듈만 교체·추가하면 화면 코드 수정 없이 자료를 갱신할 수 있다.
+export const ADMISSION_REFERENCE_DATA = Object.freeze([...admissionResults2026]);
 
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
   referenceYear: 'number', region: 'string', university: 'string', field: 'string',
   department: 'string', admissionName: 'string', admissionType: 'string', category: '학생부교과|학생부종합',
-  cut70: 'number', cut50: 'number|null', source: 'string',
+  cut70: 'number', cut50: 'number|null', source: 'string', updatedAt: 'YYYY-MM-DD',
 });
 
-export function classifyAdmissionReference(currentAverage, cut70, settings = ADMISSION_REFERENCE_SETTINGS) {
+export function validAdmissionReference(item = {}) {
+  return Number.isInteger(Number(item.referenceYear))
+    && ['university', 'region', 'field', 'department', 'admissionName', 'admissionType', 'category', 'source'].every((key) => Boolean(String(item[key] ?? '').trim()))
+    && Number.isFinite(Number(item.cut70))
+    && Number(item.cut70) >= 1 && Number(item.cut70) <= 9
+    && (item.cut50 == null || item.cut50 === '' || Number.isFinite(Number(item.cut50)));
+}
+
+// difference가 양수면 현재 내신 숫자가 더 낮아(더 좋은 성적) 70% cut보다 여유가 있음을 뜻한다.
+export function admissionDifference(currentAverage, cut70) {
   const difference = Number(cut70) - Number(currentAverage);
-  if (!Number.isFinite(difference)) return null;
-  if (difference >= settings.bands.stable.minDifference) return 'stable';
-  if (difference >= settings.bands.adequate.minDifference) return 'adequate';
-  return 'challenge';
+  return Number.isFinite(difference) ? Number(difference.toFixed(2)) : null;
+}
+
+export function classifyAdmissionReference(currentAverage, cut70, settings = ADMISSION_REFERENCE_SETTINGS) {
+  const difference = admissionDifference(currentAverage, cut70);
+  if (difference == null) return null;
+  if (difference >= settings.bands.comfortable.minDifference) return 'comfortable';
+  if (difference >= settings.bands.similar.minDifference) return 'similar';
+  return 'challenging';
+}
+
+export function describeAdmissionDifference(difference) {
+  if (!Number.isFinite(Number(difference))) return '';
+  const magnitude = Math.abs(Number(difference)).toFixed(2);
+  if (Number(difference) > 0) return `현재 내신이 전년도 70% cut보다 ${magnitude}등급 더 좋은 성적입니다.`;
+  if (Number(difference) < 0) return `현재 내신이 전년도 70% cut보다 ${magnitude}등급 더 낮은 성적입니다.`;
+  return '현재 내신과 전년도 70% cut이 같습니다.';
 }
 
 export function filterAdmissionReferences(data, filters = {}) {
-  return data.filter((item) => (
+  return data.filter((item) => validAdmissionReference(item) && (
     (!filters.region || item.region === filters.region)
     && (!filters.university || item.university === filters.university)
     && (!filters.field || item.field === filters.field)
