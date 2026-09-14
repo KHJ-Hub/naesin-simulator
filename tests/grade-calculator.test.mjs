@@ -29,3 +29,9 @@ test('간편 입력 평균은 1.00~5.00만 허용한다', () => {
   assert.equal(validAverageInput(0.99), false);
   assert.equal(validAverageInput(5.01), false);
 });
+
+test('5개 학기 범위에서 1학기 4.00과 목표 3.00의 단순 잔여 평균은 2.75다', () => {
+  const actual = [{ semesterId: '1-1', subjectName: '1학기 평균', credit: 1, gradeValue: 4 }];
+  const remaining = ['1-2', '2-1', '2-2', '3-1'].map((semesterId) => ({ semesterId, subjectName: `${semesterId} 남은 학기`, credit: 1 }));
+  assert.equal(calculateRequiredRemainingAverage(actual, remaining, 3, false), 2.75);
+});
