@@ -7,7 +7,7 @@ import {
   calculateRequiredRemainingAverage,
   describeGoalDifficulty,
   validAverageInput,
-} from './grade-calculator.mjs?v=20260914-quickinput2';
+} from './grade-calculator.mjs?v=20260914-quickinput3';
 import { commonCourses, courseById, coursesForSemester, recordFromCourse } from './course-catalog.mjs?v=20260914-catalog2026';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
@@ -124,6 +124,11 @@ function effectiveRecords(type = 'actual') {
   return output;
 }
 function usesQuickAverage(type = 'actual') { return SEMESTERS.some(({ id }) => !detailedStatus(type, id).complete && Number.isFinite(quickAverage(type, id))); }
+function fallbackRemainingSemesters() {
+  const completed = SEMESTERS.map(({ id }, index) => (detailedStatus('actual', id).complete || validAverageInput(quickAverage('actual', id)) ? index : -1)).filter((index) => index >= 0);
+  if (!completed.length) return [];
+  return SEMESTERS.slice(Math.max(...completed) + 1).map(({ id }) => ({ id: `remaining-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 남은 학기`, subjectGroup: '', credit: 1 }));
+}
 function modeLabel(type, semesterId) {
   const status = detailedStatus(type, semesterId);
   const quick = Number.isFinite(quickAverage(type, semesterId));
@@ -229,9 +234,9 @@ function renderSubjectSummary() {
   $('#subject-summary').innerHTML = summary.length ? summary.map(({ subjectGroup, average }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong><small>${advice(average)}</small></div>`).join('') : '<div class="empty-state">내신 계산 후 교과별 분석이 표시됩니다.</div>';
 }
 function goalDetails() {
-  const target = Number(state.targetAverage); const actual = effectiveRecords('actual'); const expected = effectiveRecords('simulation');
+  const target = Number(state.targetAverage); const actual = effectiveRecords('actual'); const expected = effectiveRecords('simulation'); const remaining = expected.length ? expected : fallbackRemainingSemesters();
   if (!state.calculated || !state.goalCalculated || !Number.isFinite(target) || target < 1 || target > 5 || !actual.length) return null;
-  const required = calculateRequiredRemainingAverage(actual, expected, target, state.weighted);
+  const required = calculateRequiredRemainingAverage(actual, remaining, target, state.weighted);
   return required == null ? null : { required };
 }
 function renderGoal() {
@@ -242,7 +247,7 @@ function renderGoal() {
     return;
   }
   const difficulty = describeGoalDifficulty(details.required);
-  const actual = effectiveRecords('actual'); const remaining = effectiveRecords('simulation');
+  const actual = effectiveRecords('actual'); const remaining = effectiveRecords('simulation').length ? effectiveRecords('simulation') : fallbackRemainingSemesters();
   const actualCredits = calculateTotalCredits(actual); const remainingCredits = calculateTotalCredits(remaining, false);
   const highest = (actual.reduce((sum, item) => sum + Number(item.gradeValue) * (state.weighted ? Number(item.credit) : 1), 0) + (state.weighted ? remainingCredits : remaining.length)) / (state.weighted ? actualCredits + remainingCredits : actual.length + remaining.length);
   const scenarios = details.required >= 1 && details.required <= 5 ? ['균형형', '초반 집중형', '후반 상승형'].map((name) => `<li><strong>${name}</strong> · 남은 학기 평균 ${fmt(details.required)}등급 기준 · 예상 최종 ${fmt(Number(state.targetAverage))}</li>`).join('') : '';
