@@ -11,7 +11,7 @@
     <main class="app-shell">
       <header class="topbar">
         <div class="brand"><span class="brand-icon">✨</span><div><p class="eyebrow">배정고 학업 설계 도구</p><h1>내신 시뮬레이터</h1></div></div>
-        <div class="top-actions"><button id="export-button" class="secondary-button">JSON 내보내기</button><label class="secondary-button file-button">JSON 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label><button id="reset-button" class="quiet-button">내 데이터 초기화</button></div>
+        <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="export-button" class="secondary-button">JSON 내보내기</button><label class="secondary-button file-button">JSON 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label><button id="reset-button" class="quiet-button">내 데이터 초기화</button></div>
       </header>
 
       <section class="notice-card"><strong>내 기기에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송하지 않고 이 브라우저에만 저장됩니다. 브라우저 데이터를 삭제하면 저장 내용도 사라질 수 있어요.</p></section>
@@ -22,6 +22,15 @@
       </section>
 
       <section class="summary-grid" id="summary-cards"></section>
+
+      <section class="panel student-panel">
+        <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>인쇄 결과표에만 사용되며, 이 브라우저에만 저장됩니다.</p></div></div>
+        <div class="student-form">
+          <label>이름 <input id="student-name" class="input" maxlength="30" autocomplete="name" placeholder="예: 홍길동" /></label>
+          <label>학년·반 <input id="student-class" class="input" maxlength="30" placeholder="예: 2학년 3반" /></label>
+          <label>번호 <input id="student-number" class="input" maxlength="20" inputmode="numeric" placeholder="예: 15" /></label>
+        </div>
+      </section>
 
       <section class="panel" id="simulator-panel">
         <div class="panel-heading"><div><p class="eyebrow">STEP 1</p><h2>성적 입력</h2><p>실제 성적 또는 예상 성적을 학기별로 입력해보세요.</p></div><div class="segmented" id="record-type-tabs"><button class="active" data-record-type="actual">실제 성적</button><button data-record-type="simulation">예상 성적</button></div></div>
@@ -38,6 +47,7 @@
 
       <footer><p>이 도구는 성적 계산을 위한 시뮬레이션이며 대학 합격 가능성을 의미하지 않습니다.</p><p>입력 데이터는 이 브라우저의 저장소에만 보관됩니다.</p></footer>
     </main>
+    <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./src/app.mjs"></script>
   </body>

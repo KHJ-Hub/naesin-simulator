@@ -12,15 +12,19 @@
 - 학점 가중 평균 및 목표 내신 계산 모듈 작성
 - 브라우저 localStorage 저장과 JSON 내보내기/복구 UI 연결
 - GitHub Pages 자동 배포 workflow 작성
+- 공개 Pages 초기 렌더링 오류 수정 (`record-type-label`, `weighted-average`의 잘못된 DOM 참조 제거·정정)
+- 교사용 학생 결과표 및 A4 인쇄 / 브라우저 PDF 저장 레이아웃 추가
+- 학생 정보(이름, 학년·반, 번호)를 localStorage 상태 및 JSON 백업·복구에 포함
+- JSON 복구 시 상태·레코드 정규화 추가
 
 ## 진행 중
 
-- GitHub Pages 활성화 및 공개 URL 확인 완료
+- GitHub Pages에 수정 사항 배포 및 공개 URL 확인 예정
 
 ## 남은 작업
 
 - 저장소 Settings에서 Pages 소스를 GitHub Actions로 확인
-- 선택적 개선: 실제 Chromium 기반 Playwright UI 자동화 추가
+- 선택적 개선: 계산 모듈 외 앱 UI 자동화 테스트를 저장소 테스트 스크립트로 정식 편입
 
 ## 중요 결정사항
 
@@ -28,6 +32,7 @@
 - 실제 성적과 시뮬레이션 성적은 별도 배열로 관리한다.
 - 성적 데이터는 현재 브라우저에만 저장하며 인증·서버·D1을 사용하지 않는다.
 - 계산은 UI와 분리한 `src/grade-calculator.mjs`에서 수행한다.
+- 결과표는 A4 인쇄 CSS를 사용하며, PDF 파일은 브라우저의 인쇄 기능으로 사용자가 저장한다.
 
 ## 변경된 파일
 
@@ -37,6 +42,7 @@
 - `src/app.mjs`: 입력, 저장, 백업/복구, 렌더링
 - `tests/grade-calculator.test.mjs`: 계산 테스트
 - `README.md`, `.gitignore`, `.github/workflows/deploy-pages.yml`
+- `tests/fixtures/browser-backup.json`: 개인정보가 아닌 브라우저 복구 검증용 예제 데이터
 
 ## DB 변경
 
@@ -44,9 +50,11 @@
 
 ## 테스트 상태
 
-- `npm test`: 4 passed
+- `node tests/grade-calculator.test.mjs`: 4 passed
+- `npm test`: 현재 환경에서 Node 자식 프로세스 권한(`spawn EPERM`)으로 실행 불가. 계산 테스트 직접 실행은 통과.
 - `node --check src/app.mjs`: 통과
 - `git diff --check`: 통과
+- 로컬 Chromium: 실제/예상 탭, 학기 탭, 성적 입력, 목표 계산, localStorage 유지, JSON 복구, 결과표 내용 확인 및 콘솔 오류 없음
 - GitHub Actions `Deploy to GitHub Pages`: `configure-pages` 실패 (Pages 미활성화로 확인)
 - GitHub Pages `pages build and deployment`: 성공 (`b47d452`)
 - 공개 URL: HTTP 200 확인 (`https://khj-hub.github.io/naesin-simulator/`)

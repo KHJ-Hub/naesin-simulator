@@ -1,0 +1,13 @@
+{
+  "actual": [
+    { "id": "fixture-actual", "semesterId": "1-1", "subjectName": "검증 국어", "subjectGroup": "국어", "credit": 4, "gradeValue": 2, "achievement": "A" }
+  ],
+  "simulation": [
+    { "id": "fixture-simulation", "semesterId": "1-2", "subjectName": "검증 수학", "subjectGroup": "수학", "credit": 4, "gradeValue": 1, "achievement": "A" }
+  ],
+  "student": { "name": "테스트 학생", "className": "2학년 3반", "number": "15" },
+  "targetAverage": "1.5",
+  "weighted": true,
+  "activeSemester": "1-1",
+  "recordType": "actual"
+}
