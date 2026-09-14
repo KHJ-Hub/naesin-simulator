@@ -64,6 +64,7 @@
 - 로컬 Chromium: 1학년 공통 과목 자동 생성, 2학년 과목 선택, 1~5등급 선택, 계산 버튼, 목표 시뮬레이션·시나리오 및 콘솔 오류 없음
 - 공개 GitHub Pages: HTTP 200, 요약 카드 4개·학기 탭 5개·결과표 인쇄 버튼·A4 CSS 확인 및 콘솔 오류 없음
 - GitHub Actions `Deploy to GitHub Pages`: `705dba3` 성공. 이전 모듈 캐시와 새 HTML 혼합을 방지하도록 버전 쿼리로 엔트리·계산·카탈로그 모듈을 로드
+- 공개 GitHub Pages 최종 브라우저 확인: 1학년 공통 과목 자동 생성, 1~5등급 선택, 계산·목표 버튼, 학기 탭 렌더링 및 콘솔 오류 없음
 - GitHub Actions `Deploy to GitHub Pages`: `configure-pages` 실패 (Pages 미활성화로 확인)
 - GitHub Pages `pages build and deployment`: 성공 (`b47d452`)
 - 공개 URL: HTTP 200 확인 (`https://khj-hub.github.io/naesin-simulator/`)
