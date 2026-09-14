@@ -9,7 +9,7 @@
 - 계산 버튼 기반의 학점 가중/단순 평균, 교과별 관리 방향 분석
 - 목표 내신과 남은 평균·균형/초반 집중/후반 상승 시나리오 시뮬레이션
 - JSON 백업·복구
-- 학생 정보와 실제·예상 성적을 포함한 교사용 결과표 인쇄 / PDF 저장
+- 학생 정보와 실제 성적을 포함한 교사용 결과표 인쇄 / PDF 저장
 
 공개 주소는 GitHub Pages 설정 후 `https://khj-hub.github.io/naesin-simulator/`가 됩니다. 저장소의 `main`에 push하면 `.github/workflows/deploy-pages.yml`이 자동 배포합니다.
 
