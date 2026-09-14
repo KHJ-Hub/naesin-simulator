@@ -19,7 +19,7 @@
 
 ## 진행 중
 
-- GitHub Pages에 수정 사항 배포 및 공개 URL 확인 예정
+- GitHub Pages에 수정 사항 배포 및 공개 URL 확인 완료
 
 ## 남은 작업
 
@@ -55,6 +55,7 @@
 - `node --check src/app.mjs`: 통과
 - `git diff --check`: 통과
 - 로컬 Chromium: 실제/예상 탭, 학기 탭, 성적 입력, 목표 계산, localStorage 유지, JSON 복구, 결과표 내용 확인 및 콘솔 오류 없음
+- 공개 GitHub Pages: HTTP 200, 요약 카드 4개·학기 탭 5개·결과표 인쇄 버튼·A4 CSS 확인 및 콘솔 오류 없음
 - GitHub Actions `Deploy to GitHub Pages`: `configure-pages` 실패 (Pages 미활성화로 확인)
 - GitHub Pages `pages build and deployment`: 성공 (`b47d452`)
 - 공개 URL: HTTP 200 확인 (`https://khj-hub.github.io/naesin-simulator/`)
@@ -66,4 +67,4 @@
 
 ## 다음 작업 시작점
 
-공개 URL에서 성적 입력과 JSON 백업/복구를 사용자 브라우저로 확인한다.
+선택적 개선으로 앱 UI 자동화 테스트를 저장소 테스트 스크립트에 편입한다.
