@@ -1,4 +1,4 @@
-import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260914-grading-types2';
+import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260914-grading-types3';
 
 export const CATALOG_STORAGE_KEY = 'naesin-course-catalog:v1';
 

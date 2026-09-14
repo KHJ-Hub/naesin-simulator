@@ -1,7 +1,7 @@
 /** 2026 입학생 교육과정. 학교 안내책자(2026 선택과목안내자료 1학년) 기준. */
 export const COURSE_CATALOG_VERSION = 2;
 export const ACTIVE_ENTRY_YEAR = 2026;
-const rules = { five:['grade',true,false,'none'], ae:['achievement',false,true,'a-e'], ac:['achievement',false,true,'a-c'], pass:['achievement',false,true,'pass'], both:['both',true,false,'a-e'] };
+const rules = { five:['grade',true,false,'none'], ae:['achievement',false,true,'a-e'], ac:['achievement',false,true,'a-c'], pass:['passfail',false,false,'pass'], both:['both',true,false,'a-e'] };
 const make = (id, subjectName, grade, semester, subjectGroup, credit, curriculumCategory, requirement='elective', rule='five', extra={}) => {
   const [gradingType, fiveLevelEligible, achievementOnly, achievementScale] = rules[rule];
   return { id, entryYear:2026, subjectName, grade, semester, semesterId:`${grade}-${semester}`, subjectGroup, credit, curriculumCategory, requirement, gradingType, fiveLevelEligible, achievementOnly, achievementScale, availability:requirement === 'elective' ? 'planned' : 'school-designated', classConditions:[], duplicateSelectionWarning:false, autoGenerate:false, ...extra };
@@ -23,5 +23,5 @@ export const SCHOOL_COURSES = [
 export const coursesForSemester = (semesterId, entryYear=ACTIVE_ENTRY_YEAR) => SCHOOL_COURSES.filter((x) => x.entryYear === entryYear && x.semesterId === semesterId);
 export const commonCourses = (entryYear=ACTIVE_ENTRY_YEAR, classNumber=null) => SCHOOL_COURSES.filter((x) => x.entryYear === entryYear && x.autoGenerate && (!x.classConditions.length || x.classConditions.includes(String(classNumber))));
 export const courseById = (id) => SCHOOL_COURSES.find((x) => x.id === id) ?? null;
-export const gradingInputs = (gradingType) => ({ grade: ['grade', 'both'].includes(gradingType), achievement: ['achievement', 'both'].includes(gradingType) });
+export const gradingInputs = (gradingType) => ({ grade: ['grade', 'both'].includes(gradingType), achievement: ['achievement', 'both'].includes(gradingType), passfail: gradingType === 'passfail' });
 export const recordFromCourse = (x,id) => ({ id,courseId:x.id,semesterId:x.semesterId,subjectName:x.subjectName,subjectGroup:x.subjectGroup,credit:x.credit,gradingType:x.gradingType,fiveLevelEligible:x.fiveLevelEligible,achievementOnly:x.achievementOnly,achievementScale:x.achievementScale,requirement:x.requirement,gradeValue:'',achievement:'' });

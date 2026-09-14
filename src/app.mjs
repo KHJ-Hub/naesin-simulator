@@ -9,7 +9,7 @@ import {
   validAverageInput,
 } from './grade-calculator.mjs?v=20260914-quickinput3';
 import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store2';
-import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types2';
+import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
 import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, classifyAdmissionReference, filterAdmissionReferences } from './admission-reference.mjs?v=20260914-admission-reference1';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
@@ -58,7 +58,7 @@ function normalizeRecord(record = {}) {
   };
 }
 function allowedAchievements(record) {
-  if (record.achievementScale === 'pass') return ['P'];
+  if (record.achievementScale === 'pass') return ['P', 'F'];
   if (record.achievementScale === 'a-e') return ['A', 'B', 'C', 'D', 'E'];
   return ['A', 'B', 'C'];
 }
@@ -178,7 +178,7 @@ function renderGradeList() {
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
       <div class="grade-fields">
         ${gradingInputs(record.gradingType).grade ? `<label class="grade-input"><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : ''}
-        ${gradingInputs(record.gradingType).achievement ? `<label class="achievement-input"><span>${record.achievementScale === 'pass' ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} 성취도"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
+        ${gradingInputs(record.gradingType).achievement || gradingInputs(record.gradingType).passfail ? `<label class="achievement-input"><span>${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} ${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
       </div>
       ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger grade-delete" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
     </div>`).join('');
@@ -186,10 +186,10 @@ function renderGradeList() {
 function renderCourseSelection() {
   const container = $('#course-selection');
   if ((state.inputModes?.[state.activeSemester] ?? 'detailed') === 'quick') { container.innerHTML = ''; return; }
-  if (state.activeSemester.startsWith('1-')) { container.innerHTML = '<p class="muted">1학년 공통 과목은 자동으로 생성됩니다.</p>'; return; }
   const used = new Set(records().filter((record) => record.semesterId === state.activeSemester).map((record) => record.courseId));
   const available = coursesForSemester(state.activeSemester).filter((course) => !used.has(course.id));
-  container.innerHTML = available.length ? `<label>학교 개설 과목 <select id="course-picker" class="input"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button id="add-grade" class="add-button">선택 과목 추가</button>` : '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
+  const firstGradeNote = state.activeSemester.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택하세요.</p>' : '';
+  container.innerHTML = available.length ? `${firstGradeNote}<label>학교 개설 과목 <select id="course-picker" class="input"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button id="add-grade" class="add-button">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
 }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
 function validRows(type) { return records(type).filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }

@@ -1,4 +1,4 @@
-import { ACTIVE_ENTRY_YEAR } from './course-catalog.mjs?v=20260914-grading-types2';
+import { ACTIVE_ENTRY_YEAR } from './course-catalog.mjs?v=20260914-grading-types3';
 import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260914-teacher-store2';
 
 const $ = (selector) => document.querySelector(selector);
@@ -10,7 +10,7 @@ const filters = { year: String(ACTIVE_ENTRY_YEAR) };
 const makeId = () => `course-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const isActive = (course) => course.active !== false && course.enabled !== false;
 const requirementLabel = (value) => ({ common: '공통', elective: '선택', 'school-designated': '학교 지정' }[value] ?? '선택');
-const gradingLabel = (value) => ({ grade: '등급 산출', achievement: '성취도', both: '등급+성취도' }[value] ?? '성적 처리');
+const gradingLabel = (value) => ({ grade: '등급 산출', achievement: '성취도', passfail: 'P/F', both: '등급+성취도' }[value] ?? '성적 처리');
 function toast(message) { $('#teacher-toast').textContent = message; clearTimeout(toast.timer); toast.timer = setTimeout(() => { $('#teacher-toast').textContent = ''; }, 2400); }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
 function semesterKey(grade, semester) { return `${grade}-${semester}`; }
@@ -68,7 +68,7 @@ function openEditor(course = null, context = {}) {
 function closeEditor() { editingId = null; $('#course-editor').hidden = true; }
 function formCourse() {
   const grade = Number($('#course-grade').value); const semester = Number($('#course-semester').value); const gradingType = $('#course-grading').value;
-  return { id: editingId || makeId(), entryYear: Number($('#course-year').value), grade, semester, semesterId: `${grade}-${semester}`, subjectName: $('#course-name').value.trim(), subjectGroup: $('#course-group').value.trim(), credit: Number($('#course-credit').value), gradingType, fiveLevelEligible: ['grade','both'].includes(gradingType), achievementOnly: gradingType === 'achievement', achievementScale: gradingType === 'grade' ? 'none' : 'a-e', curriculumCategory: 'teacher-managed', requirement: $('#course-requirement').value, availability: 'teacher-managed', classConditions: [], autoGenerate: $('#course-requirement').value === 'common' && grade === 1, active: $('#course-active').checked, enabled: $('#course-enabled').checked, displayOrder: Number($('#course-order').value), duplicateSelectionWarning: false };
+  return { id: editingId || makeId(), entryYear: Number($('#course-year').value), grade, semester, semesterId: `${grade}-${semester}`, subjectName: $('#course-name').value.trim(), subjectGroup: $('#course-group').value.trim(), credit: Number($('#course-credit').value), gradingType, fiveLevelEligible: ['grade','both'].includes(gradingType), achievementOnly: gradingType === 'achievement', achievementScale: gradingType === 'passfail' ? 'pass' : gradingType === 'grade' ? 'none' : 'a-e', curriculumCategory: 'teacher-managed', requirement: $('#course-requirement').value, availability: 'teacher-managed', classConditions: [], autoGenerate: $('#course-requirement').value === 'common' && grade === 1, active: $('#course-active').checked, enabled: $('#course-enabled').checked, displayOrder: Number($('#course-order').value), duplicateSelectionWarning: false };
 }
 renderFilters(); renderBrowser();
 $('#filter-year').addEventListener('change', (event) => { filters.year = event.target.value; openSemesters.clear(); renderBrowser(); });
