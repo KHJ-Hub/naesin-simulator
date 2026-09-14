@@ -39,7 +39,9 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!saved || !Array.isArray(saved.actual)) return defaultState();
-    return normalizeState(saved);
+    const normalized = normalizeState(saved);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    return normalized;
   } catch {
     return defaultState();
   }
