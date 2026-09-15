@@ -3,6 +3,7 @@ const REGION_MODULES = Object.freeze({
   ulsan: './admission-results/2026/ulsan.mjs',
   gyeongnam: './admission-results/2026/gyeongnam.mjs',
   incheon: './admission-results/2026/incheon.mjs',
+  gyeonggi: './admission-results/2026/gyeonggi.mjs',
 });
 
 const cache = new Map();

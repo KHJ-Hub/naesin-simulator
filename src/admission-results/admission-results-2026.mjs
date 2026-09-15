@@ -19,8 +19,9 @@ const KOSIN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PC
 const INJE = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000164';
 const KYUNGNAM = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000059';
 const INCHEON = 'https://admission.inu.ac.kr/detail.do?board_seq=15139&categoryid=52&menuurl=4428MQNdeF7ekIPFWbVCAg%3D%3D&pageNo=1&userpwd=';
+const GACHON = 'https://admission.gachon.ac.kr/admission/html/rolling/resultView.asp?BOARD_IDX=30155&page=1&s_cate=BBS0401&s_code=BOARD_TITLE';
 
-const item = (university, region, department, admissionName, category, cut50, cut70, source, updatedAt = null) => {
+const item = (university, region, department, admissionName, category, cut50, cut70, source, updatedAt = null, sourceName = source === INCHEON ? '인천대학교 입학처' : ADIGA_SOURCE) => {
   const converted50 = cut50 == null ? null : convertGrade9ToGrade5(cut50, DEFAULT_BUSAN_CONVERSION_DATASET);
   const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
   return {
@@ -33,7 +34,7 @@ const item = (university, region, department, admissionName, category, cut50, cu
     conversionMethod: 'busan-grade5-cumulative-anchor-interpolation-v1',
     conversionBasis: '부산광역시교육청학력개발원 진로진학지원센터 98개교 15,978명 고2 1학기 누적 등급평균 분석 자료',
     conversionSampleSize: 15978, conversionSchoolCount: 98, convertedScale: 5, isApproximate: true,
-    source: source === INCHEON ? '인천대학교 입학처' : ADIGA_SOURCE, sourceUrl: source, updatedAt,
+    source: sourceName, sourceUrl: source, updatedAt,
   };
 };
 
@@ -149,4 +150,20 @@ export const admissionResults2026 = Object.freeze([
   item('인천대학교', '인천광역시', '컴퓨터공학부', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.93, INCHEON, '2026-04-01'),
   item('인천대학교', '인천광역시', '정보통신공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.01, INCHEON, '2026-04-01'),
   item('인천대학교', '인천광역시', '임베디드시스템공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.19, INCHEON, '2026-04-01'),
+
+  item('가천대학교', '경기도', '약학과', '학생부교과(학생부우수자전형)', '학생부교과', 2.39, 2.69, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '의예과', '학생부교과(학생부우수자전형)', '학생부교과', 1.71, 1.81, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '경영학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.60, 3.90, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '회계세무학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.52, 3.53, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '관광경영학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.66, 3.76, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '의료산업경영학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.85, 3.87, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '금융·빅데이터학부', '학생부교과(학생부우수자전형)', '학생부교과', 3.37, 3.51, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '경제학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.51, 3.83, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '응용통계학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.51, 3.55, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '심리학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.18, 3.28, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '미디어커뮤니케이션학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.54, 3.86, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '사회복지학과', '학생부교과(학생부우수자전형)', '학생부교과', 4.06, 4.14, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '유아교육학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.51, 3.79, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', '패션산업학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.79, 3.90, GACHON, '2026-05-29', '가천대학교 입학처'),
+  item('가천대학교', '경기도', 'AI인문대학', '학생부교과(학생부우수자전형)', '학생부교과', 3.78, 3.95, GACHON, '2026-05-29', '가천대학교 입학처'),
 ]);
