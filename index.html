@@ -10,8 +10,8 @@
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div class="brand"><span class="brand-icon">✨</span><div><p class="eyebrow">배정고 학업 설계 도구</p><h1>내신 시뮬레이터</h1></div></div>
-        <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="export-button" class="secondary-button">JSON 내보내기</button><label class="secondary-button file-button">JSON 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label><button id="reset-button" class="quiet-button">내 데이터 초기화</button><a class="quiet-button teacher-link" href="./teacher.html" aria-label="선생님 페이지 열기">선생님 페이지</a></div>
+        <div class="brand"><span class="brand-icon" id="teacher-entry-trigger" role="button" tabindex="0" aria-label="배정고 학업 설계 도구">✨</span><div><p class="eyebrow">배정고 학업 설계 도구</p><h1>내신 시뮬레이터</h1></div></div>
+        <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="export-button" class="secondary-button">JSON 내보내기</button><label class="secondary-button file-button">JSON 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label><button id="reset-button" class="quiet-button">내 데이터 초기화</button></div>
       </header>
 
       <section class="notice-card"><strong>내 기기에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송하지 않고 이 브라우저에만 저장됩니다. 브라우저 데이터를 삭제하면 저장 내용도 사라질 수 있어요.</p></section>
@@ -27,7 +27,7 @@
         <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>인쇄 결과표에만 사용되며, 이 브라우저에만 저장됩니다.</p></div></div>
         <div class="student-form">
           <label>학번 <input id="student-id" class="input" type="text" maxlength="5" inputmode="numeric" autocomplete="off" placeholder="예: 10101" /></label>
-          <label>이름 <input id="student-name" class="input" type="text" maxlength="30" autocomplete="name" placeholder="예: 김민지" /></label>
+          <label>이름 <input id="student-name" class="input" type="text" maxlength="30" autocomplete="name" placeholder="예: 김철수" /></label>
         </div>
         <p id="student-info-error" class="field-error" role="alert" aria-live="polite"></p>
         <p id="student-info-summary" class="student-info-summary" aria-live="polite"></p>

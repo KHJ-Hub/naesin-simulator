@@ -34,6 +34,30 @@ const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
 const admissionFilters = { region: '', university: '', field: '', department: '', admissionType: '', category: '' };
 
+function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
+  const trigger = $(triggerSelector);
+  if (!trigger) return;
+  let clickCount = 0;
+  let resetTimer;
+  const activate = () => {
+    clickCount += 1;
+    clearTimeout(resetTimer);
+    if (clickCount >= requiredClicks) {
+      window.location.href = targetUrl;
+      return;
+    }
+    resetTimer = window.setTimeout(() => { clickCount = 0; }, intervalMs);
+  };
+  trigger.addEventListener('click', activate);
+  trigger.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    activate();
+  });
+}
+
+setupHiddenTeacherEntry();
+
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');

@@ -172,6 +172,123 @@ footer p { margin:3px; }
   .summary-card strong { font-size:1rem; }
   .grade-fields { grid-template-columns:1fr; }
 }
+
+/* Final student-screen polish: readable body text, friendly headings, and stable controls. */
+body {
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, .eyebrow, button, .pill, .admission-band-label {
+  font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif;
+}
+
+h1, h2, h3 { letter-spacing: -.025em; }
+
+.top-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(44px, auto));
+  gap: 8px;
+}
+
+.top-actions > * {
+  min-width: 0;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-grid h2 {
+  font-size: clamp(21px, 2.8vw, 30px);
+  line-height: 1.3;
+  max-width: 28ch;
+}
+
+.hero-copy {
+  line-height: 1.55;
+}
+
+.admission-reference-panel {
+  gap: 1rem;
+}
+
+.admission-reference-panel > .panel-heading {
+  margin-bottom: 0;
+}
+
+.admission-overview {
+  display: grid;
+  grid-template-columns: minmax(150px, .75fr) minmax(0, 1.25fr);
+  align-items: center;
+  gap: 12px 18px;
+  padding: 14px;
+}
+
+.admission-overview > strong {
+  line-height: 1.35;
+}
+
+.admission-basis {
+  display: flex;
+  gap: 8px;
+}
+
+.admission-basis label {
+  min-height: 44px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admission-overview > .primary-button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.admission-disclaimer,
+.admission-help {
+  font-size: .84rem;
+}
+
+@media (max-width: 767px) {
+  .hero-grid h2 {
+    font-size: clamp(21px, 6vw, 27px);
+    max-width: 24ch;
+  }
+
+  .admission-overview {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .admission-basis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admission-basis label {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .admission-overview > .primary-button {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .admission-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .top-actions { gap: 6px; }
+  .top-actions > * { font-size: 13px; padding-inline: 5px; }
+  .admission-basis label { padding-inline: 6px; font-size: 13px; }
+}
 .admission-reference-panel { display:grid; gap:1.25rem; }
 .field-error { min-height:1.3em; margin:.6rem 0 0; color:#b4235a; font-size:.85rem; font-weight:700; }
 .student-info-summary { margin:.25rem 0 0; color:var(--accent-strong); font-weight:800; }
@@ -309,4 +426,1464 @@ footer p { margin:3px; }
   .print-page th,.print-page td { padding:1.8mm; border:1px solid #999; text-align:left; }
   .print-page th { background:#eee; }
   .print-page section { break-inside:avoid; }
+}
+
+
+/* Responsive UI refinement: layout only, no interaction or calculation changes */
+:root {
+  --ui-section-gap: 14px;
+  --ui-card-gap: 12px;
+  --ui-control-height: 44px;
+}
+
+body {
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  line-height: 1.35;
+}
+
+h2 {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+}
+
+h3 {
+  font-size: clamp(1rem, 1.5vw, 1.1rem);
+}
+
+button, input, select {
+  font-size: .9rem;
+  line-height: 1.4;
+}
+
+.notice-card,
+.panel {
+  margin-top: var(--ui-section-gap);
+  padding: clamp(18px, 2.2vw, 26px);
+}
+
+.notice-card {
+  padding: 14px 18px;
+}
+
+.hero-grid {
+  margin-top: 16px;
+  padding: clamp(24px, 3.2vw, 40px);
+}
+
+.hero-grid h2 {
+  font-size: clamp(1.55rem, 3.2vw, 2.45rem);
+  line-height: 1.3;
+}
+
+.summary-grid {
+  gap: var(--ui-card-gap);
+  margin-top: var(--ui-section-gap);
+}
+
+.summary-card {
+  min-height: 104px;
+  padding: 16px 14px;
+}
+
+.summary-card span {
+  display: block;
+  line-height: 1.4;
+}
+
+.summary-card strong {
+  line-height: 1.2;
+}
+
+.panel-heading {
+  margin-bottom: 18px;
+}
+
+.semester-tabs {
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.entry-layout,
+.dashboard-grid {
+  gap: 18px;
+}
+
+.grade-list {
+  gap: 10px;
+}
+
+.grade-row {
+  gap: 10px;
+  padding: 12px;
+}
+
+.side-help {
+  padding: 16px;
+  line-height: 1.6;
+}
+
+.primary-button,
+.secondary-button,
+.quiet-button,
+.add-button,
+.segmented button,
+.semester-tabs button,
+.grade-row select,
+.input,
+.icon-button {
+  min-height: var(--ui-control-height);
+}
+
+@media (max-width: 767px) {
+  .app-shell {
+    padding: 10px 12px 44px;
+  }
+
+  .topbar {
+    padding: 14px;
+  }
+
+  .top-actions {
+    gap: 8px;
+  }
+
+  .top-actions .secondary-button,
+  .top-actions .quiet-button,
+  .top-actions .file-button {
+    min-height: var(--ui-control-height);
+    padding: 9px 8px;
+    font-size: .82rem;
+    line-height: 1.3;
+  }
+
+  .notice-card,
+  .panel {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .notice-card {
+    padding: 13px 15px;
+  }
+
+  .hero-grid {
+    margin-top: 14px;
+    padding: 22px 18px;
+  }
+
+  .hero-grid h2 {
+    font-size: clamp(1.5rem, 7vw, 2rem);
+    line-height: 1.35;
+  }
+
+  .hero-copy {
+    line-height: 1.6;
+  }
+
+  .summary-grid {
+    gap: 9px;
+    margin-top: 14px;
+  }
+
+  .summary-card {
+    min-height: 94px;
+    padding: 14px 12px;
+  }
+
+  .summary-card span {
+    font-size: .76rem;
+    line-height: 1.4;
+  }
+
+  .summary-card strong {
+    margin-top: 7px;
+    font-size: clamp(1.08rem, 5.4vw, 1.4rem);
+  }
+
+  .panel-heading {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .segmented button,
+  .semester-tabs button,
+  .grade-row select,
+  .input,
+  .icon-button,
+  .primary-button,
+  .add-button {
+    font-size: .9rem;
+  }
+
+  .semester-tabs {
+    margin-bottom: 16px;
+  }
+
+  .grade-row {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .side-help {
+    padding: 15px;
+  }
+
+  .course-selection {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell {
+    padding-inline: 9px;
+  }
+
+  .topbar,
+  .notice-card,
+  .panel {
+    padding-inline: 13px;
+  }
+
+  .summary-card {
+    min-height: 90px;
+    padding: 12px 10px;
+  }
+
+  .summary-card span {
+    font-size: .72rem;
+  }
+
+  .summary-card strong {
+    font-size: 1.05rem;
+  }
+}
+
+
+/* Student admission-results UI refinement */
+.admission-reference-panel {
+  gap: 1rem;
+}
+
+.admission-overview {
+  align-items: center;
+  gap: .8rem 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.admission-overview > strong {
+  flex: 1 1 180px;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  line-height: 1.25;
+}
+
+.admission-basis {
+  flex: 1 1 300px;
+  gap: .45rem .8rem;
+}
+
+.admission-basis label {
+  min-height: 44px;
+  padding: .5rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: .7rem;
+  background: #fff;
+}
+
+.admission-overview > .primary-button {
+  flex: 0 0 auto;
+}
+
+.admission-filter-details,
+.admission-disclaimer {
+  overflow: hidden;
+  border-color: var(--line);
+  background: #fff;
+}
+
+.admission-filter-details summary,
+.admission-disclaimer summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 44px;
+  padding: .75rem 1rem;
+  color: var(--ink);
+  font-size: .9rem;
+}
+
+.admission-filter-details summary::after,
+.admission-disclaimer summary::after {
+  color: var(--lavender-500);
+  font-size: .78rem;
+  font-weight: 800;
+  content: '열기';
+}
+
+.admission-filter-details[open] summary::after,
+.admission-disclaimer[open] summary::after {
+  content: '닫기';
+}
+
+.admission-filters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  padding: .15rem 1rem 1rem;
+}
+
+.admission-filters label {
+  min-width: 0;
+  gap: .35rem;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.admission-filters .input {
+  min-width: 0;
+  min-height: 44px;
+}
+
+/* On desktop, the filter panel uses one compact row even before expansion. */
+@media (min-width: 768px) {
+  .admission-filter-details:not([open]) .admission-filters {
+    display: grid;
+  }
+
+  .admission-filter-details:not([open]) summary::after {
+    content: '필터 더보기';
+  }
+}
+
+.admission-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .9rem;
+}
+
+.admission-card {
+  display: grid;
+  align-content: start;
+  gap: .7rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(185, 117, 151, .08);
+}
+
+.admission-card-heading {
+  gap: .6rem;
+}
+
+.admission-card-heading > div {
+  min-width: 0;
+  gap: .2rem;
+}
+
+.admission-card-heading strong {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.admission-card-heading > div > span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: .84rem;
+  line-height: 1.4;
+}
+
+.admission-band-label {
+  max-width: 9em;
+  padding: .3rem .45rem;
+  font-size: .68rem;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: center;
+}
+
+.admission-type {
+  margin: 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+.admission-scores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  padding: 0;
+  border: 0;
+  font-size: .78rem;
+}
+
+.admission-scores > span {
+  display: grid;
+  gap: .15rem;
+  min-width: 0;
+  padding: .65rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.admission-scores > span b {
+  color: var(--lavender-500);
+  font-size: 1.2rem;
+  line-height: 1.1;
+}
+
+.admission-scores .admission-score-current {
+  border-color: var(--lavender-200);
+  background: var(--lavender-50);
+}
+
+.admission-difference {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem .5rem;
+  margin: 0;
+  padding: .7rem .75rem;
+  border-radius: .75rem;
+  background: var(--pink-50);
+  color: #8c3f68;
+  font-size: .82rem;
+  line-height: 1.4;
+}
+
+.admission-difference b {
+  color: #b4235a;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.admission-difference span {
+  flex: 1 1 100%;
+  color: var(--muted);
+  font-size: .74rem;
+}
+
+.admission-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.admission-save {
+  min-height: 38px;
+  padding: .45rem .7rem;
+  border-color: var(--lavender-200);
+  color: var(--lavender-500);
+  font-size: .76rem;
+}
+
+.admission-save::before {
+  margin-right: .25rem;
+  content: '☆';
+  font-size: 1rem;
+  vertical-align: -1px;
+}
+
+.admission-save.is-saved {
+  border-color: var(--pink-300);
+  background: var(--pink-50);
+  color: #b4235a;
+}
+
+.admission-save.is-saved::before {
+  content: '✓';
+}
+
+.admission-save {
+  white-space: nowrap;
+}
+
+.admission-card-details {
+  border-top: 1px solid #f1eaf2;
+}
+
+.admission-card-details summary {
+  min-height: 36px;
+  padding: .5rem 0 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.admission-card-details summary::marker {
+  color: var(--lavender-500);
+}
+
+.admission-card-details-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .75rem;
+  padding: .35rem 0 .1rem;
+  color: var(--muted);
+  font-size: .74rem;
+  line-height: 1.45;
+}
+
+.admission-card-details-body span b {
+  color: var(--lavender-500);
+}
+
+.admission-card-details-body small {
+  color: var(--muted);
+}
+
+/* Keep a single consolidated guidance accordion in the student flow. */
+.admission-help {
+  display: none;
+}
+
+.admission-disclaimer {
+  margin-top: 0;
+}
+
+.admission-disclaimer p {
+  line-height: 1.6;
+}
+
+.admission-interests {
+  gap: .75rem;
+  padding: 1rem;
+}
+
+.admission-interests .section-title {
+  margin-bottom: 0;
+}
+
+.admission-interests .section-title .muted {
+  margin: .25rem 0 0;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.interest-item {
+  min-width: 0;
+  padding: .75rem;
+}
+
+.interest-item > div {
+  min-width: 0;
+}
+
+.interest-item strong,
+.interest-item span,
+.interest-item small {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1200px) {
+  .admission-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .admission-overview {
+    align-items: stretch;
+    padding: .85rem;
+  }
+
+  .admission-overview > strong,
+  .admission-basis,
+  .admission-overview > .primary-button {
+    flex-basis: auto;
+  }
+
+  .admission-overview > strong {
+    font-size: 1.12rem;
+  }
+
+  .admission-basis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admission-basis label {
+    padding-inline: .55rem;
+    font-size: .78rem;
+  }
+
+  .admission-overview > .primary-button {
+    width: 100%;
+  }
+
+  .admission-filter-details summary,
+  .admission-disclaimer summary {
+    padding-inline: .85rem;
+  }
+
+  .admission-filter-details:not([open]) .admission-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem;
+    padding: .1rem .85rem .85rem;
+  }
+
+  .admission-filter-details:not([open]) .admission-filters label:nth-child(n + 3) {
+    display: none;
+  }
+
+  .admission-filter-details:not([open]) summary::after {
+    content: '필터 더보기';
+  }
+
+  .admission-filter-details[open] .admission-filters {
+    grid-template-columns: 1fr;
+    gap: .65rem;
+  }
+
+  .admission-card-grid {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+  }
+
+  .admission-card {
+    gap: .65rem;
+    padding: .9rem;
+  }
+
+  .admission-card-heading {
+    align-items: flex-start;
+  }
+
+  .admission-card-heading > div {
+    flex: 1 1 auto;
+  }
+
+  .admission-band-label {
+    flex: 0 0 auto;
+  }
+
+  .admission-scores {
+    gap: .45rem;
+  }
+
+  .admission-scores > span {
+    padding: .6rem;
+    font-size: .74rem;
+  }
+
+  .admission-scores > span b {
+    font-size: 1.12rem;
+  }
+
+  .admission-difference {
+    padding: .65rem;
+  }
+
+  .admission-difference span {
+    font-size: .72rem;
+  }
+
+  .admission-card-actions {
+    justify-content: flex-end;
+  }
+
+  .admission-save {
+    min-height: 38px;
+    font-size: .74rem;
+  }
+
+  .interest-item {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .interest-item .icon-button {
+    width: auto;
+    min-width: 52px;
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 380px) {
+  .admission-basis {
+    grid-template-columns: 1fr;
+  }
+
+  .admission-scores > span b {
+    font-size: 1.05rem;
+  }
+
+  .admission-card-heading > div > span,
+  .admission-type {
+    font-size: .78rem;
+  }
+}
+
+
+/* Typography refinement: color, hierarchy and Korean readability only */
+:root {
+  --ink: #2f2f36;
+  --muted: #6b6b78;
+  --lavender-500: #4f46a5;
+  --title-strong: #4f46a5;
+  --pink-text: #a14b72;
+}
+
+html,
+body {
+  color: var(--ink);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+body {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+p,
+button,
+input,
+select,
+label,
+summary,
+article,
+section {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1 {
+  color: var(--title-strong);
+  font-size: clamp(1.75rem, 2.2vw, 1.9rem);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+h2 {
+  color: var(--title-strong);
+  font-size: clamp(1.4rem, 1.8vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+h3 {
+  color: var(--title-strong);
+  font-size: clamp(1.05rem, 1.35vw, 1.15rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+p {
+  color: var(--ink);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.eyebrow {
+  color: var(--pink-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .02em;
+}
+
+.hero-grid h2 {
+  color: var(--title-strong);
+  font-size: clamp(1.75rem, 3.3vw, 2.15rem);
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.hero-grid h2 span {
+  color: var(--title-strong);
+}
+
+.hero-copy,
+.panel-heading p:not(.eyebrow),
+.notice-card p,
+.muted,
+.empty-state,
+.side-help,
+.side-help li,
+.admission-type,
+.admission-card-details-body,
+.admission-card-details-body small,
+.teacher-hint,
+footer {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.panel-heading p:not(.eyebrow) {
+  margin-bottom: 0;
+}
+
+button,
+input,
+select {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+button {
+  font-weight: 650;
+}
+
+.primary-button,
+.secondary-button,
+.quiet-button,
+.add-button,
+.segmented button,
+.semester-tabs button,
+.file-button {
+  font-weight: 650;
+}
+
+.student-form label,
+.goal-form label,
+.grade-row label,
+.course-selection label,
+.teacher-filters label,
+.teacher-form label,
+.admission-filters label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.summary-card span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.summary-card strong {
+  color: var(--lavender-500);
+  font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.section-title h3,
+.panel-heading h2,
+.teacher-list-heading h2,
+.admission-interests h3 {
+  color: var(--title-strong);
+  font-weight: 700;
+}
+
+.pill,
+.status-chip,
+.locked-course {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grade-row .course-name strong,
+.subject-card strong,
+.teacher-course-main strong,
+.teacher-course strong,
+.admission-card-heading strong,
+.admission-card-heading > div > span {
+  color: var(--ink);
+}
+
+.grade-row .course-name strong,
+.admission-card-heading strong,
+.teacher-course-main strong {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.course-name span,
+.course-meta span,
+.locked-course,
+.subject-card span,
+.teacher-course-main small,
+.teacher-course span,
+.teacher-course small,
+.interest-item span,
+.interest-item small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.admission-card-heading > div > span,
+.admission-type {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.admission-scores,
+.admission-scores > span,
+.admission-difference {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admission-scores > span b,
+.admission-difference b,
+.goal-number,
+.goal-summary > strong,
+.admission-overview > strong {
+  color: var(--lavender-500);
+  font-weight: 700;
+}
+
+.admission-scores > span b {
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.admission-difference b {
+  color: #a14b72;
+  font-size: 22px;
+}
+
+.admission-save,
+.admission-card-details summary,
+.icon-button {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admission-save.is-saved {
+  color: #a14b72;
+}
+
+.admission-save::before {
+  font-size: 15px;
+}
+
+.admission-card-details summary,
+.admission-filter-details summary,
+.admission-disclaimer summary {
+  color: var(--muted);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.notice-card strong,
+.field-error,
+.goal-guidance strong,
+.admission-difference {
+  color: #8d4f6d;
+}
+
+@media (min-width: 768px) {
+  .topbar h1 {
+    font-size: clamp(1.75rem, 2.2vw, 1.9rem);
+  }
+
+  .panel-heading h2,
+  .teacher-list-heading h2,
+  .admission-interests h3 {
+    font-size: 24px;
+  }
+
+  .hero-grid h2 {
+    font-size: clamp(1.9rem, 3.3vw, 2.25rem);
+  }
+}
+
+@media (max-width: 767px) {
+  h1,
+  .topbar h1 {
+    font-size: clamp(1.5rem, 7vw, 1.75rem);
+  }
+
+  h2,
+  .panel-heading h2,
+  .teacher-list-heading h2,
+  .admission-interests h3 {
+    font-size: clamp(1.3rem, 5.5vw, 1.5rem);
+  }
+
+  h3 {
+    font-size: 17px;
+  }
+
+  .hero-grid h2 {
+    font-size: clamp(1.55rem, 7.2vw, 1.9rem);
+  }
+
+  body,
+  p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .hero-copy,
+  .panel-heading p:not(.eyebrow),
+  .notice-card p,
+  .muted,
+  .empty-state,
+  .side-help,
+  .side-help li,
+  .admission-type,
+  .admission-card-details-body,
+  footer {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  button,
+  input,
+  select {
+    font-size: 15px;
+  }
+
+  .top-actions .secondary-button,
+  .top-actions .quiet-button,
+  .top-actions .file-button {
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  .summary-card span {
+    font-size: 13px;
+  }
+
+  .summary-card strong {
+    font-size: clamp(1.15rem, 5.4vw, 1.4rem);
+  }
+
+  .grade-row .course-name strong,
+  .admission-card-heading strong {
+    font-size: 16px;
+  }
+
+  .admission-card-heading > div > span,
+  .admission-type {
+    font-size: 13px;
+  }
+
+  .admission-scores,
+  .admission-scores > span,
+  .admission-difference {
+    font-size: 13px;
+  }
+
+  .admission-scores > span b {
+    font-size: 18px;
+  }
+
+  .admission-difference b {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  h1,
+  .topbar h1 {
+    font-size: 24px;
+  }
+
+  h2,
+  .panel-heading h2,
+  .teacher-list-heading h2,
+  .admission-interests h3 {
+    font-size: 21px;
+  }
+
+  .hero-grid h2 {
+    font-size: 25px;
+  }
+
+  body,
+  p {
+    font-size: 15px;
+  }
+
+  .top-actions .secondary-button,
+  .top-actions .quiet-button,
+  .top-actions .file-button {
+    font-size: 13px;
+  }
+
+  .summary-card span,
+  .student-form label,
+  .goal-form label,
+  .grade-row label,
+  .admission-filters label {
+    font-size: 12px;
+  }
+}
+
+
+/* Soft rounded type accents without sacrificing reading comfort */
+body {
+  font-family: "Malgun Gothic", system-ui, sans-serif;
+  font-synthesis: none;
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+.panel-heading h2,
+.section-title h3,
+.teacher-list-heading h2,
+.admission-interests h3,
+.admission-card-heading strong {
+  font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif;
+  letter-spacing: -.015em;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+}
+
+button,
+.primary-button,
+.secondary-button,
+.quiet-button,
+.add-button,
+.segmented button,
+.semester-tabs button,
+.file-button,
+.admission-card-details summary,
+.admission-filter-details summary,
+.admission-disclaimer summary {
+  font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  line-height: 1.35;
+}
+
+button,
+input,
+select,
+textarea,
+label,
+p,
+.muted,
+.hero-copy,
+.side-help,
+.admission-type,
+.admission-card-details-body,
+.admission-filters label {
+  font-family: "Malgun Gothic", system-ui, sans-serif;
+}
+
+p,
+.muted,
+.hero-copy,
+.side-help,
+.admission-type,
+.admission-card-details-body,
+.admission-filters label {
+  letter-spacing: .005em;
+}
+
+.summary-card strong,
+.goal-number,
+.goal-summary > strong,
+.admission-overview > strong,
+.admission-scores > span b,
+.admission-difference b,
+.subject-card strong,
+.bar-item strong,
+input,
+select {
+  font-family: "Malgun Gothic", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.summary-card strong,
+.goal-number,
+.goal-summary > strong,
+.admission-overview > strong,
+.admission-scores > span b,
+.admission-difference b {
+  font-weight: 700;
+}
+
+.admission-card-heading > div > span,
+.admission-type,
+.admission-card-details-body,
+.admission-card-details-body small,
+.admission-filters label,
+.admission-scores > span,
+.admission-difference span {
+  letter-spacing: .01em;
+}
+
+@media (max-width: 767px) {
+  h1,
+  h2,
+  h3,
+  .panel-heading h2,
+  .section-title h3,
+  .teacher-list-heading h2,
+  .admission-interests h3,
+  .admission-card-heading strong {
+    letter-spacing: -.01em;
+  }
+
+  button,
+  .primary-button,
+  .secondary-button,
+  .quiet-button,
+  .add-button,
+  .segmented button,
+  .semester-tabs button,
+  .file-button {
+    letter-spacing: 0;
+  }
+}
+
+
+/* Student top action hierarchy */
+.top-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.top-actions > button,
+.top-actions > .file-button,
+.top-actions > .teacher-link {
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  border-radius: 13px;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+#print-button {
+  order: 1;
+  border: 0;
+  background: linear-gradient(120deg, #4f46a5, #6a5acd);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(79, 70, 165, .2);
+}
+
+#export-button {
+  color: var(--lavender-500);
+  order: 2;
+  border-color: var(--lavender-200);
+  background: var(--lavender-100);
+}
+
+.top-actions > .file-button {
+  order: 3;
+  border-color: var(--lavender-200);
+  background: #faf9ff;
+  color: var(--lavender-500);
+}
+
+.top-actions > .teacher-link {
+  order: 4;
+  border-color: var(--line);
+  background: #fff;
+  color: var(--muted);
+  text-decoration: none;
+  box-shadow: none;
+}
+
+#reset-button {
+  order: 5;
+  border-color: #edbfd0;
+  background: #fff8fb;
+  color: #a14b72;
+  box-shadow: none;
+}
+
+.top-actions > button:hover,
+.top-actions > .file-button:hover,
+.top-actions > .teacher-link:hover {
+  transform: translateY(-1px);
+}
+
+#print-button:hover {
+  background: linear-gradient(120deg, #453c95, #5d50c2);
+}
+
+#export-button:hover,
+.top-actions > .file-button:hover {
+  background: var(--lavender-50);
+}
+
+.top-actions > .teacher-link:hover {
+  background: #faf9fb;
+}
+
+#reset-button:hover {
+  background: #fff0f5;
+}
+
+@media (max-width: 767px) {
+  .topbar {
+    gap: 14px;
+  }
+
+  .top-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .top-actions > #print-button {
+    grid-column: 1 / -1;
+  }
+
+  .top-actions > button,
+  .top-actions > .file-button,
+  .top-actions > .teacher-link {
+    min-height: 44px;
+    padding: 9px 8px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .top-actions {
+    gap: 7px;
+  }
+
+  .top-actions > button,
+  .top-actions > .file-button,
+  .top-actions > .teacher-link {
+    padding-inline: 6px;
+    font-size: 13px;
+  }
+}
+
+
+/* Final student action layout: two columns by two rows */
+.top-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(44px, auto);
+  gap: 8px;
+}
+
+.top-actions > #print-button {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.top-actions > #reset-button {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.top-actions > #export-button {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.top-actions > .file-button {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.top-actions > #print-button,
+.top-actions > #reset-button,
+.top-actions > #export-button,
+.top-actions > .file-button {
+  width: 100%;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.top-actions > #reset-button {
+  border-color: #edbfd0;
+  background: #fff8fb;
+  color: #a14b72;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .top-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(44px, auto);
+    gap: 8px;
+  }
+
+  .top-actions > #print-button {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .top-actions > #reset-button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .top-actions > #export-button {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .top-actions > .file-button {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .top-actions > #print-button,
+  .top-actions > #reset-button,
+  .top-actions > #export-button,
+  .top-actions > .file-button {
+    min-height: 44px;
+    padding-inline: 6px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .top-actions > #print-button,
+  .top-actions > #reset-button,
+  .top-actions > #export-button,
+  .top-actions > .file-button {
+    font-size: 13px;
+    letter-spacing: -.01em;
+  }
+}
+
+
+/* Responsive hero type scale */
+.hero-grid h2 {
+  font-size: clamp(22px, 3.2vw, 30px);
+  line-height: 1.28;
+}
+
+.hero-copy {
+  font-size: clamp(14px, 1.25vw, 16px);
+  line-height: 1.55;
+}
+
+@media (max-width: 767px) {
+  .hero-grid h2 {
+    font-size: clamp(22px, 6vw, 27px);
+    line-height: 1.28;
+  }
+
+  .hero-copy {
+    font-size: 14px;
+    line-height: 1.55;
+  }
 }
