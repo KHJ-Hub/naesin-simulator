@@ -4,8 +4,8 @@
 - 공식 원천: 대입정보포털 어디가 `2026학년도 전형평가기준 및 결과공개` 대학별 상세 페이지
 - 기본 환산: `busan-grade5-g2-1sem-15978`
 - 완료 지역: 서울, 경기, 인천, 부산, 울산, 경남, 대구, 경북, 대전, 세종, 충남, 충북, 광주, 전남, 전북, 강원, 제주
-- 현재 작업 중인 지역: 없음(전국 일반대학 감사 완료)
-- 다음 작업할 대학: 없음
+- 현재 작업 중인 지역: 서울(공식 입학처 심층 재감사)
+- 다음 작업할 대학: 서경대학교
 - 마지막 지역 데이터 커밋: `dbb9dc9`
 
 ## 서울
@@ -277,17 +277,28 @@
 
 - 공식 어디가 일반대학 대상 대학/캠퍼스: 220
 - 감사 완료: 220, `not-checked`: 0, 수집 실패: 0
-- 입시결과 총 레코드: 5,606건
-- 학생부교과: 3,106건
-- 학생부종합: 2,500건
-- 레코드 상태: `confirmed-cut` 3,154건, `cut50-only` 2,413건, `cut70-only` 39건, `average-only` 0건
-- 대학 감사 상태(교과): `confirmed-cut` 61개, `not-published` 157개, `no-subject-admission` 2개
-- 대학 감사 상태(종합): `confirmed-cut` 42개, `not-published` 176개, `no-comprehensive-admission` 2개
-- 자격 유형: `general` 1,657건, `school-recommendation` 582건, `regional` 676건, `rural` 249건, `vocational` 77건, `special` 191건, `unknown` 2,174건
-- 원본 수치: `cut50Original` 5,567건, `cut70Original` 3,193건, `averageGradeOriginal` 0건
-- 5등급 환산 수치 보유: 5,606건
+- 입시결과 총 레코드: 5,648건
+- 학생부교과: 3,126건
+- 학생부종합: 2,522건
+- 레코드 상태: `confirmed-cut` 3,154건, `cut50-only` 2,413건, `cut70-only` 39건, `average-only` 42건
+- 대학 감사 상태(교과): `confirmed-cut` 61개, `average-only` 1개, `not-published` 156개, `no-subject-admission` 2개
+- 대학 감사 상태(종합): `confirmed-cut` 42개, `average-only` 1개, `not-published` 175개, `no-comprehensive-admission` 2개
+- 자격 유형: `general` 1,657건, `school-recommendation` 602건, `regional` 676건, `rural` 249건, `vocational` 77건, `special` 191건, `unknown` 2,196건
+- 원본 수치: `cut50Original` 5,567건, `cut70Original` 3,193건, `averageGradeOriginal` 42건
+- 5등급 환산 수치 보유: 5,648건
 - 필수 필드 누락: `sourceUrl` 0건, `referenceYear` 0건, `admissionCategory` 0건
 - 대학 URL 미확인: 강원대학교(제3캠퍼스), 강원대학교(제4캠퍼스)의 홈페이지·입학처 URL(어디가 URL은 확인 완료)
 - 안전 제외/경고 대학: 서울교육대학교, 경기대학교, 경기대학교(제2캠퍼스), 배재대학교, 충남대학교, 한남대학교, 한국기술교육대학교, 호서대학교, 건국대학교(글로컬)(분교), 국립한국교통대학교, 충북대학교, 전남대학교(제2캠퍼스)
 - 데이터 무결성: 동일 canonical 키 중복 0건, 9등급 원본이 있는 모든 행의 5등급 환산 범위 1~5 확인, 전체 지역 lazy loading 일치 확인
-- 최종 회귀 테스트: 60개 통과
+- 최종 회귀 테스트: 61개 통과
+
+## 서울 공식 입학처 심층 재감사
+
+- 완료 대학: 삼육대학교
+- 아직 확인하지 못한 대학: 서울 지역 `not-published` 대학 중 삼육대학교를 제외한 대학
+- 삼육대학교 공식 입학처의 2026학년도 수시 최종등록자 표에서 학생부 등급 평균 42건을 확인했다.
+- 학생부교과 학교장추천 20건과 학생부종합 세움인재·S/W인재 22건을 분리하고 모두 `average-only`로 저장했다.
+- 공식 평균값은 `averageGradeOriginal`에만 보존했으며 `cut50Original`·`cut70Original`로 변환하지 않았다.
+- 보류: 세움인재·S/W인재의 지원자격 유형은 모집요강 추가 확인 전까지 `unknown`으로 두어 학생 기본 검색에서 숨김
+- 실패: 없음
+- 마지막 확인 커밋: `7f14191`(이번 보완 커밋 생성 전)

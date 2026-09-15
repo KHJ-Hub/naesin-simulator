@@ -28,8 +28,27 @@ test('서울 공식 결과는 전형과 모집단위가 식별된 행만 중복 
   const keys = rows.map((item) => [item.university, item.department, item.admissionName, item.admissionCategory].join('|'));
   assert.ok(rows.length > 1_000);
   assert.equal(new Set(keys).size, rows.length);
-  assert.ok(rows.every((item) => item.sourceUrl.includes('adiga.kr') && item.referenceYear === 2026));
+  assert.ok(rows.every((item) => item.sourceUrl.startsWith('https://') && item.referenceYear === 2026));
   assert.ok(rows.every((item) => item.cut50Original != null || item.cut70Original != null || item.averageGradeOriginal != null));
+});
+
+test('삼육대학교 공식 평균등급은 cut과 분리된 average-only 자료로 보존된다', () => {
+  const rows = admissionResultsByRegion2026.seoul.filter((item) => item.university === '삼육대학교');
+  assert.equal(rows.length, 42);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 20);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 22);
+  assert.ok(rows.every((item) => item.dataAvailability === 'average-only'));
+  assert.ok(rows.every((item) => item.cut50Original == null && item.cut70Original == null));
+  assert.ok(rows.every((item) => Number.isFinite(item.averageGradeOriginal)));
+  assert.ok(rows.every((item) => item.averageGradeConverted >= 1 && item.averageGradeConverted <= 5));
+  assert.equal(
+    rows.find((item) => item.department === '간호학과' && item.admissionName === '학교장추천')?.averageGradeOriginal,
+    1.98,
+  );
+  assert.equal(
+    rows.find((item) => item.department === '컴퓨터공학부' && item.admissionName === 'S/W인재')?.averageGradeOriginal,
+    3.8,
+  );
 });
 
 test('경기 공식 결과도 원본과 환산값을 분리해 저장한다', () => {
