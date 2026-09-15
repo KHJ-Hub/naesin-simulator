@@ -31,3 +31,10 @@ test('서울 공식 결과는 전형과 모집단위가 식별된 행만 중복 
   assert.ok(rows.every((item) => item.sourceUrl.includes('adiga.kr') && item.referenceYear === 2026));
   assert.ok(rows.every((item) => item.cut50Original != null || item.cut70Original != null || item.averageGradeOriginal != null));
 });
+
+test('경기 공식 결과도 원본과 환산값을 분리해 저장한다', () => {
+  const rows = admissionResultsByRegion2026.gyeonggi;
+  assert.ok(rows.length > 500);
+  assert.ok(rows.every((item) => item.cut50Original == null || Number.isFinite(item.cut50Converted)));
+  assert.ok(rows.every((item) => item.cut70Original == null || Number.isFinite(item.cut70Converted)));
+});

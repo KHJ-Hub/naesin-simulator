@@ -2,6 +2,7 @@ import { admissionResultsByYear } from '../admission-results/index.mjs';
 import { normalizeAdmissionRecord } from '../admission-record-normalizer.mjs';
 import { UNIVERSITIES } from './universities.mjs';
 import { universityAudit2026Seoul } from './university-audits/2026/seoul.mjs';
+import { universityAudit2026Gyeonggi } from './university-audits/2026/gyeonggi.mjs';
 
 /**
  * 대학 단위 감사 상태는 모집단위별 입시결과 레코드와 별개다.
@@ -23,7 +24,7 @@ export const UNIVERSITY_ADMISSION_AUDIT_STATUS = Object.freeze({
 });
 
 const RESULTS_2026 = Object.freeze((admissionResultsByYear[2026] ?? []).map(normalizeAdmissionRecord));
-const GENERATED_AUDITS = Object.freeze([...universityAudit2026Seoul]);
+const GENERATED_AUDITS = Object.freeze([...universityAudit2026Seoul, ...universityAudit2026Gyeonggi]);
 const GENERATED_AUDIT_BY_CODE = new Map(GENERATED_AUDITS.map((item) => [item.universityId.replace('adiga-', ''), item]));
 
 const auditSourceUrl = (university) => university.adigaUrl?.replace('searchSyr=2027', 'searchSyr=2026') ?? null;
@@ -38,6 +39,9 @@ const auditStatusFromRecords = (records, category) => {
 };
 
 const recordDates = (records) => records.map((record) => record.updatedAt).filter(Boolean).sort();
+const resolvedStatus = (generatedStatus, recordStatus) => recordStatus === UNIVERSITY_ADMISSION_AUDIT_STATUS.NOT_CHECKED
+  ? generatedStatus ?? recordStatus
+  : recordStatus;
 
 export const UNIVERSITY_AUDIT_2026 = Object.freeze(
   UNIVERSITIES
@@ -56,8 +60,8 @@ export const UNIVERSITY_AUDIT_2026 = Object.freeze(
         homepageUrl: generatedAudit?.homepageUrl ?? university.homepageUrl,
         admissionsUrl: generatedAudit?.admissionsUrl ?? university.admissionsUrl,
         adigaUrl: university.adigaUrl,
-        subjectAdmissionStatus: generatedAudit?.subjectAdmissionStatus ?? auditStatusFromRecords(records, '학생부교과'),
-        comprehensiveAdmissionStatus: generatedAudit?.comprehensiveAdmissionStatus ?? auditStatusFromRecords(records, '학생부종합'),
+        subjectAdmissionStatus: resolvedStatus(generatedAudit?.subjectAdmissionStatus, auditStatusFromRecords(records, '학생부교과')),
+        comprehensiveAdmissionStatus: resolvedStatus(generatedAudit?.comprehensiveAdmissionStatus, auditStatusFromRecords(records, '학생부종합')),
         checkedAt: generatedAudit?.checkedAt ?? dates.at(-1) ?? null,
         sourceUrls: Object.freeze([...new Set([
           ...recordSourceUrls,

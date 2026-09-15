@@ -1,4 +1,5 @@
 import { universities2026Seoul } from './university-regions/2026/seoul.mjs';
+import { universities2026Gyeonggi } from './university-regions/2026/gyeonggi.mjs';
 
 /**
  * 대학 기본정보. 입시결과 행에는 대학명과 URL을 반복 저장하지 않는다.
@@ -75,7 +76,7 @@ const LEGACY_UNIVERSITIES = [
   ['ajou', '아주대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000146'],
   ['anyang', '안양대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000147'],
   ['yongin', '용인대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000156'],
-  ['eulji', '을지대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000161'],
+  ['eulji', '을지대학교', '대전광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000161'],
   ['cha', '차의과학대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000187'],
   ['calvin', '칼빈대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000184'],
   ['pyeongtaek', '평택대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000186'],
@@ -121,7 +122,7 @@ const mergeCatalogs = (...catalogs) => {
   return [...merged.values()];
 };
 
-export const UNIVERSITIES = Object.freeze(mergeCatalogs(LEGACY_UNIVERSITIES, universities2026Seoul));
+export const UNIVERSITIES = Object.freeze(mergeCatalogs(LEGACY_UNIVERSITIES, universities2026Seoul, universities2026Gyeonggi));
 
 export const UNIVERSITY_BY_ID = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.universityId, item])));
 export const UNIVERSITY_BY_NAME = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.name, item])));
