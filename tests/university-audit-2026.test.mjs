@@ -107,11 +107,12 @@ test('제주 공식 목록 전체가 감사 상태로 정리된다', async () =>
   assert.equal(admissionResults2026Jeju.length, 0);
 });
 
-test('서울 공식 감사와 기존 수도권 결과 상태를 함께 연결한다', () => {
+test('서울·경기 공식 감사 결과를 함께 연결한다', () => {
   const gachon = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '가천대학교');
   const konkuk = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '건국대학교');
   const seoul = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '서울대학교');
-  assert.equal(gachon.subjectAdmissionStatus, 'confirmed-cut');
+  assert.equal(gachon.subjectAdmissionStatus, 'not-published');
+  assert.equal(gachon.comprehensiveAdmissionStatus, 'confirmed-cut');
   assert.equal(konkuk.subjectAdmissionStatus, 'confirmed-cut');
   assert.equal(konkuk.comprehensiveAdmissionStatus, 'confirmed-cut');
   assert.ok(konkuk.sourceUrls.some((url) => url.includes('adiga.kr')));

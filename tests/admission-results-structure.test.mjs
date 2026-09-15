@@ -56,9 +56,14 @@ test('삼육대학교 공식 평균등급은 cut과 분리된 average-only 자�
 
 test('경기 공식 결과도 원본과 환산값을 분리해 저장한다', () => {
   const rows = admissionResultsByRegion2026.gyeonggi;
-  assert.ok(rows.length > 500);
+  assert.ok(rows.length > 1_900);
   assert.ok(rows.every((item) => item.cut50Original == null || Number.isFinite(item.cut50Converted)));
   assert.ok(rows.every((item) => item.cut70Original == null || Number.isFinite(item.cut70Converted)));
+  const gachon = rows.find((item) => item.university === '가천대학교' && item.department === '경영학과' && item.admissionName === '가천바람개비');
+  assert.equal(gachon?.admissionCategory, '학생부종합');
+  assert.equal(gachon?.cut50Original, 3.6);
+  assert.equal(gachon?.cut70Original, 3.9);
+  assert.ok(!rows.some((item) => item.university === '가천대학교' && item.admissionName === '학생부교과(학생부우수자전형)'));
 });
 
 test('인천 공식 결과는 기존 입학처 자료와 어디가 표를 함께 보존한다', () => {
