@@ -26,6 +26,8 @@
 
 - GitHub Pages에 수정 사항 배포 및 공개 URL 확인 완료
 - 전국 입시결과 확장 전 스키마·비교 로직 정비 완료: 학생부교과만 현재/목표 내신 비교 대상으로 사용하고, 학생부종합은 전년도 등록자 내신 참고로 분리
+- 서울·경기·인천 73개 대학의 대학 단위 감사 계층 추가: 결과 레코드가 없는 대학도 `not-checked` 등 전형별 상태로 관리
+- 공식 어디가 결과 표가 확인된 대학 단위 상태를 연결하고, 인하대학교 학생부종합 전형별 합산 공개자료 2건을 원문 단위로 추가
 
 ## 남은 작업
 
@@ -55,6 +57,8 @@
 - `tests/course-catalog.test.mjs`: 2026 입학생 공통·반별 과목 및 성적 처리 검증
 - `src/admission-record-normalizer.mjs`: 입시결과 canonical schema 정규화 및 상태별 검증
 - `src/admission-reference.mjs`: 기준 학년도·전형 카테고리·공개 상태 검증과 비교 대상 분리
+- `src/data/university-audit-2026.mjs`: 서울·경기·인천 73개 대학의 학생부교과·학생부종합 감사 상태와 출처 URL
+- `tests/university-audit-2026.test.mjs`: 73개 대학 감사 대상 누락 방지 검증
 
 ## DB 변경
 
@@ -78,6 +82,7 @@
 - `index.html`, `styles.css`, `src/app.mjs`, `src/grade-calculator.mjs`: 모두 HTTP 200
 - `npm test`: 33 passed (입시결과 정규화, 공개 상태, 학생부종합 비교 제외, 환산 범위 포함)
 - 로컬 `127.0.0.1:5500`: 입시결과 영역 새로고침·콘솔 오류 없음 확인
+- `npm test`: 36 passed (73개 대학 감사 상태, 인하대 전형별 합산 공개자료 보존 포함)
 
 ## Git 상태
 

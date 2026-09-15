@@ -20,6 +20,7 @@ const INJE = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCU
 const KYUNGNAM = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000059';
 const INCHEON = 'https://admission.inu.ac.kr/detail.do?board_seq=15139&categoryid=52&menuurl=4428MQNdeF7ekIPFWbVCAg%3D%3D&pageNo=1&userpwd=';
 const GACHON = 'https://admission.gachon.ac.kr/admission/html/rolling/resultView.asp?BOARD_IDX=30155&page=1&s_cate=BBS0401&s_code=BOARD_TITLE';
+const INHA_ADIGA = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0000169';
 
 const item = (university, region, department, admissionName, category, cut50, cut70, source, updatedAt = null, sourceName = source === INCHEON ? '인천대학교 입학처' : ADIGA_SOURCE) => {
   const converted50 = cut50 == null ? null : convertGrade9ToGrade5(cut50, DEFAULT_BUSAN_CONVERSION_DATASET);
@@ -170,4 +171,8 @@ export const admissionResults2026 = Object.freeze([
   item('가천대학교', '경기도', '유아교육학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.51, 3.79, GACHON, '2026-05-29', '가천대학교 입학처'),
   item('가천대학교', '경기도', '패션산업학과', '학생부교과(학생부우수자전형)', '학생부교과', 3.79, 3.90, GACHON, '2026-05-29', '가천대학교 입학처'),
   item('가천대학교', '경기도', 'AI인문대학', '학생부교과(학생부우수자전형)', '학생부교과', 3.78, 3.95, GACHON, '2026-05-29', '가천대학교 입학처'),
+
+  // 어디가의 "선발인원 3명 이하 모집단위 전형별 공개" 표를 개별 학과에 임의 배정하지 않고 합산 모집단위로 보존한다.
+  item('인하대학교', '인천광역시', '선발인원 3명 이하 모집단위 합산', '학생부종합(농어촌학생)', '학생부종합', 2.92, 3.20, INHA_ADIGA),
+  item('인하대학교', '인천광역시', '선발인원 3명 이하 모집단위 합산', '학생부종합(고른기회)', '학생부종합', 3.46, 3.86, INHA_ADIGA),
 ]);

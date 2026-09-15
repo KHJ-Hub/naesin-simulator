@@ -7,8 +7,8 @@ test('공식 확인된 2026 지역 자료만 연결한다', () => {
   assert.ok(ADMISSION_REFERENCE_DATA.length > 0);
   assert.ok(ADMISSION_REFERENCE_DATA.every((item) => validAdmissionReference(item)));
   assert.deepEqual([...new Set(ADMISSION_REFERENCE_DATA.map((item) => item.region))].sort(), ['경기도', '경상남도', '부산광역시', '울산광역시', '인천광역시']);
-  assert.deepEqual([...new Set(ADMISSION_REFERENCE_DATA.map((item) => item.university))].sort(), ['가천대학교', '경남대학교', '경상국립대학교', '고신대학교', '국립부경대학교', '국립창원대학교', '동아대학교', '동의대학교', '부산가톨릭대학교', '부산대학교', '울산대학교', '인제대학교', '인천대학교']);
-  assert.equal(ADMISSION_REFERENCE_DATA.length, 113);
+  assert.deepEqual([...new Set(ADMISSION_REFERENCE_DATA.map((item) => item.university))].sort(), ['가천대학교', '경남대학교', '경상국립대학교', '고신대학교', '국립부경대학교', '국립창원대학교', '동아대학교', '동의대학교', '부산가톨릭대학교', '부산대학교', '울산대학교', '인제대학교', '인천대학교', '인하대학교']);
+  assert.equal(ADMISSION_REFERENCE_DATA.length, 115);
   assert.ok(ADMISSION_REFERENCE_DATA.every((item) => item.cut70Original === item.cut70 && Number.isFinite(item.cut70Converted) && item.conversionDataset === 'busan-grade5-g2-1sem-15978'));
   assert.ok(ADMISSION_REFERENCE_DATA.every((item) => item.admissionCategory && item.sourceUrl));
 });
@@ -36,6 +36,14 @@ test('학생부종합은 환산 수치를 보존하되 학생 내신 비교 대�
   assert.equal(isComparableAdmissionRecord(comprehensive), false);
   assert.equal(isComparableAdmissionRecord(subject), true);
   assert.ok(Number.isFinite(comprehensive.cut70Converted));
+});
+
+test('인하대 전형별 합산 공개 자료는 개별 학과에 임의 배정하지 않는다', () => {
+  const inha = ADMISSION_REFERENCE_DATA.find((item) => item.university === '인하대학교' && item.admissionName === '학생부종합(농어촌학생)');
+  assert.equal(inha.department, '선발인원 3명 이하 모집단위 합산');
+  assert.equal(inha.cut50Original, 2.92);
+  assert.equal(inha.cut70Original, 3.20);
+  assert.equal(isComparableAdmissionRecord(inha), false);
 });
 
 test('기존 category/year 입력은 canonical schema로 정규화한다', () => {
