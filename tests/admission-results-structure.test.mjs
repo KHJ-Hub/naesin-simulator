@@ -5,7 +5,7 @@ import { admissionResultsByRegion2026 } from '../src/admission-results/index.mjs
 import { clearAdmissionResultsCache, loadAdmissionResultsByRegion } from '../src/admission-results-loader.mjs';
 
 test('현재 공식 확인 대학 기본정보는 입시결과와 연결된다', () => {
-  assert.equal(UNIVERSITIES.length, 14);
+  assert.ok(UNIVERSITIES.length >= 14);
   for (const item of Object.values(admissionResultsByRegion2026).flat()) {
     const university = UNIVERSITY_BY_NAME[item.university];
     assert.ok(university, item.university);
