@@ -6,6 +6,7 @@
  * cut 값이 공개되지 않은 모집단위는 임의로 보완하지 않고 이 모듈에서 제외한다.
  */
 const ADIGA_SOURCE = '대입정보포털 어디가';
+import { convertGrade9ToGrade5, DEFAULT_BUSAN_CONVERSION_DATASET } from '../grade-conversion/grade9-to-grade5.mjs';
 const BUSAN_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000014';
 const ULSAN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000158';
 const GYEONGSANG_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000007';
@@ -18,21 +19,22 @@ const KOSIN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PC
 const INJE = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000164';
 const KYUNGNAM = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000059';
 
-const item = (university, region, department, admissionName, category, cut50, cut70, source) => ({
-  referenceYear: 2026,
-  university,
-  region,
-  field: null,
-  department,
-  admissionName,
-  admissionType: category,
-  category,
-  cut50,
-  cut70,
-  source: ADIGA_SOURCE,
-  sourceUrl: source,
-  updatedAt: null,
-});
+const item = (university, region, department, admissionName, category, cut50, cut70, source) => {
+  const converted50 = cut50 == null ? null : convertGrade9ToGrade5(cut50, DEFAULT_BUSAN_CONVERSION_DATASET);
+  const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
+  return {
+    referenceYear: 2026, university, region, field: null, department, admissionName,
+    admissionType: category, category, cut50, cut70,
+    cut50Original: cut50, cut70Original: cut70,
+    cut50Converted: converted50?.convertedValue ?? null, cut70Converted: converted70?.convertedValue ?? null,
+    conversionDataset: DEFAULT_BUSAN_CONVERSION_DATASET,
+    interpolation: { cut50: Boolean(converted50?.interpolation), cut70: Boolean(converted70?.interpolation) },
+    conversionMethod: 'busan-grade5-cumulative-anchor-interpolation-v1',
+    conversionBasis: '부산광역시교육청학력개발원 진로진학지원센터 98개교 15,978명 고2 1학기 누적 등급평균 분석 자료',
+    conversionSampleSize: 15978, conversionSchoolCount: 98, convertedScale: 5, isApproximate: true,
+    source: ADIGA_SOURCE, sourceUrl: source, updatedAt: null,
+  };
+};
 
 export const admissionResults2026 = Object.freeze([
   item('부산대학교', '부산광역시', '물리교육과', '학생부교과(학생부교과전형)', '학생부교과', 3.35, 3.67, BUSAN_NATIONAL),

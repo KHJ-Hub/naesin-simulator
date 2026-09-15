@@ -10,6 +10,7 @@ export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
     challenging: Object.freeze({ label: '조금 도전적인 범위', minDifference: Number.NEGATIVE_INFINITY }),
   }),
 });
+export const ADMISSION_CONVERSION_NOTICE = '5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값입니다. 실제 대학별 2028학년도 평가·환산 방식과 다를 수 있습니다.';
 
 // 연도별 모듈만 교체·추가하면 화면 코드 수정 없이 자료를 갱신할 수 있다.
 export const ADMISSION_REFERENCE_DATA = Object.freeze(admissionResultsByYear[2026].map((item) => {
@@ -20,7 +21,9 @@ export const ADMISSION_REFERENCE_DATA = Object.freeze(admissionResultsByYear[202
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
   referenceYear: 'number', universityId: 'string|null', region: 'string', university: 'string', field: 'string',
   department: 'string', admissionName: 'string', admissionType: 'string', category: '학생부교과|학생부종합',
-  cut70: 'number', cut50: 'number|null', source: 'string', updatedAt: 'YYYY-MM-DD|null',
+  cut70: 'number', cut50: 'number|null', cut70Original: 'number', cut50Original: 'number|null',
+  cut70Converted: 'number|null', cut50Converted: 'number|null', conversionDataset: 'string',
+  interpolation: 'object', isApproximate: 'boolean', source: 'string', updatedAt: 'YYYY-MM-DD|null',
 });
 
 export function admissionUniversityLinks(item = {}) {
@@ -31,6 +34,11 @@ export function admissionUniversityLinks(item = {}) {
     ['입학처', info.admissionsUrl],
     ['어디가', info.adigaUrl],
   ].filter(([, url]) => Boolean(url));
+}
+
+export function admissionComparisonCut(item = {}, scale = 'converted') {
+  if (scale === 'original') return Number.isFinite(Number(item.cut70Original ?? item.cut70)) ? Number(item.cut70Original ?? item.cut70) : null;
+  return Number.isFinite(Number(item.cut70Converted)) ? Number(item.cut70Converted) : null;
 }
 
 export function validAdmissionReference(item = {}) {

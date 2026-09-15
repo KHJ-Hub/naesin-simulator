@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ADMISSION_REFERENCE_DATA, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, validAdmissionReference } from '../src/admission-reference.mjs';
+import { ADMISSION_REFERENCE_DATA, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, validAdmissionReference } from '../src/admission-reference.mjs';
 
 test('공식 확인된 2026 부산·울산·경남 자료만 연결한다', () => {
   assert.ok(ADMISSION_REFERENCE_DATA.length > 0);
@@ -8,6 +8,13 @@ test('공식 확인된 2026 부산·울산·경남 자료만 연결한다', () =
   assert.deepEqual([...new Set(ADMISSION_REFERENCE_DATA.map((item) => item.region))].sort(), ['경상남도', '부산광역시', '울산광역시']);
   assert.deepEqual([...new Set(ADMISSION_REFERENCE_DATA.map((item) => item.university))].sort(), ['경남대학교', '경상국립대학교', '고신대학교', '국립부경대학교', '국립창원대학교', '동아대학교', '동의대학교', '부산가톨릭대학교', '부산대학교', '울산대학교', '인제대학교']);
   assert.equal(ADMISSION_REFERENCE_DATA.length, 67);
+  assert.ok(ADMISSION_REFERENCE_DATA.every((item) => item.cut70Original === item.cut70 && Number.isFinite(item.cut70Converted) && item.conversionDataset === 'busan-grade5-g2-1sem-15978'));
+});
+
+test('환산 모드는 환산값을, 원본 모드는 원본값을 비교 기준으로 선택한다', () => {
+  const item = ADMISSION_REFERENCE_DATA[0];
+  assert.equal(admissionComparisonCut(item, 'converted'), item.cut70Converted);
+  assert.equal(admissionComparisonCut(item, 'original'), item.cut70Original);
 });
 
 test('설정된 차이 기준으로 참고 범위를 분류한다', () => {
