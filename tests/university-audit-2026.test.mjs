@@ -31,6 +31,12 @@ test('울산 공식 목록 전체가 감사 상태로 정리된다', () => {
   assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.울산광역시.unconfirmed, []);
 });
 
+test('경남 공식 목록 전체가 감사 상태로 정리된다', () => {
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.경상남도.total, 11);
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.경상남도.audited, 11);
+  assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.경상남도.unconfirmed, []);
+});
+
 test('서울 공식 감사와 기존 수도권 결과 상태를 함께 연결한다', () => {
   const gachon = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '가천대학교');
   const konkuk = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '건국대학교');
