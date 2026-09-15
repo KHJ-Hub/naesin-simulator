@@ -284,6 +284,82 @@ h1, h2, h3 { letter-spacing: -.025em; }
   }
 }
 
+/* Tablet touch layout: 768–1024px. Keep controls generous and avoid dense rows. */
+@media (min-width: 768px) and (max-width: 1199px) {
+  :root {
+    --tablet-control-height: 48px;
+    --tablet-control-font: 15px;
+    --tablet-gap: 14px;
+  }
+
+  .panel,
+  .notice-card { padding: 22px; }
+
+  .entry-layout { grid-template-columns: 1fr; gap: 18px; }
+  .side-help {
+    order: 2;
+    padding: 18px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .grade-list { gap: 12px; }
+  .grade-row {
+    grid-template-columns: minmax(190px, 1.4fr) minmax(120px, .85fr) minmax(170px, 1.2fr) auto;
+    gap: var(--tablet-gap);
+    padding: 14px;
+  }
+
+  .grade-row select,
+  .course-selection select,
+  .input,
+  .grade-row .icon-button,
+  .course-selection .add-button,
+  .primary-button,
+  .secondary-button,
+  .quiet-button,
+  .segmented button,
+  .semester-tabs button {
+    min-height: var(--tablet-control-height);
+    font-size: var(--tablet-control-font);
+  }
+
+  .grade-row select,
+  .course-selection select,
+  .input { padding: 10px 12px; }
+
+  .grade-row .icon-button {
+    min-width: 54px;
+    padding: 9px 12px;
+  }
+
+  .course-selection {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, .34fr);
+    align-items: end;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .course-selection > p { grid-column: 1 / -1; margin-bottom: 0; }
+  .course-selection > label { min-width: 0; }
+  .course-selection .add-button { width: 100%; padding-inline: 14px; }
+
+  .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .dashboard-grid .panel { min-width: 0; }
+  .goal-form { gap: 14px; }
+  .goal-form .input { min-height: 48px; }
+  .goal-form .primary-button { min-height: 48px; width: 100%; }
+  .goal-result { padding: 18px; line-height: 1.65; font-size: 14px; }
+  .goal-guidance { padding: 16px; font-size: 14px; line-height: 1.65; }
+
+  .panel-heading p:not(.eyebrow),
+  .muted,
+  .quick-entry p,
+  .side-help,
+  .notice-card p { font-size: 14px; }
+}
+
 @media (max-width: 380px) {
   .top-actions { gap: 6px; }
   .top-actions > * { font-size: 13px; padding-inline: 5px; }
@@ -2025,4 +2101,74 @@ select {
   }
 
   .hero-sparkle { display: none; }
+}
+
+/* Final tablet touch pass (768–1199px). */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .panel,
+  .notice-card { padding: 22px; }
+
+  .entry-layout { grid-template-columns: 1fr; gap: 18px; }
+  .side-help {
+    order: 2;
+    padding: 18px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .grade-list { gap: 12px; }
+  .grade-row {
+    grid-template-columns: minmax(190px, 1.4fr) minmax(120px, .85fr) minmax(170px, 1.2fr) auto;
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .grade-row select,
+  .course-selection select,
+  .input,
+  .grade-row .icon-button,
+  .course-selection .add-button,
+  .primary-button,
+  .secondary-button,
+  .quiet-button,
+  .segmented button,
+  .semester-tabs button {
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .grade-row select,
+  .course-selection select,
+  .input { padding: 10px 12px; }
+
+  .grade-row .icon-button {
+    min-width: 54px;
+    padding: 9px 12px;
+  }
+
+  .course-selection {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, .34fr);
+    align-items: end;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .course-selection > p { grid-column: 1 / -1; margin-bottom: 0; }
+  .course-selection > label { min-width: 0; }
+  .course-selection .add-button { width: 100%; padding-inline: 14px; }
+
+  .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .dashboard-grid .panel { min-width: 0; }
+  .goal-form { gap: 14px; }
+  .goal-form .input,
+  .goal-form .primary-button { min-height: 48px; }
+  .goal-form .primary-button { width: 100%; }
+  .goal-result,
+  .goal-guidance { padding: 18px; font-size: 14px; line-height: 1.65; }
+
+  .panel-heading p:not(.eyebrow),
+  .muted,
+  .quick-entry p,
+  .notice-card p { font-size: 14px; }
 }
