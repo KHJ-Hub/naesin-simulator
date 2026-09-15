@@ -7,6 +7,7 @@ const REGION_MODULES = Object.freeze({
   seoul: './admission-results/2026/seoul.mjs',
   daegu: './admission-results/2026/daegu.mjs',
   gyeongbuk: './admission-results/2026/gyeongbuk.mjs',
+  daejeon: './admission-results/2026/daejeon.mjs',
 });
 
 const cache = new Map();
