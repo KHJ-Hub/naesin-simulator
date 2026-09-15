@@ -27,7 +27,7 @@ const INHA_ADIGA = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menu
 const item = (university, region, department, admissionName, category, cut50, cut70, source, updatedAt = null, sourceName = source === INCHEON ? '인천대학교 입학처' : ADIGA_SOURCE) => {
   const converted50 = cut50 == null ? null : convertGrade9ToGrade5(cut50, DEFAULT_BUSAN_CONVERSION_DATASET);
   const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
-  const regionalEligibility = regionalEligibilityFor({ university, admissionName });
+  const regionalEligibility = regionalEligibilityFor({ university, admissionName, department });
   const eligibility = classifyAdmissionEligibility({ admissionName, regionalEligibility, schoolRegion: DEFAULT_SCHOOL_REGION });
   return {
     referenceYear: 2026, university, region, field: null, department, admissionName,

@@ -26,6 +26,8 @@ export function normalizeAdmissionInterest(item = {}) {
       eligibleSchoolRegions: Array.isArray(item.regionalEligibility.eligibleSchoolRegions) ? [...item.regionalEligibility.eligibleSchoolRegions] : [],
       requirementSummary: String(item.regionalEligibility.requirementSummary ?? '').trim().slice(0, 300),
       sourceUrl: String(item.regionalEligibility.sourceUrl ?? '').trim().slice(0, 500),
+      additionalRequirements: String(item.regionalEligibility.additionalRequirements ?? '').trim().slice(0, 300),
+      requiresIndividualVerification: item.regionalEligibility.requiresIndividualVerification === true,
       verified: item.regionalEligibility.verified === true,
       checkedAt: String(item.regionalEligibility.checkedAt ?? '').trim().slice(0, 20),
     } : null,
