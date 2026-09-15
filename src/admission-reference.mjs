@@ -21,7 +21,8 @@ export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
 
 export function validAdmissionReference(item = {}) {
   return Number.isInteger(Number(item.referenceYear))
-    && ['university', 'region', 'field', 'department', 'admissionName', 'admissionType', 'category', 'source'].every((key) => Boolean(String(item[key] ?? '').trim()))
+    && ['university', 'region', 'field', 'department', 'admissionName', 'admissionType', 'source', 'updatedAt'].every((key) => Boolean(String(item[key] ?? '').trim()))
+    && ['학생부교과', '학생부종합'].includes(item.category)
     && Number.isFinite(Number(item.cut70))
     && Number(item.cut70) >= 1 && Number(item.cut70) <= 9
     && (item.cut50 == null || item.cut50 === '' || Number.isFinite(Number(item.cut50)));
