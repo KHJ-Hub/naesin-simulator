@@ -9,6 +9,7 @@ export const UNIVERSITIES = Object.freeze([
   ['dong-a', '동아대학교', '부산광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000105'],
   ['busan-catholic', '부산가톨릭대학교', '부산광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000114'],
   ['kosin', '고신대학교', '부산광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000071'],
+  ['silla', '신라대학교', '부산광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000144'],
   ['ulsan', '울산대학교', '울산광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000158'],
   ['gyeongsang-national', '경상국립대학교', '경상남도', '국립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000007'],
   ['changwon-national', '국립창원대학교', '경상남도', '국립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000028'],
@@ -21,4 +22,3 @@ export const UNIVERSITIES = Object.freeze([
 
 export const UNIVERSITY_BY_ID = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.universityId, item])));
 export const UNIVERSITY_BY_NAME = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.name, item])));
-
