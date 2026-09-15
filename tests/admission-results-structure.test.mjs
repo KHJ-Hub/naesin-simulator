@@ -38,3 +38,10 @@ test('경기 공식 결과도 원본과 환산값을 분리해 저장한다', ()
   assert.ok(rows.every((item) => item.cut50Original == null || Number.isFinite(item.cut50Converted)));
   assert.ok(rows.every((item) => item.cut70Original == null || Number.isFinite(item.cut70Converted)));
 });
+
+test('인천 공식 결과는 기존 입학처 자료와 어디가 표를 함께 보존한다', () => {
+  const rows = admissionResultsByRegion2026.incheon;
+  assert.ok(rows.length > 200);
+  assert.ok(rows.some((item) => item.dataAvailability === 'cut70-only'));
+  assert.ok(rows.some((item) => item.dataAvailability === 'cut50-only'));
+});

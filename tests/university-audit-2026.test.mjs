@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { UNIVERSITY_AUDIT_2026, UNIVERSITY_AUDIT_SUMMARY_2026 } from '../src/data/university-audit-2026.mjs';
 
 test('서울·경기·인천 대학은 결과 레코드와 별도로 모두 감사 대상이다', () => {
-  assert.equal(UNIVERSITY_AUDIT_2026.length, 84);
+  assert.equal(UNIVERSITY_AUDIT_2026.length, 85);
   assert.ok(UNIVERSITY_AUDIT_2026.every((item) => item.referenceYear === 2026 && item.universityId && item.subjectAdmissionStatus && item.comprehensiveAdmissionStatus));
 });
 
@@ -11,6 +11,12 @@ test('경기 공식 목록 전체가 감사 상태로 정리된다', () => {
   assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.경기도.total, 36);
   assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.경기도.audited, 36);
   assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.경기도.unconfirmed, []);
+});
+
+test('인천 공식 목록 전체가 감사 상태로 정리된다', () => {
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.인천광역시.total, 6);
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.인천광역시.audited, 6);
+  assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.인천광역시.unconfirmed, []);
 });
 
 test('서울 공식 감사와 기존 수도권 결과 상태를 함께 연결한다', () => {
