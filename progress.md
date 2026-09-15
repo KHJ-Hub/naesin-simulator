@@ -4,8 +4,8 @@
 - 공식 원천: 대입정보포털 어디가 `2026학년도 전형평가기준 및 결과공개` 대학별 상세 페이지
 - 기본 환산: `busan-grade5-g2-1sem-15978`
 - 완료 지역: 서울, 경기, 인천, 부산, 울산, 경남, 대구, 경북, 대전, 세종, 충남, 충북, 광주, 전남, 전북, 강원, 제주
-- 현재 작업 중인 지역: 서울(공식 입학처 심층 재감사)
-- 다음 작업할 대학: 서경대학교
+- 현재 작업 중인 지역: 경기(모집단위별 2026 공식 결과 검증 대기)
+- 다음 작업할 대학: 가천대학교부터 경기 전체
 - 마지막 지역 데이터 커밋: `dbb9dc9`
 
 ## 서울
@@ -277,15 +277,15 @@
 
 - 공식 어디가 일반대학 대상 대학/캠퍼스: 220
 - 감사 완료: 220, `not-checked`: 0, 수집 실패: 0
-- 입시결과 총 레코드: 5,648건
-- 학생부교과: 3,126건
-- 학생부종합: 2,522건
-- 레코드 상태: `confirmed-cut` 3,154건, `cut50-only` 2,413건, `cut70-only` 39건, `average-only` 42건
-- 대학 감사 상태(교과): `confirmed-cut` 61개, `average-only` 1개, `not-published` 156개, `no-subject-admission` 2개
-- 대학 감사 상태(종합): `confirmed-cut` 42개, `average-only` 1개, `not-published` 175개, `no-comprehensive-admission` 2개
-- 자격 유형: `general` 1,657건, `school-recommendation` 602건, `regional` 676건, `rural` 249건, `vocational` 77건, `special` 191건, `unknown` 2,196건
-- 원본 수치: `cut50Original` 5,567건, `cut70Original` 3,193건, `averageGradeOriginal` 42건
-- 5등급 환산 수치 보유: 5,648건
+- 입시결과 총 레코드: 7,257건
+- 학생부교과: 3,636건
+- 학생부종합: 3,621건
+- 레코드 상태: `confirmed-cut` 5,123건, `cut50-only` 2,093건, `cut70-only` 39건, `average-only` 2건
+- 대학 감사 상태(교과): `confirmed-cut` 88개, `not-published` 129개, `no-subject-admission` 3개
+- 대학 감사 상태(종합): `confirmed-cut` 65개, `not-published` 145개, `no-comprehensive-admission` 10개
+- 자격 유형: `general` 1,979건, `school-recommendation` 906건, `regional` 676건, `rural` 289건, `vocational` 114건, `special` 190건, `unknown` 3,103건
+- 원본 수치: `averageGradeOriginal` 42건(서울 삼육대), cut 원본은 각 공식 팝업 레코드에 분리 보존
+- 5등급 환산 수치 보유: 7,257건
 - 필수 필드 누락: `sourceUrl` 0건, `referenceYear` 0건, `admissionCategory` 0건
 - 대학 URL 미확인: 강원대학교(제3캠퍼스), 강원대학교(제4캠퍼스)의 홈페이지·입학처 URL(어디가 URL은 확인 완료)
 - 안전 제외/경고 대학: 서울교육대학교, 경기대학교, 경기대학교(제2캠퍼스), 배재대학교, 충남대학교, 한남대학교, 한국기술교육대학교, 호서대학교, 건국대학교(글로컬)(분교), 국립한국교통대학교, 충북대학교, 전남대학교(제2캠퍼스)
@@ -302,3 +302,18 @@
 - 보류: 세움인재·S/W인재의 지원자격 유형은 모집요강 추가 확인 전까지 `unknown`으로 두어 학생 기본 검색에서 숨김
 - 실패: 없음
 - 마지막 커밋: `fe90a27`
+
+## 서울 2026학년도 모집단위별 공식 결과 재감사
+
+- 대상 대학/캠퍼스: 43, 감사 완료: 43, 수집 실패: 0
+- 공식 어디가 `classUnivAdmssPopup.do`의 `searchSyr=2026` 모집단위별 결과를 사용해 실제 2026학년도 50%·70% cut을 다시 수집했다.
+- 활성 서울 레코드: 2,933건(학생부교과 957, 학생부종합 1,976)
+- 학생부교과 대학 상태: `confirmed-cut` 39, `not-published` 3, `no-subject-admission` 1
+- 학생부종합 대학 상태: `confirmed-cut` 34, `not-published` 1, `no-comprehensive-admission` 8
+- 공식 cut 레코드가 없는 대학: 서경대학교
+- 충돌 제외: 광운대학교 2개 canonical 키, 상명대학교 1개 canonical 키. 서로 다른 공식 값이 같은 키에 나타나 임의 선택하지 않았다.
+- 삼육대학교 공식 입학처 평균등급 42건 중 같은 전형·모집단위 40건은 어디가 cut 레코드에 병합하고, cut이 없는 아트앤디자인학과·체육학과 2건은 `average-only`로 보존했다.
+- 기존 대학 요약표 기반 생성 파일은 삭제하지 않고 `generated` 경로에 보존했으며, 학생 서비스는 새 `verified` 서울 데이터만 사용한다.
+- 회귀 테스트: 61개 통과
+- 다음 지역: 경기
+- 마지막 확인 커밋: `56bcba3`(서울 verified 커밋 생성 전)

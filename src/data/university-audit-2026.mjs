@@ -1,7 +1,7 @@
 import { admissionResultsByYear } from '../admission-results/index.mjs';
 import { normalizeAdmissionRecord } from '../admission-record-normalizer.mjs';
 import { UNIVERSITIES } from './universities.mjs';
-import { universityAudit2026Seoul } from './university-audits/2026/seoul.mjs';
+import { universityAudit2026SeoulVerified as universityAudit2026Seoul } from './university-audits/2026-verified/seoul.mjs';
 import { universityAudit2026Gyeonggi } from './university-audits/2026/gyeonggi.mjs';
 import { universityAudit2026Incheon } from './university-audits/2026/incheon.mjs';
 import { universityAudit2026Busan } from './university-audits/2026/busan.mjs';

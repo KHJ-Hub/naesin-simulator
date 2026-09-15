@@ -115,8 +115,8 @@ test('서울 공식 감사와 기존 수도권 결과 상태를 함께 연결한
   assert.equal(konkuk.subjectAdmissionStatus, 'confirmed-cut');
   assert.equal(konkuk.comprehensiveAdmissionStatus, 'confirmed-cut');
   assert.ok(konkuk.sourceUrls.some((url) => url.includes('adiga.kr')));
-  assert.equal(seoul.subjectAdmissionStatus, 'not-published');
-  assert.equal(seoul.comprehensiveAdmissionStatus, 'not-published');
+  assert.equal(seoul.subjectAdmissionStatus, 'no-subject-admission');
+  assert.equal(seoul.comprehensiveAdmissionStatus, 'confirmed-cut');
   assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.서울특별시.total, 43);
   assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.서울특별시.audited, 43);
 });

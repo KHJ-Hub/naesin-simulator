@@ -26,27 +26,30 @@ test('지역 데이터는 필요한 지역만 동적으로 불러온다', async 
 test('서울 공식 결과는 전형과 모집단위가 식별된 행만 중복 없이 보존한다', () => {
   const rows = admissionResultsByRegion2026.seoul;
   const keys = rows.map((item) => [item.university, item.department, item.admissionName, item.admissionCategory].join('|'));
-  assert.ok(rows.length > 1_000);
+  assert.ok(rows.length > 2_900);
   assert.equal(new Set(keys).size, rows.length);
   assert.ok(rows.every((item) => item.sourceUrl.startsWith('https://') && item.referenceYear === 2026));
   assert.ok(rows.every((item) => item.cut50Original != null || item.cut70Original != null || item.averageGradeOriginal != null));
+  assert.ok(rows.some((item) => item.university === '서울대학교' && item.department === '국어국문학과' && item.cut70Original === 2.52));
+  assert.ok(rows.every((item) => !item.sourceUrl.includes('univDetailSelection.do')));
 });
 
 test('삼육대학교 공식 평균등급은 cut과 분리된 average-only 자료로 보존된다', () => {
   const rows = admissionResultsByRegion2026.seoul.filter((item) => item.university === '삼육대학교');
-  assert.equal(rows.length, 42);
-  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 20);
-  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 22);
-  assert.ok(rows.every((item) => item.dataAvailability === 'average-only'));
-  assert.ok(rows.every((item) => item.cut50Original == null && item.cut70Original == null));
-  assert.ok(rows.every((item) => Number.isFinite(item.averageGradeOriginal)));
-  assert.ok(rows.every((item) => item.averageGradeConverted >= 1 && item.averageGradeConverted <= 5));
+  const averageRows = rows.filter((item) => Number.isFinite(item.averageGradeOriginal));
+  assert.equal(rows.length, 84);
+  assert.equal(averageRows.length, 42);
+  assert.equal(averageRows.filter((item) => item.admissionCategory === '학생부교과').length, 20);
+  assert.equal(averageRows.filter((item) => item.admissionCategory === '학생부종합').length, 22);
+  assert.ok(averageRows.every((item) => item.averageGradeConverted >= 1 && item.averageGradeConverted <= 5));
+  assert.ok(averageRows.filter((item) => item.dataAvailability === 'average-only')
+    .every((item) => item.cut50Original == null && item.cut70Original == null));
   assert.equal(
-    rows.find((item) => item.department === '간호학과' && item.admissionName === '학교장추천')?.averageGradeOriginal,
+    averageRows.find((item) => item.department === '간호학과' && item.admissionName === '학교장추천')?.averageGradeOriginal,
     1.98,
   );
   assert.equal(
-    rows.find((item) => item.department === '컴퓨터공학부' && item.admissionName === 'S/W인재')?.averageGradeOriginal,
+    averageRows.find((item) => item.department === '컴퓨터공학부' && item.admissionName === 'S/W인재')?.averageGradeOriginal,
     3.8,
   );
 });
