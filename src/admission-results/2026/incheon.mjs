@@ -1,10 +1,4 @@
-import { admissionResults2026 } from '../admission-results-2026.mjs';
-import { admissionResults2026IncheonGenerated } from './generated/incheon.mjs';
+import { admissionResults2026IncheonVerified } from './verified/incheon.mjs';
 
 /** 인천광역시의 공식 2026학년도 공개 결과만 제공한다. */
-export const admissionResults2026Incheon = Object.freeze(
-  [
-    ...admissionResults2026.filter((item) => item.region === '인천광역시'),
-    ...admissionResults2026IncheonGenerated,
-  ],
-);
+export const admissionResults2026Incheon = admissionResults2026IncheonVerified;

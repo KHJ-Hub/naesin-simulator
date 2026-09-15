@@ -15,13 +15,12 @@ test('공식 확인된 2026 지역 자료만 연결한다', () => {
   assert.ok(ADMISSION_REFERENCE_DATA.every((item) => item.admissionCategory && item.sourceUrl));
 });
 
-test('인천대학교의 미공개 50% cut은 null로 유지하고 70% cut만 환산한다', () => {
-  const incheon = ADMISSION_REFERENCE_DATA.find((item) => item.university === '인천대학교' && item.department === '국어국문학과');
-  assert.equal(incheon.cut50Original, null);
-  assert.equal(incheon.cut50Converted, null);
+test('인천대학교의 공식 모집단위별 50%·70% cut을 원본과 환산값으로 분리한다', () => {
+  const incheon = ADMISSION_REFERENCE_DATA.find((item) => item.university === '인천대학교' && item.department === '국어국문학과' && item.admissionName === '교과성적우수자전형');
+  assert.equal(incheon.cut50Original, 2.97);
+  assert.ok(Number.isFinite(incheon.cut50Converted));
   assert.equal(incheon.cut70Original, 3.10);
-  assert.equal(incheon.updatedAt, '2026-04-01');
-  assert.equal(incheon.source, '인천대학교 입학처');
+  assert.equal(incheon.source, '대입정보포털 어디가');
   assert.ok(Number.isFinite(incheon.cut70Converted));
 });
 
@@ -41,10 +40,10 @@ test('학생부종합은 환산 수치를 보존하되 학생 내신 비교 대�
 });
 
 test('인하대 전형별 합산 공개 자료는 개별 학과에 임의 배정하지 않는다', () => {
-  const inha = ADMISSION_REFERENCE_DATA.find((item) => item.university === '인하대학교' && item.admissionName === '학생부종합(농어촌학생)');
-  assert.equal(inha.department, '선발인원 3명 이하 모집단위 합산');
-  assert.equal(inha.cut50Original, 2.92);
-  assert.equal(inha.cut70Original, 3.20);
+  const inha = ADMISSION_REFERENCE_DATA.find((item) => item.university === '인하대학교' && item.admissionName === '농어촌학생');
+  assert.ok(inha.department !== '선발인원 3명 이하 모집단위 합산');
+  assert.ok(Number.isFinite(inha.cut50Original));
+  assert.ok(Number.isFinite(inha.cut70Original));
   assert.equal(isComparableAdmissionRecord(inha), false);
 });
 

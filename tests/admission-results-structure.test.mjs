@@ -66,11 +66,14 @@ test('경기 공식 결과도 원본과 환산값을 분리해 저장한다', ()
   assert.ok(!rows.some((item) => item.university === '가천대학교' && item.admissionName === '학생부교과(학생부우수자전형)'));
 });
 
-test('인천 공식 결과는 기존 입학처 자료와 어디가 표를 함께 보존한다', () => {
+test('인천 공식 2026 모집단위별 결과를 중복 없이 보존한다', () => {
   const rows = admissionResultsByRegion2026.incheon;
-  assert.ok(rows.length > 200);
-  assert.ok(rows.some((item) => item.dataAvailability === 'cut70-only'));
-  assert.ok(rows.some((item) => item.dataAvailability === 'cut50-only'));
+  assert.equal(rows.length, 373);
+  assert.equal(new Set(rows.map((item) => [item.university, item.department, item.admissionCategory, item.admissionName].join('|'))).size, rows.length);
+  assert.ok(rows.every((item) => item.sourceUrl.includes('adiga.kr')));
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 159);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 214);
+  assert.ok(rows.filter((item) => item.admissionName === '자기추천전형').every((item) => item.eligibilityType === 'general'));
 });
 
 test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {

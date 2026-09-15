@@ -120,10 +120,13 @@ function classifyEligibility(admissionName) {
   if (/농어촌/.test(name)) return 'rural';
   if (/특성화고|마이스터고/.test(name)) return 'vocational';
   if (/지역인재|지역혁신인재|지역교과/.test(name)) return 'regional';
+  // 자기추천은 학교장 추천을 요구한다는 뜻이 아니므로 포괄적인
+  // `추천전형` 패턴보다 먼저 일반 전형으로 분리한다.
+  if (/자기추천/.test(name)) return 'general';
   if (/학교장추천|추천형|추천전형|지역균형/.test(name)) return 'school-recommendation';
   if (/고른기회|기회균형/.test(name)) return 'unknown';
   if (/국가보훈|보훈|기초생활|차상위|한부모|사회통합|사회배려|장애|특수교육|기회균등|재직자|성인학습|북한이탈/.test(name)) return 'special';
-  if (/일반|교과성적우수|학업성적우수|학생부우수|자기추천|서류형|면접형/.test(name)) return 'general';
+  if (/일반|교과성적우수|학업성적우수|학생부우수|서류형|면접형/.test(name)) return 'general';
   return 'unknown';
 }
 
