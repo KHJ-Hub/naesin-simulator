@@ -12,6 +12,7 @@ import { universityAudit2026Gyeongbuk } from './university-audits/2026/gyeongbuk
 import { universityAudit2026Daejeon } from './university-audits/2026/daejeon.mjs';
 import { universityAudit2026Sejong } from './university-audits/2026/sejong.mjs';
 import { universityAudit2026Chungnam } from './university-audits/2026/chungnam.mjs';
+import { universityAudit2026Chungbuk } from './university-audits/2026/chungbuk.mjs';
 
 /**
  * 대학 단위 감사 상태는 모집단위별 입시결과 레코드와 별개다.
@@ -29,6 +30,7 @@ export const UNIVERSITY_AUDIT_REGIONS_2026 = Object.freeze([
   '대전광역시',
   '세종특별자치시',
   '충청남도',
+  '충청북도',
 ]);
 
 export const UNIVERSITY_ADMISSION_AUDIT_STATUS = Object.freeze({
@@ -53,6 +55,7 @@ const GENERATED_AUDITS = Object.freeze([
   ...universityAudit2026Daejeon,
   ...universityAudit2026Sejong,
   ...universityAudit2026Chungnam,
+  ...universityAudit2026Chungbuk,
 ]);
 const GENERATED_AUDIT_BY_CODE = new Map(GENERATED_AUDITS.map((item) => [item.universityId.replace('adiga-', ''), item]));
 
