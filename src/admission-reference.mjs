@@ -35,7 +35,9 @@ export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
   cut70Original: 'number|null', cut50Original: 'number|null', cut70Converted: 'number|null', cut50Converted: 'number|null',
   averageGradeOriginal: 'number|null', averageGradeConverted: 'number|null', conversionDataset: 'string|null',
   eligibilityType: 'general|school-recommendation|regional|rural|opportunity|vocational|special|unknown',
-  eligibilityVerification: 'official-confirmed|name-classified|needs-eligibility-review', regionalEligibilityConfirmed: 'boolean', studentDefaultVisible: 'boolean',
+  eligibilityVerification: 'official-confirmed|name-classified|needs-eligibility-review',
+  regionalEligibility: '{ eligibleRegions, eligibleSchoolRegions, requirementSummary, sourceUrl, verified, checkedAt }|null',
+  regionalEligibilityConfirmed: 'boolean (legacy compatibility)', regionalEligibleForSchool: 'boolean|null', schoolRegion: 'string', studentDefaultVisible: 'boolean',
   interpolation: 'object|null', isApproximate: 'boolean|null', source: 'string', sourceUrl: 'URL', updatedAt: 'YYYY-MM-DD|null',
 });
 

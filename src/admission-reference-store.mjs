@@ -21,6 +21,14 @@ export function normalizeAdmissionInterest(item = {}) {
     category: String(item.category ?? item.admissionCategory ?? '').trim().slice(0, 50), cut70: Number(cut70.toFixed(2)),
     eligibilityType: String(item.eligibilityType ?? 'unknown').trim().slice(0, 50),
     eligibilityVerification: String(item.eligibilityVerification ?? '').trim().slice(0, 50),
+    regionalEligibility: item.regionalEligibility && typeof item.regionalEligibility === 'object' ? {
+      eligibleRegions: Array.isArray(item.regionalEligibility.eligibleRegions) ? [...item.regionalEligibility.eligibleRegions] : [],
+      eligibleSchoolRegions: Array.isArray(item.regionalEligibility.eligibleSchoolRegions) ? [...item.regionalEligibility.eligibleSchoolRegions] : [],
+      requirementSummary: String(item.regionalEligibility.requirementSummary ?? '').trim().slice(0, 300),
+      sourceUrl: String(item.regionalEligibility.sourceUrl ?? '').trim().slice(0, 500),
+      verified: item.regionalEligibility.verified === true,
+      checkedAt: String(item.regionalEligibility.checkedAt ?? '').trim().slice(0, 20),
+    } : null,
     studentDefaultVisible: item.studentDefaultVisible === true,
     ...(Object.prototype.hasOwnProperty.call(item, 'cut70Converted') ? {
       cut50: Number.isFinite(cut50) ? Number(cut50.toFixed(2)) : null,

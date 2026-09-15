@@ -1,3 +1,6 @@
+import { ADMISSION_ELIGIBILITY_TYPES, classifyAdmissionEligibility } from './admission-eligibility.mjs';
+import { DEFAULT_SCHOOL_REGION, isSchoolRegionEligible, normalizeRegionalEligibility } from './admission-regional-eligibility.mjs';
+
 /** 전국 입시결과 파일이 공유하는 정규 스키마와 검증 규칙이다. */
 export const ADMISSION_CATEGORIES = Object.freeze({
   SUBJECT: '학생부교과',
@@ -46,10 +49,14 @@ export function normalizeAdmissionRecord(record = {}) {
   const cut50Original = finiteOrNull(record.cut50Original ?? record.cut50);
   const cut70Original = finiteOrNull(record.cut70Original ?? record.cut70);
   const averageGradeOriginal = finiteOrNull(record.averageGradeOriginal ?? record.averageGrade);
+  const regionalEligibility = normalizeRegionalEligibility(record.regionalEligibility);
+  const regionalEligibilityConfirmed = regionalEligibility?.verified === true || record.regionalEligibilityConfirmed === true;
   const eligibility = classifyAdmissionEligibility({
     admissionName: record.admissionName,
     eligibilityType: record.eligibilityType,
-    regionalEligibilityConfirmed: record.regionalEligibilityConfirmed === true,
+    regionalEligibility,
+    regionalEligibilityConfirmed,
+    schoolRegion: record.schoolRegion ?? DEFAULT_SCHOOL_REGION,
   });
 
   return {
@@ -70,7 +77,12 @@ export function normalizeAdmissionRecord(record = {}) {
     averageGradeConverted: finiteOrNull(record.averageGradeConverted),
     eligibilityType: eligibility.eligibilityType,
     eligibilityVerification: String(record.eligibilityVerification ?? eligibility.eligibilityVerification),
-    regionalEligibilityConfirmed: record.regionalEligibilityConfirmed === true,
+    regionalEligibility,
+    regionalEligibilityConfirmed,
+    schoolRegion: String(record.schoolRegion ?? DEFAULT_SCHOOL_REGION).trim() || DEFAULT_SCHOOL_REGION,
+    regionalEligibleForSchool: eligibility.eligibilityType === ADMISSION_ELIGIBILITY_TYPES.REGIONAL
+      ? isSchoolRegionEligible(regionalEligibility, record.schoolRegion ?? DEFAULT_SCHOOL_REGION)
+      : null,
     studentDefaultVisible: record.studentDefaultVisible === true || (record.studentDefaultVisible == null && eligibility.studentDefaultVisible),
     field: textOrNull(record.field),
     sourceUrl: textOrNull(record.sourceUrl),
@@ -99,6 +111,10 @@ export function validateAdmissionRecord(record = {}) {
   if (!Number.isInteger(item.referenceYear)) errors.push('referenceYear');
   if (!item.admissionCategory) errors.push('admissionCategory');
   if (!Object.values(ADMISSION_ELIGIBILITY_TYPES).includes(item.eligibilityType)) errors.push('eligibilityType');
+  if (item.eligibilityType === ADMISSION_ELIGIBILITY_TYPES.REGIONAL) {
+    if (!item.regionalEligibility) errors.push('regionalEligibility');
+    if (item.regionalEligibility?.verified && (!item.regionalEligibility.sourceUrl || item.regionalEligibility.eligibleSchoolRegions.length === 0)) errors.push('regionalEligibility-verification');
+  }
   if (!textOrNull(item.university)) errors.push('university');
   if (!textOrNull(item.region)) errors.push('region');
   if (!textOrNull(item.department)) errors.push('department');
@@ -127,4 +143,3 @@ export function validateAdmissionRecord(record = {}) {
 export function validAdmissionRecord(record = {}) {
   return validateAdmissionRecord(record).length === 0;
 }
-import { ADMISSION_ELIGIBILITY_TYPES, classifyAdmissionEligibility } from './admission-eligibility.mjs';
