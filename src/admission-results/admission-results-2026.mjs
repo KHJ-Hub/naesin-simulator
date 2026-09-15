@@ -12,6 +12,11 @@ const GYEONGSANG_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelectio
 const PUKYONG = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000013';
 const DONG_EUI = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000107';
 const CHANGWON = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000028';
+const DONG_A = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000105';
+const BUSAN_CATHOLIC = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000114';
+const KOSIN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000071';
+const INJE = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000164';
+const KYUNGNAM = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000059';
 
 const item = (university, region, department, admissionName, category, cut50, cut70, source) => ({
   referenceYear: 2026,
@@ -62,4 +67,49 @@ export const admissionResults2026 = Object.freeze([
   item('국립창원대학교', '경상남도', '건축학부 건축공학전공', '학생부교과(학업성적우수자전형)', '학생부교과', 4.48, 4.52, CHANGWON),
   item('국립창원대학교', '경상남도', '건축학부 건축학전공', '학생부교과(학업성적우수자전형)', '학생부교과', 3.77, 3.83, CHANGWON),
   item('국립창원대학교', '경상남도', '국제관계학과', '학생부교과(학업성적우수자전형)', '학생부교과', 4.17, 4.23, CHANGWON),
+
+  item('동아대학교', '부산광역시', '컴퓨터・AI공학부 AI학과', '학생부교과(교과성적우수자전형)', '학생부교과', 3.83, 4.33, DONG_A),
+  item('동아대학교', '부산광역시', '조경학과', '학생부교과(교과성적우수자전형)', '학생부교과', 3.58, 3.83, DONG_A),
+  item('동아대학교', '부산광역시', '건축학과', '학생부교과(교과성적우수자전형)', '학생부교과', 3.17, 3.33, DONG_A),
+  item('동아대학교', '부산광역시', '교육학과', '학생부교과(교과성적우수자전형)', '학생부교과', 3.08, 3.33, DONG_A),
+  item('동아대학교', '부산광역시', '경찰학과', '학생부교과(교과성적우수자전형)', '학생부교과', 3.00, 3.08, DONG_A),
+  item('동아대학교', '부산광역시', '조경학과', '학생부교과(지역인재교과전형)', '학생부교과', 3.17, 3.42, DONG_A),
+  item('동아대학교', '부산광역시', '건축학과', '학생부교과(지역인재교과전형)', '학생부교과', 3.17, 3.42, DONG_A),
+  item('동아대학교', '부산광역시', '교육학과', '학생부교과(지역인재교과전형)', '학생부교과', 2.67, 2.83, DONG_A),
+
+  item('부산가톨릭대학교', '부산광역시', '간호학과', '학생부교과(교과성적우수자전형)', '학생부교과', 1.92, 1.92, BUSAN_CATHOLIC),
+  item('부산가톨릭대학교', '부산광역시', '병원경영학과', '학생부교과(교과성적우수자전형)', '학생부교과', 4.00, 4.00, BUSAN_CATHOLIC),
+  item('부산가톨릭대학교', '부산광역시', '언어청각치료학과', '학생부교과(교과성적우수자전형)', '학생부교과', 3.58, 3.58, BUSAN_CATHOLIC),
+  item('부산가톨릭대학교', '부산광역시', '사회복지학과', '학생부교과(교과성적우수자전형)', '학생부교과', 4.00, 4.00, BUSAN_CATHOLIC),
+  item('부산가톨릭대학교', '부산광역시', '유통마케팅학과', '학생부교과(교과성적우수자전형)', '학생부교과', 4.50, 4.50, BUSAN_CATHOLIC),
+  item('부산가톨릭대학교', '부산광역시', '컴퓨터정보공학과', '학생부교과(교과성적우수자전형)', '학생부교과', 4.75, 4.75, BUSAN_CATHOLIC),
+
+  item('고신대학교', '부산광역시', '의예과', '학생부교과(일반고전형)', '학생부교과', 1.23, 1.28, KOSIN),
+  item('고신대학교', '부산광역시', '기독교교육과', '학생부교과(일반고전형)', '학생부교과', 3.93, 4.52, KOSIN),
+  item('고신대학교', '부산광역시', '언어청각치료학과', '학생부교과(일반고전형)', '학생부교과', 4.07, 4.47, KOSIN),
+  item('고신대학교', '부산광역시', '유아교육과', '학생부교과(일반고전형)', '학생부교과', 3.83, 3.88, KOSIN),
+  item('고신대학교', '부산광역시', '사회복지학과', '학생부교과(일반고전형)', '학생부교과', 4.03, 4.13, KOSIN),
+  item('고신대학교', '부산광역시', '자율전공학부', '학생부교과(일반고전형)', '학생부교과', 4.56, 5.13, KOSIN),
+  item('고신대학교', '부산광역시', '간호학과', '학생부교과(지역인재전형)', '학생부교과', 2.24, 2.27, KOSIN),
+  item('고신대학교', '부산광역시', '의예과', '학생부교과(지역인재전형)', '학생부교과', 1.27, 1.31, KOSIN),
+
+  item('인제대학교', '경상남도', '반려동물보건학과', '학생부교과(학생부교과전형)', '학생부교과', 3.50, 3.70, INJE),
+  item('인제대학교', '경상남도', '경영계열', '학생부교과(학생부교과전형)', '학생부교과', 5.10, 5.40, INJE),
+  item('인제대학교', '경상남도', '특수교육과', '학생부교과(학생부교과전형)', '학생부교과', 3.90, 4.00, INJE),
+  item('인제대학교', '경상남도', '컴퓨터・AI계열', '학생부교과(학생부교과전형)', '학생부교과', 4.70, 5.10, INJE),
+  item('인제대학교', '경상남도', '의생명보건계열', '학생부교과(학생부교과전형)', '학생부교과', 4.20, 4.50, INJE),
+  item('인제대학교', '경상남도', '미디어・콘텐츠계열', '학생부교과(학생부교과전형)', '학생부교과', 5.05, 5.40, INJE),
+  item('인제대학교', '경상남도', '약학과', '학생부교과(지역인재Ⅱ전형)', '학생부교과', 1.16, 1.22, INJE),
+  item('인제대학교', '경상남도', '간호학과', '학생부교과(지역인재Ⅰ전형)', '학생부교과', 1.90, 2.00, INJE),
+
+  item('경남대학교', '경상남도', '보건의료정보학과', '학생부교과(일반전형)', '학생부교과', 4.80, 5.00, KYUNGNAM),
+  item('경남대학교', '경상남도', '국어교육과', '학생부교과(일반전형)', '학생부교과', 2.70, 3.10, KYUNGNAM),
+  item('경남대학교', '경상남도', '영어교육과', '학생부교과(일반전형)', '학생부교과', 2.80, 3.10, KYUNGNAM),
+  item('경남대학교', '경상남도', '사회복지학과', '학생부교과(일반전형)', '학생부교과', 3.90, 4.20, KYUNGNAM),
+  item('경남대학교', '경상남도', '행정학과', '학생부교과(일반전형)', '학생부교과', 3.90, 4.30, KYUNGNAM),
+  item('경남대학교', '경상남도', '경찰학과', '학생부교과(일반전형)', '학생부교과', 3.50, 3.80, KYUNGNAM),
+  item('경남대학교', '경상남도', '국어교육과', '학생부교과(지역인재전형)', '학생부교과', 2.80, 3.00, KYUNGNAM),
+  item('경남대학교', '경상남도', '영어교육과', '학생부교과(지역인재전형)', '학생부교과', 2.90, 3.10, KYUNGNAM),
+  item('경남대학교', '경상남도', '사회복지학과', '학생부교과(지역인재전형)', '학생부교과', 4.20, 4.60, KYUNGNAM),
+  item('경남대학교', '경상남도', '수학교육과', '학생부교과(지역인재전형)', '학생부교과', 3.10, 3.40, KYUNGNAM),
 ]);
