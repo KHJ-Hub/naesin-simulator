@@ -48,14 +48,19 @@
 
       <section class="panel admission-reference-panel" id="admission-reference-panel">
         <div class="panel-heading compact"><div><p class="eyebrow">전년도 입시결과 참고</p><h2>공개 입시결과와 내신 비교</h2><p>대학별 산출방식이 다르므로 전년도 최종등록자 결과를 참고용으로만 비교합니다.</p></div></div>
-        <div class="admission-overview"><strong id="admission-current-score">내신 계산 후 이용 가능</strong><div class="admission-basis" role="radiogroup" aria-label="비교 기준"><label><input type="radio" name="admission-basis" value="current" checked /> 현재 내신 기준</label><label><input type="radio" name="admission-basis" value="target" /> 목표 내신 기준</label></div><div class="admission-basis" role="radiogroup" aria-label="등급제 표시"><label><input type="radio" name="admission-scale" value="converted5" checked /> 5등급 환산</label><label><input type="radio" name="admission-scale" value="original9" /> 9등급제 원본</label></div><button id="admission-view-button" class="primary-button">전년도 입시결과 보기</button></div>
+        <div class="admission-overview">
+          <div class="admission-status"><span class="eyebrow">비교 준비</span><strong id="admission-current-score">내신 계산 후 이용 가능</strong><p>내신 계산 후 현재 또는 목표 내신과 비교할 수 있어요.</p></div>
+          <div class="admission-control-group"><span>비교할 내신</span><div class="admission-basis" role="radiogroup" aria-label="비교 기준"><label><input type="radio" name="admission-basis" value="current" checked /> 현재 내신</label><label><input type="radio" name="admission-basis" value="target" /> 목표 내신</label></div></div>
+          <div class="admission-control-group"><span>표시 기준</span><div class="admission-basis" role="radiogroup" aria-label="등급제 표시"><label><input type="radio" name="admission-scale" value="converted5" checked /> 5등급 환산</label><label><input type="radio" name="admission-scale" value="original9" /> 9등급 원본</label></div></div>
+          <button id="admission-view-button" class="primary-button">전년도 입시결과 보기</button>
+        </div>
         <details class="admission-filter-details"><summary>검색·필터</summary><div class="admission-filters" id="admission-filters">
           <label>지역<select id="admission-region" class="input"><option value="">전체 지역</option></select></label>
           <label>대학<select id="admission-university" class="input"><option value="">전체 대학</option></select></label>
           <label>계열<select id="admission-field" class="input"><option value="">전체 계열</option></select></label>
           <label>학과/모집단위<select id="admission-department" class="input"><option value="">전체 모집단위</option></select></label>
-          <label>전형<select id="admission-type" class="input"><option value="">전체 전형</option></select></label>
-          <label>전형 유형<select id="admission-category" class="input"><option value="">전체 유형</option><option value="학생부교과">학생부교과</option><option value="학생부종합">학생부종합</option></select></label>
+          <label>전형명<select id="admission-name" class="input"><option value="">전체 전형명</option></select></label>
+          <label>전형 구분<select id="admission-category" class="input"><option value="">전체 전형 구분</option><option value="학생부교과">학생부교과</option><option value="학생부종합">학생부종합</option></select></label>
         </div></details>
         <details class="admission-help"><summary>70% cut · 50% cut 안내</summary><p><strong>70% cut</strong>은 전년도 최종등록자 성적 분포에서 참고할 수 있는 지표입니다. <strong>50% cut</strong>도 같은 방식의 참고 지표이며, 어느 수치도 합격선이나 최저 합격등급을 뜻하지 않습니다.</p></details>
         <div id="admission-reference-result" class="admission-reference-result"></div>

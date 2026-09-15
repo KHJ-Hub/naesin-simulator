@@ -80,6 +80,7 @@ export function filterAdmissionReferences(data, filters = {}) {
     && (!filters.university || item.university === filters.university)
     && (!filters.field || item.field === filters.field)
     && (!filters.department || item.department === filters.department)
+    && (!filters.admissionName || item.admissionName === filters.admissionName)
     && (!filters.admissionType || item.admissionType === filters.admissionType)
     && (!filters.category || item.category === filters.category)
   ));

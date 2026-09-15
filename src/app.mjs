@@ -32,7 +32,7 @@ function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-$
 let state = loadState();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
-const admissionFilters = { region: '', university: '', field: '', department: '', admissionType: '', category: '' };
+const admissionFilters = { region: '', university: '', field: '', department: '', admissionName: '', category: '' };
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -290,7 +290,7 @@ function renderAdmissionInterests() {
 function renderAdmissionReferences() {
   document.querySelectorAll('input[name="admission-scale"]').forEach((input) => { input.checked = input.value === state.admissionGradeScaleMode; });
   const notice = document.querySelector('.admission-conversion-notice'); if (notice) notice.textContent = state.admissionGradeScaleMode === 'original9' ? '전년도 공식 입시결과의 9등급제 원본 값입니다.' : ADMISSION_CONVERSION_NOTICE;
-  ['region', 'university', 'field', 'department', 'admissionType'].forEach((key) => { const element = $(`#admission-${key === 'admissionType' ? 'type' : key}`); if (element) { element.innerHTML = admissionOptions(key, key === 'region' ? '전체 지역' : key === 'university' ? '전체 대학' : key === 'field' ? '전체 계열' : key === 'department' ? '전체 모집단위' : '전체 전형'); element.value = admissionFilters[key]; } });
+  ['region', 'university', 'field', 'department', 'admissionName'].forEach((key) => { const element = $(`#admission-${key}`); if (element) { element.innerHTML = admissionOptions(key, key === 'region' ? '전체 지역' : key === 'university' ? '전체 대학' : key === 'field' ? '전체 계열' : key === 'department' ? '전체 모집단위' : '전체 전형명'); element.value = admissionFilters[key]; } });
   const result = $('#admission-reference-result');
   const comparison = admissionComparison();
   $('#admission-current-score').textContent = state.admissionGradeScaleMode === 'original9' ? '9등급제 원본 입시결과 보기' : (Number.isFinite(comparison.value) ? `${comparison.label} ${fmt(comparison.value)}` : '내신 계산 후 이용 가능');
@@ -409,7 +409,7 @@ $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculat
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; saveState(); renderSummary(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
 document.querySelector('#admission-filters').addEventListener('change', (event) => {
-  const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-type': 'admissionType', 'admission-category': 'category' };
+  const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName', 'admission-category': 'category' };
   const key = map[event.target.id];
   if (!key) return;
   admissionFilters[key] = event.target.value;
