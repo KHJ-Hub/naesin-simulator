@@ -99,6 +99,14 @@ test('강원 공식 목록 전체가 감사 상태로 정리된다', () => {
   assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.강원특별자치도.unconfirmed, []);
 });
 
+test('제주 공식 목록 전체가 감사 상태로 정리된다', async () => {
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.제주특별자치도.total, 2);
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.제주특별자치도.audited, 2);
+  assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.제주특별자치도.unconfirmed, []);
+  const { admissionResults2026Jeju } = await import('../src/admission-results/2026/jeju.mjs');
+  assert.equal(admissionResults2026Jeju.length, 0);
+});
+
 test('서울 공식 감사와 기존 수도권 결과 상태를 함께 연결한다', () => {
   const gachon = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '가천대학교');
   const konkuk = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '건국대학교');

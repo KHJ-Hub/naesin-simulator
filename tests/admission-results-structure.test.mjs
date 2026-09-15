@@ -45,3 +45,20 @@ test('인천 공식 결과는 기존 입학처 자료와 어디가 표를 함께
   assert.ok(rows.some((item) => item.dataAvailability === 'cut70-only'));
   assert.ok(rows.some((item) => item.dataAvailability === 'cut50-only'));
 });
+
+test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {
+  const rows = Object.values(admissionResultsByRegion2026).flat();
+  const keys = rows.map((item) => [item.referenceYear, item.university, item.department, item.admissionCategory, item.admissionName].join('|'));
+  assert.equal(new Set(keys).size, rows.length);
+  assert.ok(rows.every((item) => item.referenceYear === 2026 && item.sourceUrl));
+  assert.ok(rows.every((item) => item.cut50Original == null || (item.cut50Converted >= 1 && item.cut50Converted <= 5)));
+  assert.ok(rows.every((item) => item.cut70Original == null || (item.cut70Converted >= 1 && item.cut70Converted <= 5)));
+  assert.ok(rows.every((item) => item.averageGradeOriginal == null || (item.averageGradeConverted >= 1 && item.averageGradeConverted <= 5)));
+});
+
+test('등록된 모든 지역 lazy loader가 동일한 지역 배열을 반환한다', async () => {
+  clearAdmissionResultsCache();
+  for (const [region, expected] of Object.entries(admissionResultsByRegion2026)) {
+    assert.deepEqual(await loadAdmissionResultsByRegion(region), expected, region);
+  }
+});

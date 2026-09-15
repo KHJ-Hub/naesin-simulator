@@ -15,6 +15,7 @@ const REGION_MODULES = Object.freeze({
   jeonnam: './admission-results/2026/jeonnam.mjs',
   jeonbuk: './admission-results/2026/jeonbuk.mjs',
   gangwon: './admission-results/2026/gangwon.mjs',
+  jeju: './admission-results/2026/jeju.mjs',
 });
 
 const cache = new Map();
