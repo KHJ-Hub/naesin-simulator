@@ -1,6 +1,7 @@
 import { admissionResultsByYear } from '../admission-results/index.mjs';
 import { normalizeAdmissionRecord } from '../admission-record-normalizer.mjs';
 import { UNIVERSITIES } from './universities.mjs';
+import { universityAudit2026Seoul } from './university-audits/2026/seoul.mjs';
 
 /**
  * 대학 단위 감사 상태는 모집단위별 입시결과 레코드와 별개다.
@@ -22,23 +23,8 @@ export const UNIVERSITY_ADMISSION_AUDIT_STATUS = Object.freeze({
 });
 
 const RESULTS_2026 = Object.freeze((admissionResultsByYear[2026] ?? []).map(normalizeAdmissionRecord));
-const AUDIT_CHECKED_AT = '2026-09-15';
-
-/**
- * 2026학년도 어디가 결과 표에서 해당 전형의 50%/70% cut 열과 모집단위 행을 직접 확인한 대학 단위 감사 결과다.
- * 이 목록은 "공식 표 존재"만 뜻하며, 모집단위별 숫자는 별도 레코드 검증 전까지 추가하지 않는다.
- */
-const ADIGA_CUT_AUDIT_IDS_2026 = Object.freeze({
-  subject: new Set([
-    'incheon-national', 'konkuk', 'kyunghee', 'kookmin', 'dongduk', 'myongji', 'sangmyung', 'sogang',
-    'snue', 'swu', 'sungkyunkwan', 'hanyang', 'myongji-yongin', 'seoul-jangsin', 'ajou', 'cha',
-    'hansei', 'hanyang-erica', 'hyupsung', 'hwasung', 'gyeongin', 'inha', 'chungwoon',
-  ]),
-  comprehensive: new Set([
-    'konkuk', 'kyunghee', 'myongji', 'sangmyung', 'sogang', 'uos', 'sungkyunkwan', 'hufs',
-    'hanyang', 'myongji-yongin', 'ajou', 'cha', 'hanyang-erica', 'gyeongin', 'inha',
-  ]),
-});
+const GENERATED_AUDITS = Object.freeze([...universityAudit2026Seoul]);
+const GENERATED_AUDIT_BY_CODE = new Map(GENERATED_AUDITS.map((item) => [item.universityId.replace('adiga-', ''), item]));
 
 const auditSourceUrl = (university) => university.adigaUrl?.replace('searchSyr=2027', 'searchSyr=2026') ?? null;
 const auditStatusFromRecords = (records, category) => {
@@ -59,8 +45,7 @@ export const UNIVERSITY_AUDIT_2026 = Object.freeze(
     .map((university) => {
       const records = RESULTS_2026.filter((record) => record.university === university.name);
       const dates = recordDates(records);
-      const subjectFromOfficialTable = ADIGA_CUT_AUDIT_IDS_2026.subject.has(university.universityId);
-      const comprehensiveFromOfficialTable = ADIGA_CUT_AUDIT_IDS_2026.comprehensive.has(university.universityId);
+      const generatedAudit = GENERATED_AUDIT_BY_CODE.get(university.adigaCode);
       const recordSourceUrls = [...new Set(records.map((record) => record.sourceUrl).filter(Boolean))];
       const auditSource = auditSourceUrl(university);
       return Object.freeze({
@@ -68,16 +53,19 @@ export const UNIVERSITY_AUDIT_2026 = Object.freeze(
         universityName: university.name,
         region: university.region,
         referenceYear: 2026,
-        homepageUrl: university.homepageUrl,
-        admissionsUrl: university.admissionsUrl,
+        homepageUrl: generatedAudit?.homepageUrl ?? university.homepageUrl,
+        admissionsUrl: generatedAudit?.admissionsUrl ?? university.admissionsUrl,
         adigaUrl: university.adigaUrl,
-        subjectAdmissionStatus: subjectFromOfficialTable ? 'confirmed-cut' : auditStatusFromRecords(records, '학생부교과'),
-        comprehensiveAdmissionStatus: comprehensiveFromOfficialTable ? 'confirmed-cut' : auditStatusFromRecords(records, '학생부종합'),
-        // 공식 결과 레코드 또는 어디가 결과 표를 확인한 경우에만 확인일·출처를 연결한다.
-        checkedAt: subjectFromOfficialTable || comprehensiveFromOfficialTable ? AUDIT_CHECKED_AT : dates.at(-1) ?? null,
-        sourceUrls: Object.freeze(subjectFromOfficialTable || comprehensiveFromOfficialTable
-          ? [...new Set([...recordSourceUrls, auditSource].filter(Boolean))]
-          : recordSourceUrls),
+        subjectAdmissionStatus: generatedAudit?.subjectAdmissionStatus ?? auditStatusFromRecords(records, '학생부교과'),
+        comprehensiveAdmissionStatus: generatedAudit?.comprehensiveAdmissionStatus ?? auditStatusFromRecords(records, '학생부종합'),
+        checkedAt: generatedAudit?.checkedAt ?? dates.at(-1) ?? null,
+        sourceUrls: Object.freeze([...new Set([
+          ...recordSourceUrls,
+          ...(generatedAudit?.sourceUrls ?? []),
+          ...(generatedAudit ? [auditSource] : []),
+        ].filter(Boolean))]),
+        auditState: generatedAudit?.auditState ?? (records.length ? 'completed-from-result-records' : 'not-checked'),
+        failureReason: generatedAudit?.failureReason ?? null,
       });
     }),
 );

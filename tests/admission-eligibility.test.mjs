@@ -25,14 +25,11 @@ test('공식 지원지역이 확인된 지역인재만 부산 학생 기본 검�
   assert.equal(filterAdmissionReferences(ADMISSION_REFERENCE_DATA, { includeSpecialEligibility: true }).length, ADMISSION_REFERENCE_DATA.length);
 });
 
-test('현재 115건의 자격 유형 분포를 보존한다', () => {
-  const count = (type) => ADMISSION_REFERENCE_DATA.filter((item) => item.eligibilityType === type).length;
-  assert.equal(count('general'), 96);
-  assert.equal(count('school-recommendation'), 0);
-  assert.equal(count('regional'), 17);
-  assert.equal(count('rural'), 1);
-  assert.equal(count('opportunity'), 0);
-  assert.equal(count('vocational'), 0);
-  assert.equal(count('special'), 0);
-  assert.equal(count('unknown'), 1);
+test('전국 확장 데이터도 정해진 자격 유형만 사용한다', () => {
+  const allowed = new Set(['general', 'school-recommendation', 'regional', 'rural', 'opportunity', 'vocational', 'special', 'unknown']);
+  assert.ok(ADMISSION_REFERENCE_DATA.every((item) => allowed.has(item.eligibilityType)));
+  assert.ok(ADMISSION_REFERENCE_DATA.some((item) => item.eligibilityType === 'general'));
+  assert.ok(ADMISSION_REFERENCE_DATA.some((item) => item.eligibilityType === 'school-recommendation'));
+  assert.ok(ADMISSION_REFERENCE_DATA.some((item) => item.eligibilityType === 'rural'));
+  assert.ok(ADMISSION_REFERENCE_DATA.some((item) => item.eligibilityType === 'unknown'));
 });

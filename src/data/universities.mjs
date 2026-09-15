@@ -1,8 +1,10 @@
+import { universities2026Seoul } from './university-regions/2026/seoul.mjs';
+
 /**
  * 대학 기본정보. 입시결과 행에는 대학명과 URL을 반복 저장하지 않는다.
  * 확인되지 않은 공식 홈페이지·입학처 주소는 추측하지 않고 null로 둔다.
  */
-export const UNIVERSITIES = Object.freeze([
+const LEGACY_UNIVERSITIES = [
   ['pusan-national', '부산대학교', '부산광역시', '국립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000014'],
   ['pukyong-national', '국립부경대학교', '부산광역시', '국립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000013'],
   ['dong-eui', '동의대학교', '부산광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000107'],
@@ -28,7 +30,7 @@ export const UNIVERSITIES = Object.freeze([
   ['duk-sung', '덕성여자대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000099'],
   ['dongguk', '동국대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000100'],
   ['dongduk', '동덕여자대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000102'],
-  ['myongji', '명지대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000109'],
+  ['myongji', '명지대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000109'],
   ['sahmyook', '삼육대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000116'],
   ['sangmyung', '상명대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000117'],
   ['sogang', '서강대학교', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000120'],
@@ -62,7 +64,7 @@ export const UNIVERSITIES = Object.freeze([
   ['kyonggi', '경기대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000056'],
   ['dae-jin', '대진대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000097'],
   ['luther', '루터대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000108'],
-  ['myongji-yongin', '명지대학교(용인)', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000111'],
+  ['myongji-yongin', '명지대학교(제2캠퍼스)', '서울특별시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000111'],
   ['seoul-theological', '서울신학대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000125'],
   ['seoul-jangsin', '서울장신대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000127'],
   ['sungkyul', '성결대학교', '경기도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000131'],
@@ -91,6 +93,7 @@ export const UNIVERSITIES = Object.freeze([
   ['chungwoon', '청운대학교', '인천광역시', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000284'],
 ].map(([universityId, name, region, establishmentType, adigaUrl]) => ({
   universityId, name, region, establishmentType,
+  adigaCode: adigaUrl.match(/unvCd=(\d+)/)?.[1] ?? null,
   homepageUrl: null, admissionsUrl: null, adigaUrl,
   admissionResultsAvailable: ![
     'methodist-theological', 'gangseo', 'konkuk', 'kyunghee', 'korea', 'kwangwoon',
@@ -104,7 +107,21 @@ export const UNIVERSITIES = Object.freeze([
     'cha', 'calvin', 'pyeongtaek', 'hankyong', 'tukorea', 'kau', 'hansei', 'hanshin',
     'hanyang-erica', 'hyupsung', 'hwasung', 'gyeongin', 'incheon-catholic', 'inha', 'chungwoon',
   ].includes(universityId),
-})));
+}));
+
+const mergeCatalogs = (...catalogs) => {
+  const merged = new Map();
+  for (const university of catalogs.flat()) {
+    const key = university.adigaCode || university.name;
+    const current = merged.get(key);
+    merged.set(key, current
+      ? { ...current, ...university, universityId: current.universityId || university.universityId }
+      : university);
+  }
+  return [...merged.values()];
+};
+
+export const UNIVERSITIES = Object.freeze(mergeCatalogs(LEGACY_UNIVERSITIES, universities2026Seoul));
 
 export const UNIVERSITY_BY_ID = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.universityId, item])));
 export const UNIVERSITY_BY_NAME = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.name, item])));
