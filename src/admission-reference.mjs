@@ -16,12 +16,14 @@ export const ADMISSION_REFERENCE_DATA = Object.freeze([...admissionResults2026])
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
   referenceYear: 'number', region: 'string', university: 'string', field: 'string',
   department: 'string', admissionName: 'string', admissionType: 'string', category: '학생부교과|학생부종합',
-  cut70: 'number', cut50: 'number|null', source: 'string', updatedAt: 'YYYY-MM-DD',
+  cut70: 'number', cut50: 'number|null', source: 'string', updatedAt: 'YYYY-MM-DD|null',
 });
 
 export function validAdmissionReference(item = {}) {
   return Number.isInteger(Number(item.referenceYear))
-    && ['university', 'region', 'field', 'department', 'admissionName', 'admissionType', 'source', 'updatedAt'].every((key) => Boolean(String(item[key] ?? '').trim()))
+    && ['university', 'region', 'department', 'admissionName', 'admissionType', 'source'].every((key) => Boolean(String(item[key] ?? '').trim()))
+    && (item.field == null || typeof item.field === 'string')
+    && (item.updatedAt == null || Boolean(String(item.updatedAt).trim()))
     && ['학생부교과', '학생부종합'].includes(item.category)
     && Number.isFinite(Number(item.cut70))
     && Number(item.cut70) >= 1 && Number(item.cut70) <= 9
