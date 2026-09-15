@@ -1,6 +1,7 @@
 import { universities2026Seoul } from './university-regions/2026/seoul.mjs';
 import { universities2026Gyeonggi } from './university-regions/2026/gyeonggi.mjs';
 import { universities2026Incheon } from './university-regions/2026/incheon.mjs';
+import { universities2026Busan } from './university-regions/2026/busan.mjs';
 
 /**
  * 대학 기본정보. 입시결과 행에는 대학명과 URL을 반복 저장하지 않는다.
@@ -128,6 +129,7 @@ export const UNIVERSITIES = Object.freeze(mergeCatalogs(
   universities2026Seoul,
   universities2026Gyeonggi,
   universities2026Incheon,
+  universities2026Busan,
 ));
 
 export const UNIVERSITY_BY_ID = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.universityId, item])));

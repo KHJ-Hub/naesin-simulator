@@ -29,7 +29,17 @@ export function createOfficialAdmissionResult({
   const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
   const convertedAverage = average == null ? null : convertGrade9ToGrade5(average, DEFAULT_BUSAN_CONVERSION_DATASET);
   const verifiedRegionalEligibility = regionalEligibility
-    ?? regionalEligibilityFor({ university, admissionName, department });
+    ?? regionalEligibilityFor({ university, admissionName, department })
+    ?? (eligibilityType === 'regional' ? {
+      eligibleRegions: [],
+      eligibleSchoolRegions: [],
+      requirementSummary: '',
+      sourceUrl,
+      additionalRequirements: null,
+      requiresIndividualVerification: false,
+      verified: false,
+      checkedAt: null,
+    } : null);
   const eligibility = classifyAdmissionEligibility({
     admissionName,
     eligibilityType,
