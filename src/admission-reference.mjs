@@ -7,6 +7,7 @@ import {
   isStudentRecordComprehensive,
   validAdmissionRecord,
 } from './admission-record-normalizer.mjs';
+import { isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
 
 /** 전년도 공개 입시결과를 현재 내신과 단순 비교하기 위한 설정이다. */
 export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
@@ -33,6 +34,8 @@ export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
   dataAvailability: 'confirmed-cut|cut70-only|cut50-only|average-only|not-published|not-checked|no-result',
   cut70Original: 'number|null', cut50Original: 'number|null', cut70Converted: 'number|null', cut50Converted: 'number|null',
   averageGradeOriginal: 'number|null', averageGradeConverted: 'number|null', conversionDataset: 'string|null',
+  eligibilityType: 'general|school-recommendation|regional|rural|opportunity|vocational|special|unknown',
+  eligibilityVerification: 'official-confirmed|name-classified|needs-eligibility-review', regionalEligibilityConfirmed: 'boolean', studentDefaultVisible: 'boolean',
   interpolation: 'object|null', isApproximate: 'boolean|null', source: 'string', sourceUrl: 'URL', updatedAt: 'YYYY-MM-DD|null',
 });
 
@@ -55,7 +58,7 @@ export function validAdmissionReference(item = {}) {
   return validAdmissionRecord(item);
 }
 
-export { ADMISSION_CATEGORIES, isComparableAdmissionRecord, isStudentRecordComprehensive };
+export { ADMISSION_CATEGORIES, isComparableAdmissionRecord, isStudentRecordComprehensive, isDefaultStudentVisibleAdmission };
 
 // difference가 양수면 현재 내신 숫자가 더 낮아(더 좋은 성적) 70% cut보다 여유가 있음을 뜻한다.
 export function admissionDifference(currentAverage, cut70) {
@@ -80,7 +83,9 @@ export function describeAdmissionDifference(difference) {
 }
 
 export function filterAdmissionReferences(data, filters = {}) {
-  return data.filter((item) => validAdmissionReference(item) && (
+  return data.map(normalizeAdmissionRecord).filter((item) => validAdmissionReference(item) && (
+    (filters.includeSpecialEligibility === true || isDefaultStudentVisibleAdmission(item))
+    &&
     (!filters.region || item.region === filters.region)
     && (!filters.university || item.university === filters.university)
     && (!filters.field || item.field === filters.field)
@@ -89,5 +94,6 @@ export function filterAdmissionReferences(data, filters = {}) {
     && (!filters.admissionType || item.admissionType === filters.admissionType)
     && (!filters.admissionCategory || item.admissionCategory === filters.admissionCategory)
     && (!filters.category || item.admissionCategory === filters.category)
+    && (!filters.eligibilityType || item.eligibilityType === filters.eligibilityType)
   ));
 }

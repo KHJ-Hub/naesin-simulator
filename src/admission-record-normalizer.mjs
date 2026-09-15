@@ -46,6 +46,11 @@ export function normalizeAdmissionRecord(record = {}) {
   const cut50Original = finiteOrNull(record.cut50Original ?? record.cut50);
   const cut70Original = finiteOrNull(record.cut70Original ?? record.cut70);
   const averageGradeOriginal = finiteOrNull(record.averageGradeOriginal ?? record.averageGrade);
+  const eligibility = classifyAdmissionEligibility({
+    admissionName: record.admissionName,
+    eligibilityType: record.eligibilityType,
+    regionalEligibilityConfirmed: record.regionalEligibilityConfirmed === true,
+  });
 
   return {
     ...record,
@@ -63,6 +68,10 @@ export function normalizeAdmissionRecord(record = {}) {
     cut70Converted: finiteOrNull(record.cut70Converted),
     averageGradeOriginal,
     averageGradeConverted: finiteOrNull(record.averageGradeConverted),
+    eligibilityType: eligibility.eligibilityType,
+    eligibilityVerification: String(record.eligibilityVerification ?? eligibility.eligibilityVerification),
+    regionalEligibilityConfirmed: record.regionalEligibilityConfirmed === true,
+    studentDefaultVisible: record.studentDefaultVisible === true || (record.studentDefaultVisible == null && eligibility.studentDefaultVisible),
     field: textOrNull(record.field),
     sourceUrl: textOrNull(record.sourceUrl),
   };
@@ -89,6 +98,7 @@ export function validateAdmissionRecord(record = {}) {
   const errors = [];
   if (!Number.isInteger(item.referenceYear)) errors.push('referenceYear');
   if (!item.admissionCategory) errors.push('admissionCategory');
+  if (!Object.values(ADMISSION_ELIGIBILITY_TYPES).includes(item.eligibilityType)) errors.push('eligibilityType');
   if (!textOrNull(item.university)) errors.push('university');
   if (!textOrNull(item.region)) errors.push('region');
   if (!textOrNull(item.department)) errors.push('department');
@@ -117,3 +127,4 @@ export function validateAdmissionRecord(record = {}) {
 export function validAdmissionRecord(record = {}) {
   return validateAdmissionRecord(record).length === 0;
 }
+import { ADMISSION_ELIGIBILITY_TYPES, classifyAdmissionEligibility } from './admission-eligibility.mjs';

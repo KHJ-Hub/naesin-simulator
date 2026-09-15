@@ -7,6 +7,7 @@
  */
 const ADIGA_SOURCE = '대입정보포털 어디가';
 import { convertGrade9ToGrade5, DEFAULT_BUSAN_CONVERSION_DATASET } from '../grade-conversion/grade9-to-grade5.mjs';
+import { classifyAdmissionEligibility } from '../admission-eligibility.mjs';
 const BUSAN_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000014';
 const ULSAN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000158';
 const GYEONGSANG_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000007';
@@ -25,6 +26,7 @@ const INHA_ADIGA = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menu
 const item = (university, region, department, admissionName, category, cut50, cut70, source, updatedAt = null, sourceName = source === INCHEON ? '인천대학교 입학처' : ADIGA_SOURCE) => {
   const converted50 = cut50 == null ? null : convertGrade9ToGrade5(cut50, DEFAULT_BUSAN_CONVERSION_DATASET);
   const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
+  const eligibility = classifyAdmissionEligibility({ admissionName });
   return {
     referenceYear: 2026, university, region, field: null, department, admissionName,
     // 기존 category는 호환용으로 보존하며 admissionCategory를 새 기준 필드로 사용한다.
@@ -32,6 +34,10 @@ const item = (university, region, department, admissionName, category, cut50, cu
     cut50Original: cut50, cut70Original: cut70,
     cut50Converted: converted50?.convertedValue ?? null, cut70Converted: converted70?.convertedValue ?? null,
     averageGradeOriginal: null, averageGradeConverted: null,
+    eligibilityType: eligibility.eligibilityType,
+    eligibilityVerification: eligibility.eligibilityVerification,
+    regionalEligibilityConfirmed: false,
+    studentDefaultVisible: eligibility.studentDefaultVisible,
     // 인천대 공식 자료는 70% cut만 공개했음을 자료 확인 단계에서 명시했다.
     dataAvailability: source === INCHEON ? 'cut70-only' : 'confirmed-cut',
     conversionDataset: DEFAULT_BUSAN_CONVERSION_DATASET,
