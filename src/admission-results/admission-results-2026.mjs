@@ -9,6 +9,9 @@ const ADIGA_SOURCE = '대입정보포털 어디가';
 const BUSAN_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000014';
 const ULSAN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000158';
 const GYEONGSANG_NATIONAL = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000007';
+const PUKYONG = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000013';
+const DONG_EUI = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000107';
+const CHANGWON = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000028';
 
 const item = (university, region, department, admissionName, category, cut50, cut70, source) => ({
   referenceYear: 2026,
@@ -44,4 +47,19 @@ export const admissionResults2026 = Object.freeze([
   item('경상국립대학교', '경상남도', '국어교육과', '학생부교과(지역인재전형)', '학생부교과', 2.89, 2.93, GYEONGSANG_NATIONAL),
   item('경상국립대학교', '경상남도', '경제학부', '학생부교과(지역인재전형)', '학생부교과', 4.23, 4.46, GYEONGSANG_NATIONAL),
   item('경상국립대학교', '경상남도', '간호학과', '학생부교과(지역인재전형)', '학생부교과', 2.72, 2.77, GYEONGSANG_NATIONAL),
+
+  item('국립부경대학교', '부산광역시', '과학컴퓨팅학과', '학생부교과(교과성적우수인재)', '학생부교과', 3.80, 3.86, PUKYONG),
+  item('국립부경대학교', '부산광역시', '법학과', '학생부교과(교과성적우수인재)', '학생부교과', 3.26, 3.51, PUKYONG),
+  item('국립부경대학교', '부산광역시', '국제통상학부', '학생부교과(교과성적우수인재)', '학생부교과', 3.05, 3.14, PUKYONG),
+  item('국립부경대학교', '부산광역시', '행정복지학부', '학생부교과(교과성적우수인재)', '학생부교과', 3.28, 3.38, PUKYONG),
+  item('국립부경대학교', '부산광역시', '법학과', '학생부교과(지역혁신인재)', '학생부교과', 2.87, 2.88, PUKYONG),
+  item('국립부경대학교', '부산광역시', '국제통상학부', '학생부교과(지역혁신인재)', '학생부교과', 3.10, 3.16, PUKYONG),
+
+  item('동의대학교', '부산광역시', '법학과', '학생부교과(일반고교과전형)', '학생부교과', 4.00, 4.16, DONG_EUI),
+  item('동의대학교', '부산광역시', '문헌정보학과', '학생부교과(일반고교과전형)', '학생부교과', 3.91, 4.16, DONG_EUI),
+  item('동의대학교', '부산광역시', '사회복지학과', '학생부교과(일반고교과전형)', '학생부교과', 3.91, 4.08, DONG_EUI),
+
+  item('국립창원대학교', '경상남도', '건축학부 건축공학전공', '학생부교과(학업성적우수자전형)', '학생부교과', 4.48, 4.52, CHANGWON),
+  item('국립창원대학교', '경상남도', '건축학부 건축학전공', '학생부교과(학업성적우수자전형)', '학생부교과', 3.77, 3.83, CHANGWON),
+  item('국립창원대학교', '경상남도', '국제관계학과', '학생부교과(학업성적우수자전형)', '학생부교과', 4.17, 4.23, CHANGWON),
 ]);
