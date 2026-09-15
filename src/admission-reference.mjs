@@ -1,5 +1,12 @@
 import { admissionResultsByYear } from './admission-results/index.mjs';
 import { UNIVERSITY_BY_NAME } from './data/universities.mjs';
+import {
+  ADMISSION_CATEGORIES,
+  normalizeAdmissionRecord,
+  isComparableAdmissionRecord,
+  isStudentRecordComprehensive,
+  validAdmissionRecord,
+} from './admission-record-normalizer.mjs';
 
 /** 전년도 공개 입시결과를 현재 내신과 단순 비교하기 위한 설정이다. */
 export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
@@ -13,17 +20,20 @@ export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
 export const ADMISSION_CONVERSION_NOTICE = '5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값입니다. 실제 대학별 2028학년도 평가·환산 방식과 다를 수 있습니다.';
 
 // 연도별 모듈만 교체·추가하면 화면 코드 수정 없이 자료를 갱신할 수 있다.
-export const ADMISSION_REFERENCE_DATA = Object.freeze(admissionResultsByYear[2026].map((item) => {
+export const ADMISSION_REFERENCE_DATA = Object.freeze(admissionResultsByYear[2026].map((rawItem) => {
+  const item = normalizeAdmissionRecord(rawItem);
   const universityInfo = UNIVERSITY_BY_NAME[item.university] ?? null;
   return { ...item, universityId: universityInfo?.universityId ?? null, universityInfo };
 }));
 
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
-  referenceYear: 'number', universityId: 'string|null', region: 'string', university: 'string', field: 'string',
-  department: 'string', admissionName: 'string', admissionType: 'string', category: '학생부교과|학생부종합',
-  cut70: 'number', cut50: 'number|null', cut70Original: 'number', cut50Original: 'number|null',
-  cut70Converted: 'number|null', cut50Converted: 'number|null', conversionDataset: 'string',
-  interpolation: 'object', isApproximate: 'boolean', source: 'string', updatedAt: 'YYYY-MM-DD|null',
+  referenceYear: 'number (canonical)', universityId: 'string|null', region: 'string', university: 'string', field: 'string|null',
+  department: 'string', admissionName: 'string', admissionCategory: '학생부교과|학생부종합',
+  admissionType: 'string|null (별도 전형 유형이 있을 때만)', category: 'legacy alias',
+  dataAvailability: 'confirmed-cut|cut70-only|cut50-only|average-only|not-published|not-checked|no-result',
+  cut70Original: 'number|null', cut50Original: 'number|null', cut70Converted: 'number|null', cut50Converted: 'number|null',
+  averageGradeOriginal: 'number|null', averageGradeConverted: 'number|null', conversionDataset: 'string|null',
+  interpolation: 'object|null', isApproximate: 'boolean|null', source: 'string', sourceUrl: 'URL', updatedAt: 'YYYY-MM-DD|null',
 });
 
 export function admissionUniversityLinks(item = {}) {
@@ -42,15 +52,10 @@ export function admissionComparisonCut(item = {}, scale = 'converted') {
 }
 
 export function validAdmissionReference(item = {}) {
-  return Number.isInteger(Number(item.referenceYear))
-    && ['university', 'region', 'department', 'admissionName', 'admissionType', 'source'].every((key) => Boolean(String(item[key] ?? '').trim()))
-    && (item.field == null || typeof item.field === 'string')
-    && (item.updatedAt == null || Boolean(String(item.updatedAt).trim()))
-    && ['학생부교과', '학생부종합'].includes(item.category)
-    && Number.isFinite(Number(item.cut70))
-    && Number(item.cut70) >= 1 && Number(item.cut70) <= 9
-    && (item.cut50 == null || item.cut50 === '' || Number.isFinite(Number(item.cut50)));
+  return validAdmissionRecord(item);
 }
+
+export { ADMISSION_CATEGORIES, isComparableAdmissionRecord, isStudentRecordComprehensive };
 
 // difference가 양수면 현재 내신 숫자가 더 낮아(더 좋은 성적) 70% cut보다 여유가 있음을 뜻한다.
 export function admissionDifference(currentAverage, cut70) {
@@ -82,6 +87,7 @@ export function filterAdmissionReferences(data, filters = {}) {
     && (!filters.department || item.department === filters.department)
     && (!filters.admissionName || item.admissionName === filters.admissionName)
     && (!filters.admissionType || item.admissionType === filters.admissionType)
-    && (!filters.category || item.category === filters.category)
+    && (!filters.admissionCategory || item.admissionCategory === filters.admissionCategory)
+    && (!filters.category || item.admissionCategory === filters.category)
   ));
 }

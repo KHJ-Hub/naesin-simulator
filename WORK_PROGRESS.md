@@ -25,6 +25,7 @@
 ## 진행 중
 
 - GitHub Pages에 수정 사항 배포 및 공개 URL 확인 완료
+- 전국 입시결과 확장 전 스키마·비교 로직 정비 완료: 학생부교과만 현재/목표 내신 비교 대상으로 사용하고, 학생부종합은 전년도 등록자 내신 참고로 분리
 
 ## 남은 작업
 
@@ -52,6 +53,8 @@
 - `tests/fixtures/browser-backup.json`: 개인정보가 아닌 브라우저 복구 검증용 예제 데이터
 - `src/course-catalog.mjs`: 학교 과목 카탈로그와 공통/선택 과목 조회 계층
 - `tests/course-catalog.test.mjs`: 2026 입학생 공통·반별 과목 및 성적 처리 검증
+- `src/admission-record-normalizer.mjs`: 입시결과 canonical schema 정규화 및 상태별 검증
+- `src/admission-reference.mjs`: 기준 학년도·전형 카테고리·공개 상태 검증과 비교 대상 분리
 
 ## DB 변경
 
@@ -73,6 +76,8 @@
 - GitHub Pages `pages build and deployment`: 성공 (`b47d452`)
 - 공개 URL: HTTP 200 확인 (`https://khj-hub.github.io/naesin-simulator/`)
 - `index.html`, `styles.css`, `src/app.mjs`, `src/grade-calculator.mjs`: 모두 HTTP 200
+- `npm test`: 33 passed (입시결과 정규화, 공개 상태, 학생부종합 비교 제외, 환산 범위 포함)
+- 로컬 `127.0.0.1:5500`: 입시결과 영역 새로고침·콘솔 오류 없음 확인
 
 ## Git 상태
 

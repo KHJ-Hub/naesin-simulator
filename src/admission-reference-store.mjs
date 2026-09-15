@@ -1,7 +1,7 @@
 export const ADMISSION_INTERESTS_STORAGE_KEY = 'naesin-admission-interests:v1';
 
 export function admissionInterestKey(item = {}) {
-  return [item.referenceYear, item.university, item.department, item.admissionName].map((value) => String(value ?? '').trim()).join('|');
+  return [item.referenceYear, item.university, item.department, item.admissionCategory ?? item.category, item.admissionName].map((value) => String(value ?? '').trim()).join('|');
 }
 
 export function normalizeAdmissionInterest(item = {}) {
@@ -17,7 +17,8 @@ export function normalizeAdmissionInterest(item = {}) {
   if (!Number.isInteger(referenceYear) || !university || !department || !admissionName || !Number.isFinite(cut70)) return null;
   return { referenceYear, university, department, admissionName,
     admissionType: String(item.admissionType ?? '').trim().slice(0, 50),
-    category: String(item.category ?? '').trim().slice(0, 50), cut70: Number(cut70.toFixed(2)),
+    admissionCategory: String(item.admissionCategory ?? item.category ?? '').trim().slice(0, 50),
+    category: String(item.category ?? item.admissionCategory ?? '').trim().slice(0, 50), cut70: Number(cut70.toFixed(2)),
     ...(Object.prototype.hasOwnProperty.call(item, 'cut70Converted') ? {
       cut50: Number.isFinite(cut50) ? Number(cut50.toFixed(2)) : null,
       cut70Original: Number(cut70.toFixed(2)), cut50Original: Number.isFinite(cut50) ? Number(cut50.toFixed(2)) : null,
@@ -25,7 +26,7 @@ export function normalizeAdmissionInterest(item = {}) {
       cut50Converted: Number.isFinite(cut50Converted) ? Number(cut50Converted.toFixed(2)) : null,
     } : {}),
     comparisonScore: Number.isFinite(comparisonScore) ? Number(comparisonScore.toFixed(2)) : null,
-    comparisonBasis: item.comparisonBasis === 'target' ? 'target' : 'current' };
+    comparisonBasis: item.comparisonBasis === 'target' ? 'target' : item.comparisonBasis === 'reference' ? 'reference' : 'current' };
 }
 
 export function normalizeAdmissionInterests(items = []) {

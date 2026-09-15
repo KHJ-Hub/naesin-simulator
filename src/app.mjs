@@ -10,7 +10,7 @@ import {
 } from './grade-calculator.mjs?v=20260914-quickinput3';
 import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store2';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
-import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences } from './admission-reference.mjs?v=20260915-admission-reference3';
+import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260915-admission-reference4';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
@@ -32,7 +32,7 @@ function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-$
 let state = loadState();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
-const admissionFilters = { region: '', university: '', field: '', department: '', admissionName: '', category: '' };
+const admissionFilters = { region: '', university: '', field: '', department: '', admissionName: '', admissionCategory: '' };
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -269,23 +269,26 @@ function admissionComparison() {
 }
 function admissionResultCard(item, comparison) {
   const originalMode = state.admissionGradeScaleMode === 'original9';
+  const comparable = isComparableAdmissionRecord(item);
+  const comprehensive = isStudentRecordComprehensive(item);
   const referenceCut = admissionComparisonCut(item, originalMode ? 'original' : 'converted');
-  const difference = originalMode ? null : admissionDifference(comparison.value, referenceCut);
-  const bandKey = originalMode ? 'original' : classifyAdmissionReference(comparison.value, referenceCut);
-  const band = originalMode ? { label: '9등급제 원본' } : ADMISSION_REFERENCE_SETTINGS.bands[bandKey];
+  const difference = originalMode || !comparable ? null : admissionDifference(comparison.value, referenceCut);
+  const bandKey = originalMode ? 'original' : comparable ? classifyAdmissionReference(comparison.value, referenceCut) : 'reference';
+  const band = originalMode ? { label: '9등급제 원본' } : comparable ? ADMISSION_REFERENCE_SETTINGS.bands[bandKey] : { label: '전년도 등록자 내신 참고' };
   const key = admissionInterestKey(item);
   const saved = state.admissionInterests.some((interest) => admissionInterestKey(interest) === key);
   const original = `<span>원본 9등급제 <b>${fmt(Number(item.cut70Original ?? item.cut70))}</b></span>`;
   const converted = item.cut70Converted != null ? `<span>5등급제 환산 참고 <b>${fmt(Number(item.cut70Converted))}</b></span>` : '';
   const scoreLine = originalMode ? original : `<span>5등급제 환산 참고 <b>${fmt(Number(item.cut70Converted))}</b></span><small>원본 9등급제 ${fmt(Number(item.cut70Original ?? item.cut70))}</small>`;
-  const differenceLine = originalMode ? '<p class="admission-difference">원본 9등급제 값은 5등급제 학생 내신과 직접 비교하지 않습니다.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
-  const currentLine = originalMode ? '' : `<span class="admission-score-current">${comparison.label} <b>${fmt(comparison.value)}</b></span>`;
-  return `<article class="admission-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)}</span></div><span class="admission-band-label ${bandKey}">${band.label}</span></div><p class="admission-type">${escapeHtml(item.category)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores"><span class="admission-score-cut">전년도 70% cut ${scoreLine}</span>${currentLine}</div>${differenceLine}<div class="admission-card-actions"><button class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div><details class="admission-card-details"><summary>세부 정보</summary><div class="admission-card-details-body">${item.cut50Original != null ? `<span>50% cut 원본 <b>${fmt(Number(item.cut50Original))}</b></span>` : ''}${item.cut50Converted != null ? `<span>50% cut 환산 참고 <b>${fmt(Number(item.cut50Converted))}</b></span>` : ''}<small>${escapeHtml(item.referenceYear)}학년도 · ${escapeHtml(item.source)}${item.updatedAt ? ` · ${escapeHtml(item.updatedAt)} 갱신` : ''}</small></div></details></article>`;
+  const differenceLine = originalMode ? '<p class="admission-difference">원본 9등급제 값은 5등급제 학생 내신과 직접 비교하지 않습니다.</p>' : comprehensive ? '<p class="admission-difference">학생부종합 전형은 전년도 등록자 내신 참고로만 제공하며 현재·목표 내신과 비교하지 않습니다.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
+  const currentLine = originalMode || !comparable ? '' : `<span class="admission-score-current">${comparison.label} <b>${fmt(comparison.value)}</b></span>`;
+  const availabilityLine = item.dataAvailability === 'cut70-only' ? '<small>공식 70% cut만 공개</small>' : item.dataAvailability === 'average-only' ? '<small>공식 평균등급 참고</small>' : '';
+  return `<article class="admission-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)}</span></div><span class="admission-band-label ${bandKey}">${band.label}</span></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores"><span class="admission-score-cut">전년도 70% cut ${scoreLine}</span>${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div><details class="admission-card-details"><summary>세부 정보</summary><div class="admission-card-details-body">${item.cut50Original != null ? `<span>50% cut 원본 <b>${fmt(Number(item.cut50Original))}</b></span>` : ''}${item.cut50Converted != null ? `<span>50% cut 환산 참고 <b>${fmt(Number(item.cut50Converted))}</b></span>` : ''}<small>${escapeHtml(item.referenceYear)}학년도 · ${escapeHtml(item.source)}${item.updatedAt ? ` · ${escapeHtml(item.updatedAt)} 갱신` : ''}</small></div></details></article>`;
 }
 function renderAdmissionInterests() {
   const container = $('#admission-interests');
   if (!state.admissionInterests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없습니다.</p>'; return; }
-  container.innerHTML = state.admissionInterests.map((item) => `<article class="interest-item"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><small>${escapeHtml(item.referenceYear)}학년도 · 70% cut ${fmt(item.cut70)} · ${item.comparisonBasis === 'target' ? '목표 내신' : '현재 내신'} ${fmt(item.comparisonScore)}</small></div><button class="icon-button" data-admission-remove="${escapeHtml(admissionInterestKey(item))}">삭제</button></article>`).join('');
+  container.innerHTML = state.admissionInterests.map((item) => `<article class="interest-item"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><small>${escapeHtml(item.referenceYear)}학년도 · 70% cut ${fmt(item.cut70)} · ${item.comparisonBasis === 'reference' ? '전년도 등록자 내신 참고' : item.comparisonBasis === 'target' ? '목표 내신' : '현재 내신'}${item.comparisonScore == null ? '' : ` ${fmt(item.comparisonScore)}`}</small></div><button class="icon-button" data-admission-remove="${escapeHtml(admissionInterestKey(item))}">삭제</button></article>`).join('');
 }
 function renderAdmissionReferences() {
   document.querySelectorAll('input[name="admission-scale"]').forEach((input) => { input.checked = input.value === state.admissionGradeScaleMode; });
@@ -297,9 +300,9 @@ function renderAdmissionReferences() {
   $('#admission-view-button').disabled = !state.calculated || !Number.isFinite(comparison.value);
   if (!state.calculated || !Number.isFinite(comparison.value)) { result.innerHTML = '<div class="empty-state">내신 계산을 완료하면 현재 내신과 전년도 공개 입시결과를 비교할 수 있습니다.</div>'; renderAdmissionInterests(); return; }
   if (!ADMISSION_REFERENCE_DATA.length) { result.innerHTML = '<div class="empty-state">등록된 전년도 입시결과 데이터가 없습니다.<br /><small>대교협 대입정보포털 어디가의 공개 자료를 확인한 뒤 연도별 데이터 파일에 추가합니다.</small></div>'; renderAdmissionInterests(); return; }
-  const filtered = filterAdmissionReferences(ADMISSION_REFERENCE_DATA, admissionFilters).map((item) => ({ item, band: state.admissionGradeScaleMode === 'converted5' ? classifyAdmissionReference(comparison.value, admissionComparisonCut(item, 'converted')) : 'original' }));
-  const bandKeys = state.admissionGradeScaleMode === 'converted5' ? Object.keys(ADMISSION_REFERENCE_SETTINGS.bands) : ['original'];
-  result.innerHTML = filtered.length ? bandKeys.map((key) => { const items = filtered.filter((entry) => entry.band === key); const label = key === 'original' ? '9등급제 원본 자료' : ADMISSION_REFERENCE_SETTINGS.bands[key].label; return items.length ? `<section class="admission-band"><h3>${label}</h3><div class="admission-card-grid">${items.map(({ item }) => admissionResultCard(item, comparison)).join('')}</div></section>` : ''; }).join('') : '<div class="empty-state">선택한 조건에 맞는 참고 자료가 없습니다.</div>';
+  const filtered = filterAdmissionReferences(ADMISSION_REFERENCE_DATA, admissionFilters).map((item) => ({ item, band: state.admissionGradeScaleMode === 'converted5' && isComparableAdmissionRecord(item) ? classifyAdmissionReference(comparison.value, admissionComparisonCut(item, 'converted')) : state.admissionGradeScaleMode === 'converted5' ? 'reference' : 'original' }));
+  const bandKeys = state.admissionGradeScaleMode === 'converted5' ? [...Object.keys(ADMISSION_REFERENCE_SETTINGS.bands), 'reference'] : ['original'];
+  result.innerHTML = filtered.length ? bandKeys.map((key) => { const items = filtered.filter((entry) => entry.band === key); const label = key === 'original' ? '9등급제 원본 자료' : key === 'reference' ? '전년도 등록자 내신 참고' : ADMISSION_REFERENCE_SETTINGS.bands[key].label; return items.length ? `<section class="admission-band"><h3>${label}</h3><div class="admission-card-grid">${items.map(({ item }) => admissionResultCard(item, comparison)).join('')}</div></section>` : ''; }).join('') : '<div class="empty-state">선택한 조건에 맞는 참고 자료가 없습니다.</div>';
   renderAdmissionInterests();
 }
 function goalDetails() {
@@ -409,7 +412,7 @@ $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculat
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; saveState(); renderSummary(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
 document.querySelector('#admission-filters').addEventListener('change', (event) => {
-  const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName', 'admission-category': 'category' };
+  const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName', 'admission-category': 'admissionCategory' };
   const key = map[event.target.id];
   if (!key) return;
   admissionFilters[key] = event.target.value;
@@ -438,7 +441,7 @@ document.querySelector('#admission-reference-panel').addEventListener('click', (
   if (!key) return;
   const item = ADMISSION_REFERENCE_DATA.find((entry) => admissionInterestKey(entry) === key) ?? state.admissionInterests.find((entry) => admissionInterestKey(entry) === key);
   if (!item) return;
-  if (saveButton) { const comparison = admissionComparison(); state.admissionInterests = toggleAdmissionInterest(state.admissionInterests, { ...item, comparisonScore: comparison.value, comparisonBasis: comparison.basis }); showToast(state.admissionInterests.some((interest) => admissionInterestKey(interest) === key) ? '관심 대학에 저장했습니다.' : '관심 대학 저장을 해제했습니다.'); }
+  if (saveButton) { const comparison = isComparableAdmissionRecord(item) ? admissionComparison() : { value: null, basis: 'reference' }; state.admissionInterests = toggleAdmissionInterest(state.admissionInterests, { ...item, comparisonScore: comparison.value, comparisonBasis: comparison.basis }); showToast(state.admissionInterests.some((interest) => admissionInterestKey(interest) === key) ? '관심 대학에 저장했습니다.' : '관심 대학 저장을 해제했습니다.'); }
   else { state.admissionInterests = state.admissionInterests.filter((interest) => admissionInterestKey(interest) !== key); showToast('관심 대학에서 삭제했습니다.'); }
   saveState(); renderAdmissionReferences(); renderPrintReport();
 });

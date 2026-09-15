@@ -26,9 +26,13 @@ const item = (university, region, department, admissionName, category, cut50, cu
   const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
   return {
     referenceYear: 2026, university, region, field: null, department, admissionName,
-    admissionType: category, category, cut50, cut70,
+    // 기존 category는 호환용으로 보존하며 admissionCategory를 새 기준 필드로 사용한다.
+    admissionCategory: category, admissionType: null, category, cut50, cut70,
     cut50Original: cut50, cut70Original: cut70,
     cut50Converted: converted50?.convertedValue ?? null, cut70Converted: converted70?.convertedValue ?? null,
+    averageGradeOriginal: null, averageGradeConverted: null,
+    // 인천대 공식 자료는 70% cut만 공개했음을 자료 확인 단계에서 명시했다.
+    dataAvailability: source === INCHEON ? 'cut70-only' : 'confirmed-cut',
     conversionDataset: DEFAULT_BUSAN_CONVERSION_DATASET,
     interpolation: { cut50: Boolean(converted50?.interpolation), cut70: Boolean(converted70?.interpolation) },
     conversionMethod: 'busan-grade5-cumulative-anchor-interpolation-v1',
