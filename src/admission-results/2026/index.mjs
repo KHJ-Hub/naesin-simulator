@@ -13,6 +13,7 @@ import { admissionResults2026Chungbuk } from './chungbuk.mjs';
 import { admissionResults2026Gwangju } from './gwangju.mjs';
 import { admissionResults2026Jeonnam } from './jeonnam.mjs';
 import { admissionResults2026Jeonbuk } from './jeonbuk.mjs';
+import { admissionResults2026Gangwon } from './gangwon.mjs';
 
 export const admissionResultsByRegion2026 = Object.freeze({
   busan: admissionResults2026Busan,
@@ -30,6 +31,7 @@ export const admissionResultsByRegion2026 = Object.freeze({
   gwangju: admissionResults2026Gwangju,
   jeonnam: admissionResults2026Jeonnam,
   jeonbuk: admissionResults2026Jeonbuk,
+  gangwon: admissionResults2026Gangwon,
 });
 export const admissionResults2026Regional = Object.freeze([
   ...admissionResults2026Busan,
@@ -47,4 +49,5 @@ export const admissionResults2026Regional = Object.freeze([
   ...admissionResults2026Gwangju,
   ...admissionResults2026Jeonnam,
   ...admissionResults2026Jeonbuk,
+  ...admissionResults2026Gangwon,
 ]);
