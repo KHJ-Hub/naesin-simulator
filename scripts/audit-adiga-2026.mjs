@@ -23,6 +23,12 @@ const LIST_URL = `${BASE}/ucp/uvt/uni/univView.do?menuId=PCUVTINF2000`;
 const checkedAt = new Date().toISOString().slice(0, 10);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// 공식 상세 페이지가 다른 캠퍼스와 동일한 전 대학 결과를 반복 제공해
+// 모집단위를 해당 캠퍼스에 귀속할 수 없는 경우에는 결과 행을 만들지 않는다.
+const AMBIGUOUS_CAMPUS_RESULTS = Object.freeze({
+  '0000024': 'campus attribution unresolved: result tables duplicate the Gwangju campus page',
+});
+
 function decodeHtml(value = '') {
   const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
   return value
@@ -239,6 +245,11 @@ for (let index = 0; index < universities.length; index += 1) {
     university.homepageUrl = parseExternalUrl(html, '홈페이지');
     university.admissionsUrl = parseExternalUrl(html, '입시홈페이지');
     const extraction = extractResultTables(html, university);
+    const ambiguousCampusReason = AMBIGUOUS_CAMPUS_RESULTS[listed.adigaCode];
+    if (ambiguousCampusReason && extraction.records.length) {
+      extraction.records = [];
+      extraction.errors.push(ambiguousCampusReason);
+    }
     const pageText = text(html);
     resultRows.push(...extraction.records);
     auditRows.push({

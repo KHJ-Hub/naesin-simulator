@@ -79,6 +79,14 @@ test('광주 공식 목록 전체가 감사 상태로 정리된다', () => {
   assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.광주광역시.unconfirmed, []);
 });
 
+test('전남 공식 목록 전체가 감사 상태로 정리되고 캠퍼스 중복 결과는 제외된다', async () => {
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.전라남도.total, 10);
+  assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.전라남도.audited, 10);
+  assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.전라남도.unconfirmed, []);
+  const { admissionResults2026Jeonnam } = await import('../src/admission-results/2026/jeonnam.mjs');
+  assert.equal(admissionResults2026Jeonnam.length, 0);
+});
+
 test('서울 공식 감사와 기존 수도권 결과 상태를 함께 연결한다', () => {
   const gachon = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '가천대학교');
   const konkuk = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === '건국대학교');
