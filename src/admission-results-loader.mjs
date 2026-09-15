@@ -2,6 +2,7 @@ const REGION_MODULES = Object.freeze({
   busan: './admission-results/2026/busan.mjs',
   ulsan: './admission-results/2026/ulsan.mjs',
   gyeongnam: './admission-results/2026/gyeongnam.mjs',
+  incheon: './admission-results/2026/incheon.mjs',
 });
 
 const cache = new Map();
@@ -19,4 +20,3 @@ export async function loadAdmissionResultsByRegion(region) {
 
 export function clearAdmissionResultsCache() { cache.clear(); }
 export const admissionResultRegions = Object.freeze(Object.keys(REGION_MODULES));
-

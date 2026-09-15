@@ -18,8 +18,9 @@ const BUSAN_CATHOLIC = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?
 const KOSIN = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000071';
 const INJE = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000164';
 const KYUNGNAM = 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000059';
+const INCHEON = 'https://admission.inu.ac.kr/detail.do?board_seq=15139&categoryid=52&menuurl=4428MQNdeF7ekIPFWbVCAg%3D%3D&pageNo=1&userpwd=';
 
-const item = (university, region, department, admissionName, category, cut50, cut70, source) => {
+const item = (university, region, department, admissionName, category, cut50, cut70, source, updatedAt = null) => {
   const converted50 = cut50 == null ? null : convertGrade9ToGrade5(cut50, DEFAULT_BUSAN_CONVERSION_DATASET);
   const converted70 = cut70 == null ? null : convertGrade9ToGrade5(cut70, DEFAULT_BUSAN_CONVERSION_DATASET);
   return {
@@ -32,7 +33,7 @@ const item = (university, region, department, admissionName, category, cut50, cu
     conversionMethod: 'busan-grade5-cumulative-anchor-interpolation-v1',
     conversionBasis: '부산광역시교육청학력개발원 진로진학지원센터 98개교 15,978명 고2 1학기 누적 등급평균 분석 자료',
     conversionSampleSize: 15978, conversionSchoolCount: 98, convertedScale: 5, isApproximate: true,
-    source: ADIGA_SOURCE, sourceUrl: source, updatedAt: null,
+    source: source === INCHEON ? '인천대학교 입학처' : ADIGA_SOURCE, sourceUrl: source, updatedAt,
   };
 };
 
@@ -114,4 +115,38 @@ export const admissionResults2026 = Object.freeze([
   item('경남대학교', '경상남도', '영어교육과', '학생부교과(지역인재전형)', '학생부교과', 2.90, 3.10, KYUNGNAM),
   item('경남대학교', '경상남도', '사회복지학과', '학생부교과(지역인재전형)', '학생부교과', 4.20, 4.60, KYUNGNAM),
   item('경남대학교', '경상남도', '수학교육과', '학생부교과(지역인재전형)', '학생부교과', 3.10, 3.40, KYUNGNAM),
+
+  // 인천대학교 입학처의 2026학년도 수시모집 결과표는 최종등록자 70% cut만 공개한다.
+  // 50% cut은 추정하지 않고 null로 유지한다.
+  item('인천대학교', '인천광역시', '국어국문학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.10, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '영어영문학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.24, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '독어독문학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.05, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '불어불문학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.05, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '일본지역문화학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.24, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '중어중국학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.06, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '수학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.81, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '물리학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.94, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '화학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.70, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '패션산업학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.08, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '해양학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.98, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '사회복지학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.98, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '미디어커뮤니케이션학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.24, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '문헌정보학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.24, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '창의인재개발학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.24, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '행정학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.97, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '정치외교학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.07, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '경제학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.88, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', 'Global Trade & Service학부', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.89, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '소비자학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.73, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '기계공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.76, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '전기공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.78, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '전자공학부', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.65, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '산업경영공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.82, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '신소재공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.66, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '안전공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.02, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '에너지화학공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.38, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '바이오-로봇시스템공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.00, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '컴퓨터공학부', '학생부교과(교과성적우수자전형)', '학생부교과', null, 2.93, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '정보통신공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.01, INCHEON, '2026-04-01'),
+  item('인천대학교', '인천광역시', '임베디드시스템공학과', '학생부교과(교과성적우수자전형)', '학생부교과', null, 3.19, INCHEON, '2026-04-01'),
 ]);

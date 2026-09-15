@@ -15,6 +15,7 @@ export const UNIVERSITIES = Object.freeze([
   ['changwon-national', '국립창원대학교', '경상남도', '국립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000028'],
   ['inje', '인제대학교', '경상남도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000164'],
   ['kyungnam', '경남대학교', '경상남도', '사립', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000059'],
+  ['incheon-national', '인천대학교', '인천광역시', '국립대법인', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0002660'],
 ].map(([universityId, name, region, establishmentType, adigaUrl]) => ({
   universityId, name, region, establishmentType,
   homepageUrl: null, admissionsUrl: null, adigaUrl,
