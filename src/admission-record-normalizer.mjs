@@ -28,6 +28,53 @@ const AVAILABILITY_VALUES = new Set(Object.values(ADMISSION_DATA_AVAILABILITY));
 const finiteOrNull = (value) => value == null || value === '' ? null : Number.isFinite(Number(value)) ? Number(value) : null;
 const textOrNull = (value) => String(value ?? '').trim() || null;
 
+export const ADMISSION_ACADEMIC_FIELDS = Object.freeze({
+  HUMANITIES: 'humanities',
+  NATURAL: 'natural',
+  ARTS: 'arts',
+  OTHER: 'other',
+  UNKNOWN: 'unknown',
+});
+
+const ACADEMIC_FIELD_ALIASES = Object.freeze({
+  humanities: ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
+  '인문': ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
+  '인문사회': ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
+  '사회': ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
+  '교육': ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
+  natural: ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  '자연': ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  '자연과학': ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  '공학': ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  '의학/보건': ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  '의약': ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  '보건': ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  arts: ADMISSION_ACADEMIC_FIELDS.ARTS,
+  '예체능': ADMISSION_ACADEMIC_FIELDS.ARTS,
+  '예술': ADMISSION_ACADEMIC_FIELDS.ARTS,
+  '체육': ADMISSION_ACADEMIC_FIELDS.ARTS,
+  other: ADMISSION_ACADEMIC_FIELDS.OTHER,
+  '기타': ADMISSION_ACADEMIC_FIELDS.OTHER,
+  unknown: ADMISSION_ACADEMIC_FIELDS.UNKNOWN,
+  '미분류': ADMISSION_ACADEMIC_FIELDS.UNKNOWN,
+});
+
+export function normalizeAcademicField(value) {
+  const normalized = String(value ?? '').trim();
+  return ACADEMIC_FIELD_ALIASES[normalized] ?? ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
+}
+
+/** 공식 계열값이 없을 때 모집단위명만으로 명확한 경우에 한해 넓은 계열을 보완한다. */
+export function inferAcademicFieldFromDepartment(department) {
+  const name = String(department ?? '').replace(/\s/g, '');
+  if (!name) return ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
+  if (/(예술|디자인|미술|회화|조형|음악|성악|작곡|무용|연극|영화|공연|체육|스포츠|애니메이션)/.test(name)) return ADMISSION_ACADEMIC_FIELDS.ARTS;
+  if (/((?<!전)공학|컴퓨터|소프트웨어|인공지능|데이터사이언스|정보보호|사이버보안|수학|통계|물리|화학|생명|생물|바이오|간호|의예|의학|약학|치의|한의|보건|재활|임상병리|방사선|치위생|응급구조|건축|환경|식품|영양|농학|산림|원예|축산|동물|해양|지구과학|스마트팜)/.test(name)) return ADMISSION_ACADEMIC_FIELDS.NATURAL;
+  if (/(국어|문예|문학|영어|독어|불어|중어|일어|러시아|스페인|언어|사학|역사|철학|종교|신학|법학|행정|정치|외교|경제|경영|회계|무역|금융|관광|사회|복지|심리|아동|유아|교육|미디어|언론|광고|홍보|국제|문화인류)/.test(name)) return ADMISSION_ACADEMIC_FIELDS.HUMANITIES;
+  if (/(자유전공|자율전공|무전공|융합학부|융합전공)/.test(name)) return ADMISSION_ACADEMIC_FIELDS.OTHER;
+  return ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
+}
+
 export function normalizeAdmissionCategory(value) {
   return CATEGORY_ALIASES[String(value ?? '').trim()] ?? null;
 }
@@ -85,6 +132,11 @@ export function normalizeAdmissionRecord(record = {}) {
       : null,
     studentDefaultVisible: record.studentDefaultVisible === true || (record.studentDefaultVisible == null && eligibility.studentDefaultVisible),
     field: textOrNull(record.field),
+    academicField: record.academicField != null || record.field != null
+      ? normalizeAcademicField(record.academicField ?? record.field)
+      : inferAcademicFieldFromDepartment(record.department),
+    majorSearchGroup: textOrNull(record.majorSearchGroup),
+    normalizedMajorKeyword: textOrNull(record.normalizedMajorKeyword),
     sourceUrl: textOrNull(record.sourceUrl),
   };
 }

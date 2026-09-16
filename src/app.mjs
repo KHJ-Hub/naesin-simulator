@@ -10,7 +10,8 @@ import {
 } from './grade-calculator.mjs?v=20260914-quickinput3';
 import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store2';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
-import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260915-regional-eligibility1';
+import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-dependent-filters1';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailableAdmissionCategories, getAvailableAdmissionNames, getAvailableDepartments, getAvailableRegions, getAvailableUniversities, reconcileAdmissionFilters } from './admission-filter-options.mjs?v=20260916-dependent-filters1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
@@ -256,9 +257,27 @@ function renderSubjectSummary() {
   };
   $('#subject-summary').innerHTML = summary.length ? summary.map(({ subjectGroup, average }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong><small>${advice(average)}</small></div>`).join('') : '<div class="empty-state">내신 계산 후 교과별 분석이 표시됩니다.</div>';
 }
-function admissionOptions(key, placeholder) {
-  const values = [...new Set(ADMISSION_REFERENCE_DATA.map((item) => item[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'ko'));
-  return `<option value="">${placeholder}</option>${values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('')}`;
+function admissionOptions(values, placeholder, labels = {}) {
+  return `<option value="">${placeholder}</option>${values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(labels[value] ?? value)}</option>`).join('')}`;
+}
+function renderAdmissionFilterOptions() {
+  const admissionNames = getAvailableAdmissionNames(ADMISSION_REFERENCE_DATA, admissionFilters);
+  const configurations = [
+    ['region', getAvailableRegions(ADMISSION_REFERENCE_DATA, admissionFilters), '전체 지역'],
+    ['university', getAvailableUniversities(ADMISSION_REFERENCE_DATA, admissionFilters), '전체 대학'],
+    ['field', getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, admissionFilters), '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
+    ['department', getAvailableDepartments(ADMISSION_REFERENCE_DATA, admissionFilters), admissionFilters.university ? '전체 모집단위' : '대학을 먼저 선택하세요'],
+    ['admissionName', admissionNames, admissionNames.length ? '전체 전형명' : '대학을 먼저 선택하세요'],
+    ['admissionCategory', getAvailableAdmissionCategories(ADMISSION_REFERENCE_DATA, admissionFilters), '전체 전형 구분'],
+  ];
+  configurations.forEach(([key, values, placeholder, labels]) => {
+    const element = $(`#admission-${key}`);
+    if (!element) return;
+    element.innerHTML = admissionOptions(values, placeholder, labels);
+    element.value = admissionFilters[key];
+    if (key === 'department') element.disabled = !admissionFilters.university;
+    if (key === 'admissionName') element.disabled = values.length === 0;
+  });
 }
 function admissionComparison() {
   const current = calculateOverallAverage(state.calculated ? effectiveRecords() : [], state.weighted);
@@ -293,7 +312,7 @@ function renderAdmissionInterests() {
 function renderAdmissionReferences() {
   document.querySelectorAll('input[name="admission-scale"]').forEach((input) => { input.checked = input.value === state.admissionGradeScaleMode; });
   const notice = document.querySelector('.admission-conversion-notice'); if (notice) notice.textContent = state.admissionGradeScaleMode === 'original9' ? '전년도 공식 입시결과의 9등급제 원본 값입니다.' : ADMISSION_CONVERSION_NOTICE;
-  ['region', 'university', 'field', 'department', 'admissionName'].forEach((key) => { const element = $(`#admission-${key}`); if (element) { element.innerHTML = admissionOptions(key, key === 'region' ? '전체 지역' : key === 'university' ? '전체 대학' : key === 'field' ? '전체 계열' : key === 'department' ? '전체 모집단위' : '전체 전형명'); element.value = admissionFilters[key]; } });
+  renderAdmissionFilterOptions();
   const result = $('#admission-reference-result');
   const comparison = admissionComparison();
   $('#admission-current-score').textContent = state.admissionGradeScaleMode === 'original9' ? '9등급제 원본 입시결과 보기' : (Number.isFinite(comparison.value) ? `${comparison.label} ${fmt(comparison.value)}` : '내신 계산 후 이용 가능');
@@ -416,6 +435,7 @@ document.querySelector('#admission-filters').addEventListener('change', (event) 
   const key = map[event.target.id];
   if (!key) return;
   admissionFilters[key] = event.target.value;
+  Object.assign(admissionFilters, reconcileAdmissionFilters(ADMISSION_REFERENCE_DATA, admissionFilters));
   renderAdmissionReferences();
 });
 $('#admission-view-button').addEventListener('click', () => {

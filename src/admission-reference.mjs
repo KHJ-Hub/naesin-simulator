@@ -8,6 +8,7 @@ import {
   validAdmissionRecord,
 } from './admission-record-normalizer.mjs';
 import { isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
+import { filterAdmissionRecords } from './admission-filter-options.mjs';
 
 /** 전년도 공개 입시결과를 현재 내신과 단순 비교하기 위한 설정이다. */
 export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
@@ -28,8 +29,9 @@ export const ADMISSION_REFERENCE_DATA = Object.freeze(admissionResultsByYear[202
 }));
 
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
-  referenceYear: 'number (canonical)', universityId: 'string|null', region: 'string', university: 'string', field: 'string|null',
+  referenceYear: 'number (canonical)', universityId: 'string|null', region: 'string', university: 'string', field: 'string|null', academicField: 'humanities|natural|arts|other|unknown',
   department: 'string', admissionName: 'string', admissionCategory: '학생부교과|학생부종합',
+  majorSearchGroup: 'string|null (검색 보조값)', normalizedMajorKeyword: 'string|null (검색 보조값)',
   admissionType: 'string|null (별도 전형 유형이 있을 때만)', category: 'legacy alias',
   dataAvailability: 'confirmed-cut|cut70-only|cut50-only|average-only|not-published|not-checked|no-result',
   cut70Original: 'number|null', cut50Original: 'number|null', cut70Converted: 'number|null', cut50Converted: 'number|null',
@@ -85,17 +87,5 @@ export function describeAdmissionDifference(difference) {
 }
 
 export function filterAdmissionReferences(data, filters = {}) {
-  return data.map(normalizeAdmissionRecord).filter((item) => validAdmissionReference(item) && (
-    (filters.includeSpecialEligibility === true || isDefaultStudentVisibleAdmission(item))
-    &&
-    (!filters.region || item.region === filters.region)
-    && (!filters.university || item.university === filters.university)
-    && (!filters.field || item.field === filters.field)
-    && (!filters.department || item.department === filters.department)
-    && (!filters.admissionName || item.admissionName === filters.admissionName)
-    && (!filters.admissionType || item.admissionType === filters.admissionType)
-    && (!filters.admissionCategory || item.admissionCategory === filters.admissionCategory)
-    && (!filters.category || item.admissionCategory === filters.category)
-    && (!filters.eligibilityType || item.eligibilityType === filters.eligibilityType)
-  ));
+  return filterAdmissionRecords(data, filters);
 }

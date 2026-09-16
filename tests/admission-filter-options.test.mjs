@@ -1,0 +1,110 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  ADMISSION_REGION_ORDER,
+  departmentSearchMetadata,
+  filterAdmissionRecords,
+  getAvailableAcademicFields,
+  getAvailableAdmissionCategories,
+  getAvailableAdmissionNames,
+  getAvailableDepartments,
+  getAvailableRegions,
+  getAvailableUniversities,
+  reconcileAdmissionFilters,
+  searchAvailableDepartments,
+} from '../src/admission-filter-options.mjs';
+import { inferAcademicFieldFromDepartment, normalizeAdmissionRecord } from '../src/admission-record-normalizer.mjs';
+
+function result(overrides = {}) {
+  return {
+    referenceYear: 2026,
+    region: '부산광역시',
+    university: '부산대학교',
+    department: '건축학과',
+    admissionName: '교과우수전형',
+    admissionCategory: '학생부교과',
+    academicField: 'natural',
+    dataAvailability: 'cut70-only',
+    cut70Original: 2.5,
+    cut70Converted: 1.8,
+    eligibilityType: 'general',
+    source: '공식 입학처',
+    sourceUrl: 'https://example.test/result',
+    ...overrides,
+  };
+}
+
+const FIXTURE = Object.freeze([
+  result(),
+  result(), // 동일 레코드가 있어도 선택지는 중복되지 않아야 한다.
+  result({ department: '컴퓨터공학과', admissionName: '학교장추천', eligibilityType: 'school-recommendation' }),
+  result({ department: '국어국문학과', admissionName: '학생부종합일반', admissionCategory: '학생부종합', academicField: 'humanities' }),
+  result({ university: '동아대학교', department: '건축공학과', admissionName: '지역인재', eligibilityType: 'general' }),
+  result({ region: '서울특별시', university: '서울대학교', department: '건축학전공', admissionName: '지역균형전형' }),
+]);
+
+test('지역 선택에 따라 대학 목록을 좁히고 중복을 제거해 가나다순으로 반환한다', () => {
+  assert.deepEqual(getAvailableUniversities(FIXTURE, { region: '부산광역시' }), ['동아대학교', '부산대학교']);
+  assert.deepEqual(getAvailableUniversities(FIXTURE, { region: '서울특별시' }), ['서울대학교']);
+  assert.equal(getAvailableUniversities(FIXTURE, { region: '서울특별시' }).includes('부산대학교'), false);
+});
+
+test('지역은 대학 감사에서 정의한 순서를 유지한다', () => {
+  const regions = getAvailableRegions(FIXTURE);
+  assert.deepEqual(regions, ['서울특별시', '부산광역시']);
+  assert.ok(ADMISSION_REGION_ORDER.indexOf(regions[0]) < ADMISSION_REGION_ORDER.indexOf(regions[1]));
+});
+
+test('대학을 선택하면 해당 대학의 공식 모집단위만 중복 없이 반환한다', () => {
+  assert.deepEqual(getAvailableDepartments(FIXTURE, { university: '부산대학교' }), ['건축학과', '국어국문학과', '컴퓨터공학과']);
+  assert.deepEqual(getAvailableDepartments(FIXTURE, {}), []);
+});
+
+test('상위 지역 변경으로 무효가 된 대학·모집단위·전형명은 전체 선택으로 초기화한다', () => {
+  const filters = reconcileAdmissionFilters(FIXTURE, {
+    region: '서울특별시',
+    university: '부산대학교',
+    field: 'natural',
+    department: '컴퓨터공학과',
+    admissionName: '학교장추천',
+    admissionCategory: '학생부교과',
+  });
+  assert.equal(filters.region, '서울특별시');
+  assert.equal(filters.university, '');
+  assert.equal(filters.department, '');
+  assert.equal(filters.admissionName, '');
+});
+
+test('건축 검색은 명칭을 합치지 않고 관련 공식 모집단위명을 그대로 반환한다', () => {
+  const originalNames = FIXTURE.map((item) => item.department);
+  const matches = searchAvailableDepartments(FIXTURE, {}, '건축', { limit: 20 });
+  assert.deepEqual(matches.map((item) => item.department), ['건축공학과', '건축학과', '건축학전공']);
+  assert.ok(matches.every((item) => item.majorSearchGroup === '건축'));
+  assert.deepEqual(FIXTURE.map((item) => item.department), originalNames);
+  assert.equal(departmentSearchMetadata('건축학부').department, '건축학부');
+});
+
+test('기존 field 값은 canonical academicField로 읽되 검색 보조값과 원본 모집단위명을 보존한다', () => {
+  const normalized = normalizeAdmissionRecord(result({ field: '공학', academicField: undefined, majorSearchGroup: '건축', normalizedMajorKeyword: '건축설계' }));
+  assert.equal(normalized.field, '공학');
+  assert.equal(normalized.academicField, 'natural');
+  assert.equal(normalized.department, '건축학과');
+  assert.equal(normalized.majorSearchGroup, '건축');
+  assert.equal(normalized.normalizedMajorKeyword, '건축설계');
+  assert.equal(inferAcademicFieldFromDepartment('컴퓨터교육과'), 'natural');
+  assert.equal(inferAcademicFieldFromDepartment('체육교육과'), 'arts');
+  assert.equal(inferAcademicFieldFromDepartment('자율전공학부'), 'other');
+  assert.equal(inferAcademicFieldFromDepartment('경영대학자유전공학부'), 'humanities');
+  assert.equal(inferAcademicFieldFromDepartment('미래융합학과'), 'unknown');
+});
+
+test('학생부교과·종합과 계열 조건이 선택지와 실제 결과에 함께 적용된다', () => {
+  assert.deepEqual(getAvailableAdmissionNames(FIXTURE), []);
+  assert.deepEqual(getAvailableDepartments(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합' }), ['국어국문학과']);
+  assert.deepEqual(getAvailableAcademicFields(FIXTURE, { university: '부산대학교', admissionCategory: '학생부교과' }), ['natural']);
+  assert.deepEqual(getAvailableAdmissionNames(FIXTURE, { university: '부산대학교', field: 'humanities' }), ['학생부종합일반']);
+  assert.deepEqual(getAvailableAdmissionCategories(FIXTURE, { university: '부산대학교', department: '국어국문학과' }), ['학생부종합']);
+  const comprehensive = filterAdmissionRecords(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합', field: 'humanities' });
+  assert.equal(comprehensive.length, 1);
+  assert.equal(comprehensive[0].department, '국어국문학과');
+});
