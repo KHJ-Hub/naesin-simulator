@@ -13,6 +13,7 @@ import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914
 import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields2';
 import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailableAdmissionCategories, getAvailableAdmissionNames, getAvailableDepartments, getAvailableRegions, getAvailableUniversities, reconcileAdmissionFilters } from './admission-filter-options.mjs?v=20260916-academic-fields2';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
+import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260916-semester-summary1';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
@@ -332,25 +333,6 @@ function goalDetails() {
   const required = calculateRequiredRemainingAverage(actual, remaining, target, weighted);
   return required == null ? null : { required, actual, remaining, simple, weighted };
 }
-function clampGrade(value) { return Math.max(1, Math.min(5, Number(value))); }
-function scenarioTargets(remaining, required, mode) {
-  if (!remaining.length) return [];
-  if (mode === 'balanced' || remaining.length === 1) return remaining.map((item) => ({ ...item, target: required }));
-  const anchorIndex = mode === 'early' ? 0 : remaining.length - 1;
-  const anchor = remaining[anchorIndex];
-  const totalWeight = remaining.reduce((sum, item) => sum + Number(item.credit), 0);
-  const anchorTarget = clampGrade(required + (mode === 'early' ? -0.4 : -0.4));
-  const otherWeight = totalWeight - Number(anchor.credit);
-  const otherTarget = otherWeight > 0 ? clampGrade((required * totalWeight - anchorTarget * Number(anchor.credit)) / otherWeight) : required;
-  return remaining.map((item, index) => ({ ...item, target: index === anchorIndex ? anchorTarget : otherTarget }));
-}
-function scenarioFinalAverage(actual, targets, weighted) {
-  const actualWeight = weighted ? calculateTotalCredits(actual) : actual.length;
-  const actualTotal = actual.reduce((sum, item) => sum + Number(item.gradeValue) * (weighted ? Number(item.credit) : 1), 0);
-  const remainingWeight = targets.reduce((sum, item) => sum + (weighted ? Number(item.credit) : 1), 0);
-  const remainingTotal = targets.reduce((sum, item) => sum + item.target * (weighted ? Number(item.credit) : 1), 0);
-  return actualWeight + remainingWeight ? (actualTotal + remainingTotal) / (actualWeight + remainingWeight) : null;
-}
 function renderGoal() {
   const result = $('#goal-result');
   const details = goalDetails();
@@ -362,7 +344,7 @@ function renderGoal() {
   const actual = details.actual; const remaining = details.remaining;
   const actualCredits = calculateTotalCredits(actual); const remainingCredits = calculateTotalCredits(remaining, false);
   const highest = (actual.reduce((sum, item) => sum + Number(item.gradeValue) * (details.weighted ? Number(item.credit) : 1), 0) + (details.weighted ? remainingCredits : remaining.length)) / (details.weighted ? actualCredits + remainingCredits : actual.length + remaining.length);
-  const scenarios = details.required >= 1 && details.required <= 5 ? [['balanced', '균형형'], ['early', '초반 집중형'], ['late', '후반 상승형']].map(([mode, name]) => { const targets = scenarioTargets(remaining, details.required, mode); const rows = targets.map((item) => `<div class="scenario-semester"><span>${escapeHtml(semesterLabel(item.semesterId))}</span><strong>${fmt(item.target)}</strong></div>`).join(''); return `<article class="scenario-card"><h4>${name}</h4><div class="scenario-semesters">${rows}</div><p>예상 최종 내신 <strong>${fmt(scenarioFinalAverage(actual, targets, details.weighted))}</strong></p></article>`; }).join('') : '';
+  const scenarios = details.required >= 1 && details.required <= 5 ? createGoalScenarioSummaries(actual, remaining, details.required, details.weighted).map(({ name, semesterResults, finalAverage }) => { const rows = semesterResults.map((item) => `<div class="scenario-semester"><span>${escapeHtml(semesterLabel(item.semesterId))}</span><strong>${fmt(item.target)}</strong></div>`).join(''); return `<article class="scenario-card"><h4>${name}</h4><div class="scenario-semesters">${rows}</div><p>예상 최종 내신 <strong>${fmt(finalAverage)}</strong></p></article>`; }).join('') : '';
   const guidance = details.simple ? '<li>간편 입력 결과는 학기 평균 기준 참고값입니다.</li><li>실제 과목별 학점 입력 시 결과가 달라질 수 있습니다.</li>' : '<li>상세 입력 과목의 실제 학점 가중치로 계산했습니다.</li>';
   const summaryText = details.required >= 1 && details.required <= 5 ? `목표 내신 ${fmt(Number(state.targetAverage))}을 위해 남은 학기 평균 ${fmt(details.required)}가 필요해요.` : difficulty;
   result.innerHTML = `<section class="goal-summary"><span>남은 학기 필요 평균</span><strong>${details.required >= 1 && details.required <= 5 ? `${fmt(details.required)}등급` : '-'}</strong><p>${summaryText}</p>${details.required < 1 || details.required > 5 ? `<small>남은 모든 과목을 1등급으로 가정한 최고 가능 최종 내신: ${fmt(highest)}</small>` : ''}</section>${scenarios ? `<section class="scenario-grid" aria-label="목표 시나리오">${scenarios}</section>` : ''}<aside class="goal-guidance"><strong>안내</strong><ul>${guidance}<li>대학 합격 가능성을 의미하지 않습니다.</li></ul></aside>`;
