@@ -166,7 +166,10 @@ export function hasAdmissionCut(item = {}) {
 }
 
 export function isComparableAdmissionRecord(item = {}) {
-  return isStudentRecordSubject(item) && Number.isFinite(Number(item.cut70Original));
+  return isStudentRecordSubject(item)
+    && item.cut70Original != null
+    && item.cut70Original !== ''
+    && Number.isFinite(Number(item.cut70Original));
 }
 
 export function validateAdmissionRecord(record = {}) {
