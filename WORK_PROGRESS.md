@@ -727,3 +727,13 @@
 - 명시적 전형명과 `admissionCategory`가 서로 반대인 레코드는 0건이며, 공식 분류가 없는 전형을 이름만으로 재분류하지 않았다.
 - 전체 대학별 현황과 필터 단계는 `docs/admission-comprehensive-audit-2026.md`에 기록했다.
 - 전체 회귀 테스트 127개가 통과했다. 사용자/Aside 수정 중인 `index.html`과 `styles.css`는 변경하지 않았다.
+
+## 입시결과 대학별 아코디언 데이터 및 학종 참고 구간 추가
+
+- 교과의 기존 `classifySubjectAdmissionRange()`와 `similar`/`higher`/`lower` 계산·정렬은 수정하지 않고, 각 기존 그룹의 화면 전달값에 `universityGroups`만 추가했다.
+- `groupResultsByUniversity(results)`는 이미 정렬된 평면 결과를 `universityId` 기준으로 묶고 `universityId`, `universityName`, `resultCount`, `results`를 반환하며 대학 내부 결과 순서를 그대로 보존한다.
+- 학종은 기존 직접 비교용 `difference`를 만들지 않은 채 `referenceGrade`, `referenceDifference`, `referenceGroup`을 별도로 갖는 `comprehensiveReferenceGroups`를 추가했다.
+- 학종 참고값은 공식 5등급 환산 70% cut, 공식 평균등급, 50% cut 순으로 존재하는 값을 사용하며, 값이 없는 레코드는 참고 구간에서 제외한다. 평균값을 cut으로 바꾸지는 않는다.
+- 학생 내신 2.00 기준 학종 참고 구간도 1.80·2.20은 비슷한 범위, 1.79는 높은 쪽, 2.21은 낮은 쪽 경계로 검증했다.
+- 교과·학종 대학별 그룹, 내부 순서 보존, 학종 참고 구간, 기존 교과 경계를 포함한 전체 회귀 테스트 129개가 통과했다.
+- 사용자/Aside 수정 중인 `index.html`과 `styles.css`는 변경하지 않았다.

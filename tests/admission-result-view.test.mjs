@@ -5,10 +5,12 @@ import {
   ADMISSION_RESULT_PAGE_SIZE,
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
+  classifyComprehensiveReferenceRange,
   classifySubjectAdmissionRange,
   getAdmissionViewFilterOptions,
   increaseAdmissionGroupLimit,
   interleaveAdmissionResultsByUniversity,
+  groupResultsByUniversity,
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
@@ -72,6 +74,20 @@ test('학생 내신 2.00 기준 ±0.20 경계를 포함하고 등급 숫자 방�
   assert.equal(classifySubjectAdmissionRange(2, 2.21), ADMISSION_SUBJECT_GROUPS.LOWER);
 });
 
+test('대학별 그룹은 universityId를 기준으로 묶고 기존 결과 순서를 보존한다', () => {
+  const results = [
+    { item: subject({ universityId: 'pusan', university: '부산대학교', department: '경영학과' }) },
+    { item: subject({ universityId: 'pusan', university: '부산대학교', department: '국어국문학과' }) },
+    { item: subject({ universityId: 'donga', university: '동아대학교', department: '간호학과' }) },
+  ];
+  const groups = groupResultsByUniversity(results);
+  assert.deepEqual(groups.map(({ universityId, universityName, resultCount }) => ({ universityId, universityName, resultCount })), [
+    { universityId: 'pusan', universityName: '부산대학교', resultCount: 2 },
+    { universityId: 'donga', universityName: '동아대학교', resultCount: 1 },
+  ]);
+  assert.deepEqual(groups[0].results.map(({ item }) => item.department), ['경영학과', '국어국문학과']);
+});
+
 test('교과 모드에서만 차이를 계산하고 세 그룹별 건수를 제공한다', () => {
   const rows = [
     subject({ university: '경계상단대', cut70Converted: 1.8 }),
@@ -84,6 +100,7 @@ test('교과 모드에서만 차이를 계산하고 세 그룹별 건수를 제�
   assert.equal(view.subjectHigherCount, 1);
   assert.equal(view.subjectLowerCount, 1);
   assert.ok(view.visibleResults.every(({ difference, absoluteDifference }) => Number.isFinite(difference) && Number.isFinite(absoluteDifference)));
+  assert.ok(view.subjectGroups.similar.universityGroups.every((group) => group.universityId && group.resultCount === group.results.length));
 });
 
 test('각 교과 그룹 안에서는 학생 내신과 가까운 순, 동률이면 대학·모집단위 가나다순이다', () => {
@@ -112,6 +129,31 @@ test('학생부종합 모드는 현재·목표 내신 차이와 교과 그룹을
   assert.equal(view.subjectGroups, null);
   assert.equal(view.comprehensive.visibleResults[0].difference, null);
   assert.equal(view.comprehensive.visibleResults[0].absoluteDifference, null);
+});
+
+test('학종은 전년도 등록자 내신 참고용 ±0.2 그룹과 대학별 묶음을 별도로 제공한다', () => {
+  const rows = [
+    comprehensive({ universityId: 'pusan', university: '부산대학교', department: '경영학과', cut70Converted: 1.8 }),
+    comprehensive({ universityId: 'pusan', university: '부산대학교', department: '국어국문학과', cut70Converted: 1.79 }),
+    comprehensive({ universityId: 'donga', university: '동아대학교', department: '간호학과', cut70Converted: 2.2 }),
+    comprehensive({ universityId: 'donga', university: '동아대학교', department: '컴퓨터공학과', cut70Converted: 2.21 }),
+  ];
+  const view = prepareAdmissionResultView(rows, {
+    admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE,
+    comparisonValue: 2,
+  });
+  assert.equal(classifyComprehensiveReferenceRange(2, 1.8), ADMISSION_SUBJECT_GROUPS.SIMILAR);
+  assert.equal(classifyComprehensiveReferenceRange(2, 1.79), ADMISSION_SUBJECT_GROUPS.HIGHER);
+  assert.equal(classifyComprehensiveReferenceRange(2, 2.2), ADMISSION_SUBJECT_GROUPS.SIMILAR);
+  assert.equal(classifyComprehensiveReferenceRange(2, 2.21), ADMISSION_SUBJECT_GROUPS.LOWER);
+  assert.equal(view.comprehensiveSimilarCount, 2);
+  assert.equal(view.comprehensiveHigherCount, 1);
+  assert.equal(view.comprehensiveLowerCount, 1);
+  assert.deepEqual(view.comprehensiveReferenceGroups.similar.universityGroups.map(({ universityId, resultCount }) => ({ universityId, resultCount })), [
+    { universityId: 'donga', resultCount: 1 },
+    { universityId: 'pusan', resultCount: 1 },
+  ]);
+  assert.ok(view.comprehensiveReferenceGroups.similar.visibleResults.every((entry) => entry.difference == null && Number.isFinite(entry.referenceDifference)));
 });
 
 test('학종 첫 페이지는 한 대학의 모집단위가 독점하지 않도록 대학별로 순환 배치한다', () => {

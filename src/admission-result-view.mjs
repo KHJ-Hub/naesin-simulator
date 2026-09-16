@@ -28,6 +28,12 @@ const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort(koSor
 const convertedCut70 = (item) => item.cut70Converted != null && item.cut70Converted !== '' && Number.isFinite(Number(item.cut70Converted))
   ? Number(item.cut70Converted)
   : null;
+const comprehensiveReferenceGrade = (item) => {
+  for (const value of [item.cut70Converted, item.averageGradeConverted, item.cut50Converted]) {
+    if (value != null && value !== '' && Number.isFinite(Number(value))) return Number(value);
+  }
+  return null;
+};
 const comparisonDifference = (score, cut) => score != null && score !== '' && cut != null && cut !== '' && Number.isFinite(Number(score)) && Number.isFinite(Number(cut))
   ? Number((Number(cut) - Number(score)).toFixed(2))
   : null;
@@ -102,12 +108,42 @@ export function classifySubjectAdmissionRange(studentGrade, referenceGrade) {
   return difference < -0.2 ? ADMISSION_SUBJECT_GROUPS.HIGHER : ADMISSION_SUBJECT_GROUPS.LOWER;
 }
 
+/** 학종 공개 내신값을 합격 판단 없이 참고 구간으로만 나눈다. */
+export function classifyComprehensiveReferenceRange(studentGrade, referenceGrade) {
+  const difference = comparisonDifference(studentGrade, referenceGrade);
+  if (difference == null) return null;
+  if (Math.abs(difference) <= 0.2) return ADMISSION_SUBJECT_GROUPS.SIMILAR;
+  return difference < -0.2 ? ADMISSION_SUBJECT_GROUPS.HIGHER : ADMISSION_SUBJECT_GROUPS.LOWER;
+}
+
+/** 이미 정렬된 평면 결과의 순서를 유지하며 universityId 기준 아코디언 데이터를 만든다. */
+export function groupResultsByUniversity(results = []) {
+  const groups = new Map();
+  results.forEach((result) => {
+    const item = result?.item ?? result;
+    const universityId = item?.universityId ?? null;
+    const universityName = String(item?.university ?? '').trim();
+    const key = universityId || `university-name:${universityName}`;
+    if (!groups.has(key)) {
+      groups.set(key, { universityId, universityName, resultCount: 0, results: [] });
+    }
+    const group = groups.get(key);
+    group.results.push(result);
+    group.resultCount += 1;
+  });
+  return Object.freeze([...groups.values()].map((group) => Object.freeze({
+    ...group,
+    results: Object.freeze(group.results),
+  })));
+}
+
 function groupView(entries, limit) {
   const visibleResultLimit = Math.max(0, Number(limit) || ADMISSION_RESULT_PAGE_SIZE);
   const visibleResults = entries.slice(0, visibleResultLimit);
   return Object.freeze({
     totalCount: entries.length,
     visibleResults: Object.freeze(visibleResults),
+    universityGroups: groupResultsByUniversity(visibleResults),
     visibleResultLimit,
     hasMore: visibleResults.length < entries.length,
     remainingResultCount: Math.max(0, entries.length - visibleResults.length),
@@ -177,7 +213,8 @@ export function prepareAdmissionResultView(data, {
       admissionViewMode: null, admissionCategory: null, totalMatchedResults: 0,
       visibleResults: Object.freeze([]), visibleResultLimit: 0, hasMore: false,
       subjectSimilarCount: 0, subjectHigherCount: 0, subjectLowerCount: 0,
-      subjectGroups: null, subjectReference: null, comprehensive: null,
+      comprehensiveSimilarCount: 0, comprehensiveHigherCount: 0, comprehensiveLowerCount: 0,
+      subjectGroups: null, subjectReference: null, comprehensiveReferenceGroups: null, comprehensive: null,
     });
   }
 
@@ -185,11 +222,29 @@ export function prepareAdmissionResultView(data, {
   const filtered = filterAdmissionRecords(data, effectiveFilters);
 
   if (normalizedMode === ADMISSION_VIEW_MODES.COMPREHENSIVE) {
-    const entries = interleaveAdmissionResultsByUniversity(filtered
+    const sourceEntries = filtered
       .filter(isStudentRecordComprehensive)
-      .map((item) => ({ item, difference: null, absoluteDifference: null, group: null }))
-      .sort(stableTextSort));
+      .map((item) => ({ item, difference: null, absoluteDifference: null, group: null }));
+    const entries = interleaveAdmissionResultsByUniversity([...sourceEntries].sort(stableTextSort));
     const comprehensive = groupView(entries, visibleResultLimits.comprehensive);
+    const referenceEntries = sourceEntries
+      .map(({ item }) => {
+        const referenceGrade = comprehensiveReferenceGrade(item);
+        const referenceDifference = comparisonDifference(comparisonValue, referenceGrade);
+        return {
+          item,
+          referenceGrade,
+          referenceDifference,
+          referenceAbsoluteDifference: referenceDifference == null ? Number.POSITIVE_INFINITY : Math.abs(referenceDifference),
+          referenceGroup: classifyComprehensiveReferenceRange(comparisonValue, referenceGrade),
+        };
+      })
+      .filter((entry) => entry.referenceGroup)
+      .sort((left, right) => left.referenceAbsoluteDifference - right.referenceAbsoluteDifference || stableTextSort(left, right));
+    const comprehensiveReferenceGroups = Object.fromEntries(Object.values(ADMISSION_SUBJECT_GROUPS).map((group) => [
+      group,
+      groupView(referenceEntries.filter((entry) => entry.referenceGroup === group), visibleResultLimits[group]),
+    ]));
     return Object.freeze({
       admissionViewMode: normalizedMode, admissionCategory,
       totalMatchedResults: entries.length,
@@ -197,7 +252,11 @@ export function prepareAdmissionResultView(data, {
       visibleResultLimit: comprehensive.visibleResultLimit,
       hasMore: comprehensive.hasMore,
       subjectSimilarCount: 0, subjectHigherCount: 0, subjectLowerCount: 0,
-      subjectGroups: null, subjectReference: null, comprehensive,
+      comprehensiveSimilarCount: comprehensiveReferenceGroups.similar.totalCount,
+      comprehensiveHigherCount: comprehensiveReferenceGroups.higher.totalCount,
+      comprehensiveLowerCount: comprehensiveReferenceGroups.lower.totalCount,
+      subjectGroups: null, subjectReference: null,
+      comprehensiveReferenceGroups: Object.freeze(comprehensiveReferenceGroups), comprehensive,
     });
   }
 
@@ -213,7 +272,8 @@ export function prepareAdmissionResultView(data, {
       visibleResultLimit: subjectReference.visibleResultLimit,
       hasMore: subjectReference.hasMore,
       subjectSimilarCount: 0, subjectHigherCount: 0, subjectLowerCount: 0,
-      subjectGroups: null, subjectReference, comprehensive: null,
+      comprehensiveSimilarCount: 0, comprehensiveHigherCount: 0, comprehensiveLowerCount: 0,
+      subjectGroups: null, subjectReference, comprehensiveReferenceGroups: null, comprehensive: null,
     });
   }
 
@@ -243,7 +303,8 @@ export function prepareAdmissionResultView(data, {
     subjectSimilarCount: grouped.similar.totalCount,
     subjectHigherCount: grouped.higher.totalCount,
     subjectLowerCount: grouped.lower.totalCount,
-    subjectGroups: Object.freeze(grouped), subjectReference: null,
+    comprehensiveSimilarCount: 0, comprehensiveHigherCount: 0, comprehensiveLowerCount: 0,
+    subjectGroups: Object.freeze(grouped), subjectReference: null, comprehensiveReferenceGroups: null,
     comprehensive: null,
   });
 }
