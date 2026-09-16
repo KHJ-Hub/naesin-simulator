@@ -137,25 +137,33 @@ const mergeCatalogs = (...catalogs) => {
   return [...merged.values()];
 };
 
+/**
+ * 대입정보포털 어디가의 2026학년도 지역별 대학 목록 스냅샷.
+ * 최종 대학 마스터와 독립적으로 보존해 누락·중복·지역 불일치를 감사한다.
+ */
+export const ADIGA_UNIVERSITIES_2026 = Object.freeze([
+  ...universities2026Seoul,
+  ...universities2026Gyeonggi,
+  ...universities2026Incheon,
+  ...universities2026Busan,
+  ...universities2026Ulsan,
+  ...universities2026Gyeongnam,
+  ...universities2026Daegu,
+  ...universities2026Gyeongbuk,
+  ...universities2026Daejeon,
+  ...universities2026Sejong,
+  ...universities2026Chungnam,
+  ...universities2026Chungbuk,
+  ...universities2026Gwangju,
+  ...universities2026Jeonnam,
+  ...universities2026Jeonbuk,
+  ...universities2026Gangwon,
+  ...universities2026Jeju,
+]);
+
 export const UNIVERSITIES = Object.freeze(mergeCatalogs(
   LEGACY_UNIVERSITIES,
-  universities2026Seoul,
-  universities2026Gyeonggi,
-  universities2026Incheon,
-  universities2026Busan,
-  universities2026Ulsan,
-  universities2026Gyeongnam,
-  universities2026Daegu,
-  universities2026Gyeongbuk,
-  universities2026Daejeon,
-  universities2026Sejong,
-  universities2026Chungnam,
-  universities2026Chungbuk,
-  universities2026Gwangju,
-  universities2026Jeonnam,
-  universities2026Jeonbuk,
-  universities2026Gangwon,
-  universities2026Jeju,
+  ADIGA_UNIVERSITIES_2026,
 ));
 
 export const UNIVERSITY_BY_ID = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.universityId, item])));
