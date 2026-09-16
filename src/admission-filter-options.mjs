@@ -28,17 +28,28 @@ export const ADMISSION_REGION_ORDER = Object.freeze([
 ]);
 
 export const ADMISSION_ACADEMIC_FIELD_LABELS = Object.freeze({
-  [ADMISSION_ACADEMIC_FIELDS.HUMANITIES]: '인문사회',
-  [ADMISSION_ACADEMIC_FIELDS.NATURAL]: '자연과학·공학·의약',
+  [ADMISSION_ACADEMIC_FIELDS.HUMANITIES]: '인문',
+  [ADMISSION_ACADEMIC_FIELDS.NATURAL]: '자연',
   [ADMISSION_ACADEMIC_FIELDS.ARTS]: '예체능',
   [ADMISSION_ACADEMIC_FIELDS.OTHER]: '기타',
   [ADMISSION_ACADEMIC_FIELDS.UNKNOWN]: '계열 미분류',
+  'other-unknown': '기타/미분류',
 });
+
+export const ADMISSION_ACADEMIC_FIELD_FILTERS = Object.freeze([
+  ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
+  ADMISSION_ACADEMIC_FIELDS.NATURAL,
+  ADMISSION_ACADEMIC_FIELDS.ARTS,
+  'other-unknown',
+]);
 
 const koSort = (left, right) => String(left).localeCompare(String(right), 'ko');
 const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort(koSort);
 const selectedAcademicField = (filters = {}) => filters.academicField || filters.field || '';
 const itemAcademicField = (item = {}) => normalizeAcademicField(item.academicField ?? item.field);
+const academicFieldMatches = (item, selected) => selected === 'other-unknown'
+  ? [ADMISSION_ACADEMIC_FIELDS.OTHER, ADMISSION_ACADEMIC_FIELDS.UNKNOWN].includes(itemAcademicField(item))
+  : itemAcademicField(item) === selected;
 const normalizedRecordCache = new WeakMap();
 
 function normalizedEntry(record) {
@@ -63,7 +74,7 @@ function matches(item, filters = {}, ignored = []) {
   return (
     (skip.has('region') || !filters.region || item.region === filters.region)
     && (skip.has('university') || !filters.university || item.university === filters.university)
-    && (skip.has('academicField') || !academicField || itemAcademicField(item) === academicField)
+    && (skip.has('academicField') || !academicField || academicFieldMatches(item, academicField))
     && (skip.has('department') || !filters.department || item.department === filters.department)
     && (skip.has('admissionName') || !filters.admissionName || item.admissionName === filters.admissionName)
     && (skip.has('admissionType') || !filters.admissionType || item.admissionType === filters.admissionType)
@@ -94,7 +105,9 @@ export function getAvailableUniversities(data, filters = {}) {
 export function getAvailableAcademicFields(data, filters = {}) {
   const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['academicField', 'department', 'admissionName']));
   const present = new Set(records.map(itemAcademicField));
-  return Object.values(ADMISSION_ACADEMIC_FIELDS).filter((field) => present.has(field));
+  return ADMISSION_ACADEMIC_FIELD_FILTERS.filter((field) => field === 'other-unknown'
+    ? present.has(ADMISSION_ACADEMIC_FIELDS.OTHER) || present.has(ADMISSION_ACADEMIC_FIELDS.UNKNOWN)
+    : present.has(field));
 }
 
 export function departmentSearchMetadata(itemOrDepartment = {}) {
@@ -139,6 +152,22 @@ export function getAvailableAdmissionNames(data, filters = {}) {
 export function getAvailableAdmissionCategories(data, filters = {}) {
   const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['admissionCategory', 'category']));
   return uniqueSorted(records.map((item) => item.admissionCategory));
+}
+
+/** 전체 데이터의 canonical 계열 분포와 검토가 필요한 고유 모집단위를 반환한다. */
+export function summarizeAdmissionAcademicFields(data) {
+  const counts = Object.fromEntries(Object.values(ADMISSION_ACADEMIC_FIELDS).map((field) => [field, 0]));
+  const unknownDepartments = new Set();
+  data.map(normalizedEntry).filter((entry) => entry.valid).forEach(({ item }) => {
+    const field = itemAcademicField(item);
+    counts[field] += 1;
+    if (field === ADMISSION_ACADEMIC_FIELDS.UNKNOWN) unknownDepartments.add(item.department);
+  });
+  return Object.freeze({
+    total: Object.values(counts).reduce((sum, count) => sum + count, 0),
+    counts: Object.freeze({ ...counts }),
+    unknownDepartments: Object.freeze([...unknownDepartments].sort(koSort)),
+  });
 }
 
 /** 상위 조건 변경 뒤에도 유효한 선택은 유지하고, 범위를 벗어난 하위 선택만 전체로 되돌린다. */

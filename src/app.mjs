@@ -10,8 +10,8 @@ import {
 } from './grade-calculator.mjs?v=20260914-quickinput3';
 import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store2';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
-import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-dependent-filters1';
-import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailableAdmissionCategories, getAvailableAdmissionNames, getAvailableDepartments, getAvailableRegions, getAvailableUniversities, reconcileAdmissionFilters } from './admission-filter-options.mjs?v=20260916-dependent-filters1';
+import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields2';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailableAdmissionCategories, getAvailableAdmissionNames, getAvailableDepartments, getAvailableRegions, getAvailableUniversities, reconcileAdmissionFilters } from './admission-filter-options.mjs?v=20260916-academic-fields2';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 
 const STORAGE_KEY = 'naesin-simulator:v1';

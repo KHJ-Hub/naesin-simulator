@@ -12,8 +12,10 @@ import {
   getAvailableUniversities,
   reconcileAdmissionFilters,
   searchAvailableDepartments,
+  summarizeAdmissionAcademicFields,
 } from '../src/admission-filter-options.mjs';
 import { inferAcademicFieldFromDepartment, normalizeAdmissionRecord } from '../src/admission-record-normalizer.mjs';
+import { createOfficialAdmissionResult } from '../src/admission-results/admission-result-factory.mjs';
 
 function result(overrides = {}) {
   return {
@@ -41,6 +43,14 @@ const FIXTURE = Object.freeze([
   result({ department: '국어국문학과', admissionName: '학생부종합일반', admissionCategory: '학생부종합', academicField: 'humanities' }),
   result({ university: '동아대학교', department: '건축공학과', admissionName: '지역인재', eligibilityType: 'general' }),
   result({ region: '서울특별시', university: '서울대학교', department: '건축학전공', admissionName: '지역균형전형' }),
+]);
+
+const FIELD_FIXTURE = Object.freeze([
+  result({ department: '국어국문학과', academicField: 'humanities' }),
+  result({ department: '컴퓨터공학과', academicField: 'natural' }),
+  result({ department: '회화과', academicField: 'arts' }),
+  result({ department: '자율전공학부', academicField: 'other' }),
+  result({ department: '미래융합학과', academicField: 'unknown' }),
 ]);
 
 test('지역 선택에 따라 대학 목록을 좁히고 중복을 제거해 가나다순으로 반환한다', () => {
@@ -96,6 +106,32 @@ test('기존 field 값은 canonical academicField로 읽되 검색 보조값과 
   assert.equal(inferAcademicFieldFromDepartment('자율전공학부'), 'other');
   assert.equal(inferAcademicFieldFromDepartment('경영대학자유전공학부'), 'humanities');
   assert.equal(inferAcademicFieldFromDepartment('미래융합학과'), 'unknown');
+  assert.equal(inferAcademicFieldFromDepartment('데이터사이언스학과'), 'natural');
+  assert.equal(inferAcademicFieldFromDepartment('방송영상학과'), 'arts');
+  assert.equal(inferAcademicFieldFromDepartment('공공정책학과'), 'humanities');
+});
+
+test('계열 필터는 인문·자연·예체능과 기타/미분류 묶음을 canonical 값으로 적용한다', () => {
+  assert.deepEqual(getAvailableAcademicFields(FIELD_FIXTURE, { university: '부산대학교' }), ['humanities', 'natural', 'arts', 'other-unknown']);
+  assert.equal(filterAdmissionRecords(FIELD_FIXTURE, {}).length, 5);
+  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'humanities' }).map((item) => item.department), ['국어국문학과']);
+  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'natural' }).map((item) => item.department), ['컴퓨터공학과']);
+  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'arts' }).map((item) => item.department), ['회화과']);
+  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'other-unknown' }).map((item) => item.department), ['자율전공학부', '미래융합학과']);
+  assert.equal(filterAdmissionRecords(FIELD_FIXTURE, { region: '서울특별시', field: 'natural' }).length, 0);
+  const audit = summarizeAdmissionAcademicFields(FIELD_FIXTURE);
+  assert.deepEqual(audit.counts, { humanities: 1, natural: 1, arts: 1, other: 1, unknown: 1 });
+  assert.deepEqual(audit.unknownDepartments, ['미래융합학과']);
+});
+
+test('새 공식 데이터는 제공된 academicField를 저장하고 공식값을 이름 추론보다 우선한다', () => {
+  const official = createOfficialAdmissionResult({
+    university: '검증대학교', region: '부산광역시', department: '컴퓨터문화학과', academicField: 'humanities',
+    admissionName: '일반전형', admissionCategory: '학생부교과', cut70Original: 2.5,
+    sourceUrl: 'https://example.test/official', eligibilityType: 'general',
+  });
+  assert.equal(official.academicField, 'humanities');
+  assert.equal(normalizeAdmissionRecord(official).academicField, 'humanities');
 });
 
 test('학생부교과·종합과 계열 조건이 선택지와 실제 결과에 함께 적용된다', () => {
