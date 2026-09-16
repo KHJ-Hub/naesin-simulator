@@ -4,7 +4,7 @@ import {
   normalizeAdmissionRecord,
   validAdmissionRecord,
 } from './admission-record-normalizer.mjs';
-import { isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
+import { ADMISSION_ELIGIBILITY_TYPES, isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
 import { UNIVERSITIES } from './data/universities.mjs';
 
 /** 대학 감사에서 사용하는 지역 순서를 학생 검색에도 그대로 적용한다. */
@@ -118,6 +118,48 @@ function matches(item, filters = {}, ignored = []) {
 /** 실제 결과 조회용 필터. 선택지 계산과 분리해 같은 규칙을 독립적으로 검증한다. */
 export function filterAdmissionRecords(data, filters = {}) {
   return visibleRecords(data, filters).filter((item) => matches(item, filters));
+}
+
+/**
+ * 학생 화면의 실제 필터 순서를 단계별 건수로 돌려준다.
+ * 현재 데이터에는 대학 성별·학교 설정 전용 필드가 없으므로 두 단계는 명시적인 no-op이다.
+ */
+export function traceAdmissionFilterPipeline(data, filters = {}) {
+  const stages = [];
+  const snapshot = (stage, records, applied = true) => {
+    stages.push(Object.freeze({ stage, count: records.length, applied }));
+    return records;
+  };
+  let records = snapshot('all-valid-records', data.map(normalizedEntry).filter((entry) => entry.valid).map((entry) => entry.item));
+  const category = filters.admissionCategory || filters.category || '';
+  records = snapshot('admission-category', category ? records.filter((item) => item.admissionCategory === category) : records, Boolean(category));
+  records = snapshot('school-settings', records, false);
+  records = snapshot('gender', records, false);
+
+  if (filters.includeSpecialEligibility !== true) {
+    const generallyEligible = new Set([
+      ADMISSION_ELIGIBILITY_TYPES.GENERAL,
+      ADMISSION_ELIGIBILITY_TYPES.SCHOOL_RECOMMENDATION,
+      ADMISSION_ELIGIBILITY_TYPES.REGIONAL,
+    ]);
+    records = snapshot('eligibility-type', records.filter((item) => generallyEligible.has(item.eligibilityType)));
+    records = snapshot('regional-eligibility', records.filter((item) => item.eligibilityType !== ADMISSION_ELIGIBILITY_TYPES.REGIONAL || isDefaultStudentVisibleAdmission(item)));
+  } else {
+    records = snapshot('eligibility-type', records, false);
+    records = snapshot('regional-eligibility', records, false);
+  }
+
+  const filterStep = (stage, predicate, applied) => {
+    records = snapshot(stage, applied ? records.filter(predicate) : records, applied);
+  };
+  filterStep('region', (item) => normalizeAdmissionRegion(item.region) === normalizeAdmissionRegion(filters.region), Boolean(filters.region));
+  filterStep('university', (item) => item.university === filters.university, Boolean(filters.university));
+  const academicField = selectedAcademicField(filters);
+  filterStep('academic-field', (item) => academicFieldMatches(item, academicField), Boolean(academicField));
+  filterStep('department', (item) => item.department === filters.department, Boolean(filters.department));
+  filterStep('admission-name', (item) => item.admissionName === filters.admissionName, Boolean(filters.admissionName));
+  filterStep('admission-type', (item) => item.admissionType === filters.admissionType, Boolean(filters.admissionType));
+  return Object.freeze({ stages: Object.freeze(stages), finalRecords: Object.freeze(records) });
 }
 
 export function getAvailableRegions(data, filters = {}, universities = UNIVERSITIES) {

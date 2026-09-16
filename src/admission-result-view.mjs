@@ -38,6 +38,25 @@ function stableTextSort(left, right) {
     || koSort(left.item.admissionName, right.item.admissionName);
 }
 
+/** 한 대학의 모집단위가 첫 페이지를 독점하지 않도록 대학별 한 건씩 순환 배치한다. */
+export function interleaveAdmissionResultsByUniversity(entries) {
+  const buckets = new Map();
+  entries.forEach((entry) => {
+    const key = entry.item.university;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(entry);
+  });
+  const universityNames = [...buckets.keys()].sort(koSort);
+  const interleaved = [];
+  for (let index = 0; interleaved.length < entries.length; index += 1) {
+    universityNames.forEach((university) => {
+      const entry = buckets.get(university)?.[index];
+      if (entry) interleaved.push(entry);
+    });
+  }
+  return interleaved;
+}
+
 export function normalizeAdmissionViewMode(mode) {
   if ([ADMISSION_VIEW_MODES.SUBJECT, ADMISSION_CATEGORIES.SUBJECT].includes(mode)) return ADMISSION_VIEW_MODES.SUBJECT;
   if ([ADMISSION_VIEW_MODES.COMPREHENSIVE, ADMISSION_CATEGORIES.COMPREHENSIVE].includes(mode)) return ADMISSION_VIEW_MODES.COMPREHENSIVE;
@@ -166,10 +185,10 @@ export function prepareAdmissionResultView(data, {
   const filtered = filterAdmissionRecords(data, effectiveFilters);
 
   if (normalizedMode === ADMISSION_VIEW_MODES.COMPREHENSIVE) {
-    const entries = filtered
+    const entries = interleaveAdmissionResultsByUniversity(filtered
       .filter(isStudentRecordComprehensive)
       .map((item) => ({ item, difference: null, absoluteDifference: null, group: null }))
-      .sort(stableTextSort);
+      .sort(stableTextSort));
     const comprehensive = groupView(entries, visibleResultLimits.comprehensive);
     return Object.freeze({
       admissionViewMode: normalizedMode, admissionCategory,

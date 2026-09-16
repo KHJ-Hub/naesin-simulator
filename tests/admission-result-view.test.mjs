@@ -8,6 +8,7 @@ import {
   classifySubjectAdmissionRange,
   getAdmissionViewFilterOptions,
   increaseAdmissionGroupLimit,
+  interleaveAdmissionResultsByUniversity,
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
@@ -111,6 +112,28 @@ test('학생부종합 모드는 현재·목표 내신 차이와 교과 그룹을
   assert.equal(view.subjectGroups, null);
   assert.equal(view.comprehensive.visibleResults[0].difference, null);
   assert.equal(view.comprehensive.visibleResults[0].absoluteDifference, null);
+});
+
+test('학종 첫 페이지는 한 대학의 모집단위가 독점하지 않도록 대학별로 순환 배치한다', () => {
+  const rows = [
+    ...Array.from({ length: 25 }, (_, index) => comprehensive({ university: '가대학교', department: `가${index}학과` })),
+    ...Array.from({ length: 3 }, (_, index) => comprehensive({ university: '나대학교', department: `나${index}학과` })),
+    ...Array.from({ length: 2 }, (_, index) => comprehensive({ university: '다대학교', department: `다${index}학과` })),
+  ];
+  const view = prepareAdmissionResultView(rows, {
+    admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE,
+  });
+  assert.deepEqual(view.comprehensive.visibleResults.slice(0, 3).map(({ item }) => item.university), ['가대학교', '나대학교', '다대학교']);
+  assert.equal(new Set(view.comprehensive.visibleResults.map(({ item }) => item.university)).size, 3);
+  assert.equal(interleaveAdmissionResultsByUniversity([]).length, 0);
+});
+
+test('부산 학종 첫 페이지에는 공식 데이터가 있는 부산대학교가 포함된다', () => {
+  const view = prepareAdmissionResultView(ADMISSION_REFERENCE_DATA, {
+    admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE,
+    filters: { region: '부산광역시' },
+  });
+  assert.ok(view.comprehensive.visibleResults.some(({ item }) => item.university === '부산대학교'));
 });
 
 test('9등급제 원본 교과 모드는 학생 내신 비교와 범위 그룹 없이 전체 원본 자료를 제공한다', () => {

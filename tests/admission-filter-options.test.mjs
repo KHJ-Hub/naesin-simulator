@@ -13,11 +13,29 @@ import {
   reconcileAdmissionFilters,
   searchAvailableDepartments,
   summarizeAdmissionAcademicFields,
+  traceAdmissionFilterPipeline,
 } from '../src/admission-filter-options.mjs';
 import { inferAcademicFieldFromDepartment, normalizeAdmissionRecord } from '../src/admission-record-normalizer.mjs';
 import { createOfficialAdmissionResult } from '../src/admission-results/admission-result-factory.mjs';
 import { UNIVERSITIES } from '../src/data/universities.mjs';
 import { ADMISSION_REFERENCE_DATA } from '../src/admission-reference.mjs';
+
+test('학종 필터 파이프라인은 전형 구분과 자격 유형을 별도 단계로 추적한다', () => {
+  const trace = traceAdmissionFilterPipeline(ADMISSION_REFERENCE_DATA, { admissionCategory: '학생부종합' });
+  const counts = Object.fromEntries(trace.stages.map(({ stage, count }) => [stage, count]));
+  assert.equal(counts['admission-category'], 6123);
+  assert.equal(counts['eligibility-type'], 2413);
+  assert.equal(counts['regional-eligibility'], 2084);
+  assert.equal(trace.finalRecords.length, 2084);
+
+  const pusan = traceAdmissionFilterPipeline(ADMISSION_REFERENCE_DATA, {
+    admissionCategory: '학생부종합',
+    region: '부산광역시',
+    university: '부산대학교',
+  });
+  assert.equal(pusan.finalRecords.length, 69);
+  assert.ok(pusan.finalRecords.every((item) => item.admissionCategory === '학생부종합' && item.university === '부산대학교'));
+});
 
 function result(overrides = {}) {
   return {
