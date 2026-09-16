@@ -3,9 +3,14 @@ import assert from 'node:assert/strict';
 import { ADMISSION_REFERENCE_DATA } from '../src/admission-reference.mjs';
 import {
   ADMISSION_RESULT_PAGE_SIZE,
-  increaseAdmissionResultLimit,
+  ADMISSION_SUBJECT_GROUPS,
+  ADMISSION_VIEW_MODES,
+  classifySubjectAdmissionRange,
+  getAdmissionViewFilterOptions,
+  increaseAdmissionGroupLimit,
   prepareAdmissionResultView,
-  resetAdmissionResultLimit,
+  reconcileAdmissionViewFilters,
+  resetAdmissionGroupLimits,
 } from '../src/admission-result-view.mjs';
 
 const subject = (overrides = {}) => ({
@@ -28,101 +33,148 @@ const subject = (overrides = {}) => ({
   ...overrides,
 });
 
+const comprehensive = (overrides = {}) => subject({
+  admissionCategory: '학생부종합',
+  admissionName: '종합일반',
+  ...overrides,
+});
+
 const FIXTURE = [
   subject(),
   subject({ university: '나대학교', department: '경영학과', cut70Converted: 1.9 }),
   subject({ university: '다대학교', department: '컴퓨터공학과', academicField: 'natural', cut70Converted: 2.4 }),
   subject({ university: '라대학교', department: '간호학과', academicField: 'natural', cut70Converted: 1.4 }),
-  subject({ university: '마대학교', department: '교육학과', admissionCategory: '학생부종합', admissionName: '종합일반', cut70Converted: 2.05 }),
+  comprehensive({ university: '마대학교', region: '서울특별시', department: '교육학과', cut70Converted: 2.05 }),
   subject({ university: '바대학교', department: '사회학과', dataAvailability: 'cut50-only', cut70Original: null, cut70Converted: null }),
   subject({ university: '사대학교', department: '수학과', eligibilityType: 'rural', cut70Converted: 2.01 }),
 ];
 
-test('필터가 없으면 학생부교과 비교 가능 결과만 현재 내신과 가까운 순으로 정렬한다', () => {
+const subjectView = (data, options = {}) => prepareAdmissionResultView(data, {
+  admissionViewMode: ADMISSION_VIEW_MODES.SUBJECT,
+  comparisonValue: 2,
+  ...options,
+});
+
+test('전형 방식을 고르기 전에는 결과와 하위 필터 선택지를 만들지 않는다', () => {
   const view = prepareAdmissionResultView(FIXTURE, { comparisonValue: 2 });
-  assert.equal(view.admissionCategory, '학생부교과');
-  assert.deepEqual(view.visibleResults.map(({ item }) => item.university), ['가대학교', '나대학교', '다대학교', '라대학교']);
-  assert.deepEqual(view.visibleResults.map(({ absoluteDifference }) => absoluteDifference), [0.1, 0.1, 0.4, 0.6]);
-  assert.equal(view.visibleResults.some(({ item }) => item.admissionCategory === '학생부종합'), false);
-  assert.equal(view.visibleResults.some(({ item }) => item.dataAvailability === 'cut50-only'), false);
-});
-
-test('70% cut이 null인 교과 자료는 비교 가능한 결과로 오인하지 않는다', () => {
-  const view = prepareAdmissionResultView([
-    subject({ dataAvailability: 'cut50-only', cut70Original: null, cut70Converted: null }),
-  ], { comparisonValue: 2 });
+  const options = getAdmissionViewFilterOptions(FIXTURE);
+  assert.equal(view.admissionViewMode, null);
   assert.equal(view.totalMatchedResults, 0);
+  assert.deepEqual(options.regions, []);
+  assert.deepEqual(options.universities, []);
 });
 
-test('동일한 절대 차이는 대학명과 모집단위 가나다순으로 정렬한다', () => {
+test('학생 내신 2.00 기준 ±0.20 경계를 포함하고 등급 숫자 방향을 정확히 분류한다', () => {
+  assert.equal(classifySubjectAdmissionRange(2, 1.8), ADMISSION_SUBJECT_GROUPS.SIMILAR);
+  assert.equal(classifySubjectAdmissionRange(2, 1.79), ADMISSION_SUBJECT_GROUPS.HIGHER);
+  assert.equal(classifySubjectAdmissionRange(2, 2.2), ADMISSION_SUBJECT_GROUPS.SIMILAR);
+  assert.equal(classifySubjectAdmissionRange(2, 2.21), ADMISSION_SUBJECT_GROUPS.LOWER);
+});
+
+test('교과 모드에서만 차이를 계산하고 세 그룹별 건수를 제공한다', () => {
   const rows = [
-    subject({ university: '가대학교', department: '수학과', cut70Converted: 2.1 }),
-    subject({ university: '가대학교', department: '국어학과', cut70Converted: 1.9 }),
-    subject({ university: '나대학교', department: '경영학과', cut70Converted: 2.1 }),
+    subject({ university: '경계상단대', cut70Converted: 1.8 }),
+    subject({ university: '높은입결대', cut70Converted: 1.79 }),
+    subject({ university: '경계하단대', cut70Converted: 2.2 }),
+    subject({ university: '낮은입결대', cut70Converted: 2.21 }),
   ];
-  const view = prepareAdmissionResultView(rows, { comparisonValue: 2 });
-  assert.deepEqual(view.visibleResults.map(({ item }) => `${item.university}|${item.department}`), [
+  const view = subjectView(rows);
+  assert.equal(view.subjectSimilarCount, 2);
+  assert.equal(view.subjectHigherCount, 1);
+  assert.equal(view.subjectLowerCount, 1);
+  assert.ok(view.visibleResults.every(({ difference, absoluteDifference }) => Number.isFinite(difference) && Number.isFinite(absoluteDifference)));
+});
+
+test('각 교과 그룹 안에서는 학생 내신과 가까운 순, 동률이면 대학·모집단위 가나다순이다', () => {
+  const rows = [
+    subject({ university: '나대학교', department: '경영학과', cut70Converted: 1.7 }),
+    subject({ university: '가대학교', department: '수학과', cut70Converted: 1.79 }),
+    subject({ university: '가대학교', department: '국어학과', cut70Converted: 1.79 }),
+    subject({ university: '다대학교', department: '컴퓨터학과', cut70Converted: 2.4 }),
+    subject({ university: '라대학교', department: '간호학과', cut70Converted: 2.21 }),
+  ];
+  const view = subjectView(rows);
+  assert.deepEqual(view.subjectGroups.higher.visibleResults.map(({ item }) => `${item.university}|${item.department}`), [
     '가대학교|국어학과',
     '가대학교|수학과',
     '나대학교|경영학과',
   ]);
+  assert.deepEqual(view.subjectGroups.lower.visibleResults.map(({ item }) => item.university), ['라대학교', '다대학교']);
 });
 
-test('현재 내신과 목표 내신 비교값에 따라 가까운 결과 순서가 달라진다', () => {
-  const current = prepareAdmissionResultView(FIXTURE, { comparisonValue: 2 });
-  const target = prepareAdmissionResultView(FIXTURE, { comparisonValue: 1.5 });
-  assert.equal(current.visibleResults[0].item.university, '가대학교');
-  assert.equal(target.visibleResults[0].item.university, '라대학교');
-});
-
-test('지역·대학·계열 조건을 적용한 범위 안에서만 교과 결과를 정렬한다', () => {
+test('학생부종합 모드는 현재·목표 내신 차이와 교과 그룹을 만들지 않는다', () => {
   const view = prepareAdmissionResultView(FIXTURE, {
+    admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE,
     comparisonValue: 2,
+  });
+  assert.equal(view.totalMatchedResults, 1);
+  assert.equal(view.subjectGroups, null);
+  assert.equal(view.comprehensive.visibleResults[0].difference, null);
+  assert.equal(view.comprehensive.visibleResults[0].absoluteDifference, null);
+});
+
+test('전형 모드가 바뀌면 해당 모드 데이터만으로 지역·대학 선택지를 재계산한다', () => {
+  const subjectOptions = getAdmissionViewFilterOptions(FIXTURE, { admissionViewMode: ADMISSION_VIEW_MODES.SUBJECT });
+  const comprehensiveOptions = getAdmissionViewFilterOptions(FIXTURE, { admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE });
+  assert.deepEqual(subjectOptions.regions, ['부산광역시']);
+  assert.ok(subjectOptions.universities.includes('가대학교'));
+  assert.equal(subjectOptions.universities.includes('마대학교'), false);
+  assert.deepEqual(comprehensiveOptions.regions, ['서울특별시']);
+  assert.deepEqual(comprehensiveOptions.universities, ['마대학교']);
+});
+
+test('모드 변경으로 유효하지 않은 하위 필터는 전체 선택으로 초기화한다', () => {
+  const filters = reconcileAdmissionViewFilters(FIXTURE, {
+    admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE,
+    filters: { region: '부산', university: '가대학교', field: 'natural', department: '컴퓨터공학과', admissionName: '일반전형' },
+  });
+  assert.equal(filters.region, '');
+  assert.equal(filters.university, '');
+  assert.equal(filters.field, '');
+  assert.equal(filters.department, '');
+  assert.equal(filters.admissionName, '');
+});
+
+test('지역·대학·계열 조건을 먼저 적용한 뒤 교과 그룹을 계산한다', () => {
+  const view = subjectView(FIXTURE, {
     filters: { region: '부산', university: '다대학교', academicField: 'natural' },
   });
   assert.equal(view.totalMatchedResults, 1);
-  assert.equal(view.visibleResults[0].item.department, '컴퓨터공학과');
+  assert.equal(view.subjectGroups.lower.visibleResults[0].item.department, '컴퓨터공학과');
 });
 
-test('학생부종합은 내신 차이를 계산하지 않고 참고 자료로만 정렬한다', () => {
-  const view = prepareAdmissionResultView(FIXTURE, {
-    comparisonValue: 2,
-    filters: { admissionCategory: '학생부종합' },
-  });
-  assert.equal(view.totalMatchedResults, 1);
-  assert.equal(view.visibleResults[0].difference, null);
-  assert.equal(view.visibleResults[0].absoluteDifference, null);
-  assert.equal(view.visibleResults[0].item.university, '마대학교');
-});
-
-test('처음 20건만 반환하고 더 보기는 20건씩 증가하며 초기화하면 20건으로 돌아간다', () => {
-  const rows = Array.from({ length: 45 }, (_, index) => subject({
-    university: `${String(index + 1).padStart(2, '0')}대학교`,
-    department: `${index + 1}학과`,
-    cut70Converted: 2 + index / 100,
-  }));
-  let limit = resetAdmissionResultLimit();
-  const first = prepareAdmissionResultView(rows, { comparisonValue: 2, visibleResultLimit: limit });
+test('각 교과 그룹은 처음 20건만 제공하고 더 보기는 선택 그룹만 20건 증가시킨다', () => {
+  const rows = [
+    ...Array.from({ length: 25 }, (_, index) => subject({ university: `비슷${index}대`, department: `${index}학과`, cut70Converted: 2 + index / 1000 })),
+    ...Array.from({ length: 25 }, (_, index) => subject({ university: `높음${index}대`, department: `${index}학과`, cut70Converted: 1.79 - index / 100 })),
+    ...Array.from({ length: 25 }, (_, index) => subject({ university: `낮음${index}대`, department: `${index}학과`, cut70Converted: 2.21 + index / 100 })),
+  ];
+  let limits = resetAdmissionGroupLimits();
+  const first = subjectView(rows, { visibleResultLimits: limits });
   assert.equal(ADMISSION_RESULT_PAGE_SIZE, 20);
-  assert.equal(first.totalMatchedResults, 45);
-  assert.equal(first.visibleResults.length, 20);
-  assert.equal(first.hasMore, true);
+  assert.equal(first.subjectGroups.similar.visibleResults.length, 20);
+  assert.equal(first.subjectGroups.higher.visibleResults.length, 20);
+  assert.equal(first.subjectGroups.lower.visibleResults.length, 20);
 
-  limit = increaseAdmissionResultLimit(limit);
-  const second = prepareAdmissionResultView(rows, { comparisonValue: 2, visibleResultLimit: limit });
-  assert.equal(second.visibleResults.length, 40);
-  assert.equal(second.visibleResultLimit, 40);
-
-  limit = increaseAdmissionResultLimit(limit);
-  const third = prepareAdmissionResultView(rows, { comparisonValue: 2, visibleResultLimit: limit });
-  assert.equal(third.visibleResults.length, 45);
-  assert.equal(third.hasMore, false);
-  assert.equal(resetAdmissionResultLimit(), 20);
+  limits = increaseAdmissionGroupLimit(limits, ADMISSION_SUBJECT_GROUPS.HIGHER);
+  const second = subjectView(rows, { visibleResultLimits: limits });
+  assert.equal(second.subjectGroups.higher.visibleResults.length, 25);
+  assert.equal(second.subjectGroups.similar.visibleResults.length, 20);
+  assert.equal(second.subjectGroups.lower.visibleResults.length, 20);
 });
 
-test('실제 전국 데이터도 기본 교과 결과를 20건만 준비한다', () => {
-  const view = prepareAdmissionResultView(ADMISSION_REFERENCE_DATA, { comparisonValue: 2.5 });
+test('70% cut이 없거나 기본 숨김 자격인 교과 자료는 비교 그룹에서 제외한다', () => {
+  const view = subjectView(FIXTURE);
+  assert.equal(view.visibleResults.some(({ item }) => item.dataAvailability === 'cut50-only'), false);
+  assert.equal(view.visibleResults.some(({ item }) => item.eligibilityType === 'rural'), false);
+});
+
+test('실제 전국 데이터에서도 교과 그룹 건수 합과 전체 매칭 수가 일치한다', () => {
+  const view = prepareAdmissionResultView(ADMISSION_REFERENCE_DATA, {
+    admissionViewMode: ADMISSION_VIEW_MODES.SUBJECT,
+    comparisonValue: 2.5,
+  });
+  assert.equal(view.subjectSimilarCount + view.subjectHigherCount + view.subjectLowerCount, view.totalMatchedResults);
   assert.ok(view.totalMatchedResults > 20);
-  assert.equal(view.visibleResults.length, 20);
-  assert.ok(view.visibleResults.every(({ item, absoluteDifference }) => item.admissionCategory === '학생부교과' && Number.isFinite(absoluteDifference)));
+  assert.equal(view.subjectGroups.similar.visibleResults.length, Math.min(20, view.subjectSimilarCount));
 });
