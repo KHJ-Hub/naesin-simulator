@@ -305,6 +305,23 @@ function setAdmissionViewMode(mode) {
   Object.assign(admissionFilters, { region: '', university: '', field: '', department: '', admissionName: '' });
   resetAdmissionViewPaging();
 }
+function ensureAdmissionViewModeControls() {
+  const panel = $('#admission-reference-panel');
+  const overview = panel?.querySelector('.admission-overview');
+  if (!panel || !overview) return;
+
+  if (!panel.querySelector('[data-admission-view-mode-selector]')) {
+    const selector = document.createElement('div');
+    selector.className = 'admission-control-group admission-view-mode-selector';
+    selector.dataset.admissionViewModeSelector = '';
+    selector.innerHTML = '<span>전형 방식 선택</span><div class="admission-basis" role="radiogroup" aria-label="전형 방식 선택"><label><input type="radio" name="admission-view-mode" value="student-record-subject" data-admission-view-mode="student-record-subject" /> 학생부교과</label><label><input type="radio" name="admission-view-mode" value="student-record-comprehensive" data-admission-view-mode="student-record-comprehensive" /> 학생부종합</label></div>';
+    overview.before(selector);
+  }
+
+  const legacyCategory = $('#admission-category');
+  const legacyCategoryField = legacyCategory?.closest('label');
+  if (legacyCategoryField) legacyCategoryField.hidden = true;
+}
 function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
   const configurations = [
@@ -636,4 +653,5 @@ document.querySelector('.student-form').addEventListener('input', (event) => {
   render();
 });
 
+ensureAdmissionViewModeControls();
 render();
