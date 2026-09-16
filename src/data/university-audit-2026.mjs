@@ -10,7 +10,7 @@ import { universityAudit2026GyeongnamVerified as universityAudit2026Gyeongnam } 
 import { universityAudit2026DaeguVerified as universityAudit2026Daegu } from './university-audits/2026-verified/daegu.mjs';
 import { universityAudit2026GyeongbukVerified as universityAudit2026Gyeongbuk } from './university-audits/2026-verified/gyeongbuk.mjs';
 import { universityAudit2026DaejeonVerified as universityAudit2026Daejeon } from './university-audits/2026-verified/daejeon.mjs';
-import { universityAudit2026Sejong } from './university-audits/2026/sejong.mjs';
+import { universityAudit2026SejongVerified as universityAudit2026Sejong } from './university-audits/2026-verified/sejong.mjs';
 import { universityAudit2026Chungnam } from './university-audits/2026/chungnam.mjs';
 import { universityAudit2026Chungbuk } from './university-audits/2026/chungbuk.mjs';
 import { universityAudit2026Gwangju } from './university-audits/2026/gwangju.mjs';
