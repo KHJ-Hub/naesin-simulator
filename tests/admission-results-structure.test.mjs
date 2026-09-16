@@ -115,6 +115,14 @@ test('대구 공식 2026 모집단위별 결과를 연결한다', () => {
   assert.ok(rows.every((item) => item.sourceUrl.includes('searchSyr=2026')));
 });
 
+test('경북 공식 2026 모집단위별 결과를 연결한다', () => {
+  const rows = admissionResultsByRegion2026.gyeongbuk;
+  assert.equal(rows.length, 1_353);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 1_009);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 344);
+  assert.ok(rows.every((item) => item.sourceUrl.includes('searchSyr=2026')));
+});
+
 test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {
   const rows = Object.values(admissionResultsByRegion2026).flat();
   const keys = rows.map((item) => [item.referenceYear, item.university, item.department, item.admissionCategory, item.admissionName].join('|'));
