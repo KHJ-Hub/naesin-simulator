@@ -421,10 +421,12 @@ function renderAdmissionReferences() {
     admissionViewMode,
     filters: admissionFilters,
     comparisonValue: comparison.value,
+    comparisonEnabled: state.admissionGradeScaleMode !== 'original9',
     visibleResultLimits: admissionVisibleResultLimits,
   });
-  const activeGroup = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? admissionExpandedSubjectGroup : 'comprehensive';
-  const activeView = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? view.subjectGroups[activeGroup] : view.comprehensive;
+  const originalSubjectMode = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT && state.admissionGradeScaleMode === 'original9';
+  const activeGroup = originalSubjectMode ? 'subjectReference' : admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? admissionExpandedSubjectGroup : 'comprehensive';
+  const activeView = originalSubjectMode ? view.subjectReference : admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? view.subjectGroups[activeGroup] : view.comprehensive;
   result.dataset.totalMatchedResults = String(view.totalMatchedResults);
   result.dataset.visibleResults = String(activeView.visibleResults.length);
   result.dataset.visibleResultLimit = String(activeView.visibleResultLimit);
@@ -435,7 +437,7 @@ function renderAdmissionReferences() {
   result.dataset.expandedSubjectGroup = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? admissionExpandedSubjectGroup : '';
   loadMoreButtons.forEach((button) => {
     const buttonGroup = button.dataset.admissionLoadMore || activeGroup;
-    const target = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? view.subjectGroups[buttonGroup] : view.comprehensive;
+    const target = originalSubjectMode ? view.subjectReference : admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? view.subjectGroups[buttonGroup] : view.comprehensive;
     button.hidden = !target?.hasMore;
     button.disabled = !target?.hasMore;
     button.dataset.remainingResults = String(target?.remainingResultCount ?? 0);
@@ -585,7 +587,9 @@ document.querySelector('#admission-reference-panel').addEventListener('click', (
   }
   const loadMoreControl = event.target.closest('[data-admission-load-more]');
   if (loadMoreControl) {
-    const group = admissionViewMode === ADMISSION_VIEW_MODES.COMPREHENSIVE
+    const group = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT && state.admissionGradeScaleMode === 'original9'
+      ? 'subjectReference'
+      : admissionViewMode === ADMISSION_VIEW_MODES.COMPREHENSIVE
       ? 'comprehensive'
       : loadMoreControl.dataset.admissionLoadMore || admissionExpandedSubjectGroup;
     admissionVisibleResultLimits = increaseAdmissionGroupLimit(admissionVisibleResultLimits, group);

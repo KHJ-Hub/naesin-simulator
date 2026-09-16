@@ -113,6 +113,16 @@ test('학생부종합 모드는 현재·목표 내신 차이와 교과 그룹을
   assert.equal(view.comprehensive.visibleResults[0].absoluteDifference, null);
 });
 
+test('9등급제 원본 교과 모드는 학생 내신 비교와 범위 그룹 없이 전체 원본 자료를 제공한다', () => {
+  const view = subjectView(FIXTURE, { comparisonEnabled: false });
+  assert.equal(view.subjectGroups, null);
+  assert.equal(view.subjectSimilarCount, 0);
+  assert.equal(view.subjectHigherCount, 0);
+  assert.equal(view.subjectLowerCount, 0);
+  assert.equal(view.totalMatchedResults, 5);
+  assert.ok(view.subjectReference.visibleResults.every(({ difference, absoluteDifference, group }) => difference === null && absoluteDifference === null && group === null));
+});
+
 test('전형 모드가 바뀌면 해당 모드 데이터만으로 지역·대학 선택지를 재계산한다', () => {
   const subjectOptions = getAdmissionViewFilterOptions(FIXTURE, { admissionViewMode: ADMISSION_VIEW_MODES.SUBJECT });
   const comprehensiveOptions = getAdmissionViewFilterOptions(FIXTURE, { admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE });

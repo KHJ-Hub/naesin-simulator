@@ -65,12 +65,13 @@ export function resetAdmissionGroupLimits() {
     [ADMISSION_SUBJECT_GROUPS.SIMILAR]: ADMISSION_RESULT_PAGE_SIZE,
     [ADMISSION_SUBJECT_GROUPS.HIGHER]: ADMISSION_RESULT_PAGE_SIZE,
     [ADMISSION_SUBJECT_GROUPS.LOWER]: ADMISSION_RESULT_PAGE_SIZE,
+    subjectReference: ADMISSION_RESULT_PAGE_SIZE,
     comprehensive: ADMISSION_RESULT_PAGE_SIZE,
   };
 }
 
 export function increaseAdmissionGroupLimit(limits = {}, group, pageSize = ADMISSION_RESULT_PAGE_SIZE) {
-  if (![...Object.values(ADMISSION_SUBJECT_GROUPS), 'comprehensive'].includes(group)) return { ...limits };
+  if (![...Object.values(ADMISSION_SUBJECT_GROUPS), 'subjectReference', 'comprehensive'].includes(group)) return { ...limits };
   return { ...limits, [group]: increaseAdmissionResultLimit(limits[group], pageSize) };
 }
 
@@ -147,6 +148,7 @@ export function prepareAdmissionResultView(data, {
   admissionViewMode = null,
   filters = {},
   comparisonValue = null,
+  comparisonEnabled = true,
   visibleResultLimits = resetAdmissionGroupLimits(),
 } = {}) {
   const normalizedMode = normalizeAdmissionViewMode(admissionViewMode);
@@ -156,7 +158,7 @@ export function prepareAdmissionResultView(data, {
       admissionViewMode: null, admissionCategory: null, totalMatchedResults: 0,
       visibleResults: Object.freeze([]), visibleResultLimit: 0, hasMore: false,
       subjectSimilarCount: 0, subjectHigherCount: 0, subjectLowerCount: 0,
-      subjectGroups: null, comprehensive: null,
+      subjectGroups: null, subjectReference: null, comprehensive: null,
     });
   }
 
@@ -176,7 +178,23 @@ export function prepareAdmissionResultView(data, {
       visibleResultLimit: comprehensive.visibleResultLimit,
       hasMore: comprehensive.hasMore,
       subjectSimilarCount: 0, subjectHigherCount: 0, subjectLowerCount: 0,
-      subjectGroups: null, comprehensive,
+      subjectGroups: null, subjectReference: null, comprehensive,
+    });
+  }
+
+  if (!comparisonEnabled) {
+    const entries = filtered
+      .map((item) => ({ item, difference: null, absoluteDifference: null, group: null }))
+      .sort(stableTextSort);
+    const subjectReference = groupView(entries, visibleResultLimits.subjectReference);
+    return Object.freeze({
+      admissionViewMode: normalizedMode, admissionCategory,
+      totalMatchedResults: entries.length,
+      visibleResults: subjectReference.visibleResults,
+      visibleResultLimit: subjectReference.visibleResultLimit,
+      hasMore: subjectReference.hasMore,
+      subjectSimilarCount: 0, subjectHigherCount: 0, subjectLowerCount: 0,
+      subjectGroups: null, subjectReference, comprehensive: null,
     });
   }
 
@@ -206,7 +224,7 @@ export function prepareAdmissionResultView(data, {
     subjectSimilarCount: grouped.similar.totalCount,
     subjectHigherCount: grouped.higher.totalCount,
     subjectLowerCount: grouped.lower.totalCount,
-    subjectGroups: Object.freeze(grouped),
+    subjectGroups: Object.freeze(grouped), subjectReference: null,
     comprehensive: null,
   });
 }
