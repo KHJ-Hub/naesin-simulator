@@ -139,6 +139,14 @@ test('세종 공식 2026 모집단위별 결과를 연결한다', () => {
   assert.ok(rows.every((item) => item.dataAvailability === 'confirmed-cut'));
 });
 
+test('충남 공식 2026 모집단위별 결과를 연결한다', () => {
+  const rows = admissionResultsByRegion2026.chungnam;
+  assert.equal(rows.length, 1_573);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 1_181);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 392);
+  assert.ok(rows.every((item) => item.dataAvailability === 'confirmed-cut'));
+});
+
 test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {
   const rows = Object.values(admissionResultsByRegion2026).flat();
   const keys = rows.map((item) => [item.referenceYear, item.university, item.department, item.admissionCategory, item.admissionName].join('|'));
