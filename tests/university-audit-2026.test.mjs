@@ -104,7 +104,7 @@ test('제주 공식 목록 전체가 감사 상태로 정리된다', async () =>
   assert.equal(UNIVERSITY_AUDIT_SUMMARY_2026.제주특별자치도.audited, 2);
   assert.deepEqual(UNIVERSITY_AUDIT_SUMMARY_2026.제주특별자치도.unconfirmed, []);
   const { admissionResults2026Jeju } = await import('../src/admission-results/2026/jeju.mjs');
-  assert.equal(admissionResults2026Jeju.length, 0);
+  assert.equal(admissionResults2026Jeju.length, 119);
 });
 
 test('서울·경기 공식 감사 결과를 함께 연결한다', () => {

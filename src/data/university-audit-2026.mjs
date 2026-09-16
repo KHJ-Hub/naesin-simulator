@@ -17,7 +17,7 @@ import { universityAudit2026GwangjuVerified as universityAudit2026Gwangju } from
 import { universityAudit2026JeonnamVerified as universityAudit2026Jeonnam } from './university-audits/2026-verified/jeonnam.mjs';
 import { universityAudit2026JeonbukVerified as universityAudit2026Jeonbuk } from './university-audits/2026-verified/jeonbuk.mjs';
 import { universityAudit2026GangwonVerified as universityAudit2026Gangwon } from './university-audits/2026-verified/gangwon.mjs';
-import { universityAudit2026Jeju } from './university-audits/2026/jeju.mjs';
+import { universityAudit2026JejuVerified as universityAudit2026Jeju } from './university-audits/2026-verified/jeju.mjs';
 
 /**
  * 대학 단위 감사 상태는 모집단위별 입시결과 레코드와 별개다.
