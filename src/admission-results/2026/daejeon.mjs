@@ -1,3 +1,3 @@
-import { admissionResults2026DaejeonGenerated } from './generated/daejeon.mjs';
+import { admissionResults2026DaejeonVerified } from './verified/daejeon.mjs';
 
-export const admissionResults2026Daejeon = admissionResults2026DaejeonGenerated;
+export const admissionResults2026Daejeon = admissionResults2026DaejeonVerified;
