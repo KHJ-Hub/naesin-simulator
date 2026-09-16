@@ -97,6 +97,16 @@ test('울산 공식 2026 결과와 의예과 지역교과 자격 주의를 함�
   assert.equal(medicine?.studentDefaultVisible, false);
 });
 
+test('경남 공식 2026 결과와 기존 검증 지역인재 자격을 함께 보존한다', () => {
+  const rows = admissionResultsByRegion2026.gyeongnam;
+  assert.equal(rows.length, 697);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 478);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 219);
+  const verifiedRegional = rows.filter((item) => item.eligibilityType === 'regional' && item.regionalEligibility?.verified);
+  assert.equal(verifiedRegional.length, 9);
+  assert.ok(verifiedRegional.every((item) => item.regionalEligibility.eligibleSchoolRegions.includes('부산')));
+});
+
 test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {
   const rows = Object.values(admissionResultsByRegion2026).flat();
   const keys = rows.map((item) => [item.referenceYear, item.university, item.department, item.admissionCategory, item.admissionName].join('|'));
