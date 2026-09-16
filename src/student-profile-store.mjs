@@ -208,6 +208,7 @@ export function migrateLegacyStudentData({ storage = defaultStorage(), transform
   }
   storage?.setItem(CURRENT_STUDENT_ID_STORAGE_KEY, identity.studentNumber);
   storage?.setItem(STUDENT_PROFILE_MIGRATION_KEY, new Date().toISOString());
+  storage?.removeItem(LEGACY_STUDENT_STORAGE_KEY);
   clearStudentDraft(storage);
   return { migrated: true, studentId: identity.studentNumber, profile: clone(profiles[identity.studentNumber]) };
 }

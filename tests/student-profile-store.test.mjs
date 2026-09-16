@@ -110,6 +110,7 @@ test('기존 단일 저장 데이터를 첫 프로필로 한 번만 마이그레
   assert.equal(getStudentProfiles(storage)['10101'].actual[0].gradeValue, 2);
   assert.equal(storage.getItem(CURRENT_STUDENT_ID_STORAGE_KEY), '10101');
   assert.ok(storage.getItem(STUDENT_PROFILE_MIGRATION_KEY));
+  assert.equal(storage.getItem(LEGACY_STUDENT_STORAGE_KEY), null);
 
   storage.setItem(LEGACY_STUDENT_STORAGE_KEY, JSON.stringify(profileData('10101', '기존 학생', 5)));
   const second = migrateLegacyStudentData({ storage });
