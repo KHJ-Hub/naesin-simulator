@@ -34,7 +34,9 @@ export function classifyAdmissionEligibility({
 } = {}) {
   const regionalVisible = isSchoolRegionEligible(regionalEligibility, schoolRegion)
     || (regionalEligibility == null && regionalEligibilityConfirmed === true);
-  if (ELIGIBILITY_VALUES.has(eligibilityType)) {
+  // unknown은 확정된 자격 유형이 아니라 미분류 상태다. 전형명이 명확하면 아래 규칙으로
+  // 재분류하고, 이름으로도 확인할 수 없을 때만 unknown을 유지한다.
+  if (ELIGIBILITY_VALUES.has(eligibilityType) && eligibilityType !== ADMISSION_ELIGIBILITY_TYPES.UNKNOWN) {
     return {
       eligibilityType,
       eligibilityVerification: 'official-confirmed',

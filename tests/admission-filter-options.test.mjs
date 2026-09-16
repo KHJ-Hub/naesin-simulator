@@ -17,6 +17,7 @@ import {
 import { inferAcademicFieldFromDepartment, normalizeAdmissionRecord } from '../src/admission-record-normalizer.mjs';
 import { createOfficialAdmissionResult } from '../src/admission-results/admission-result-factory.mjs';
 import { UNIVERSITIES } from '../src/data/universities.mjs';
+import { ADMISSION_REFERENCE_DATA } from '../src/admission-reference.mjs';
 
 function result(overrides = {}) {
   return {
@@ -88,6 +89,11 @@ test('실제 부산 대학 마스터에는 부산대학교가 포함된다', () 
   assert.equal(universities.length, 14);
 });
 
+test('부산과 부산대학교의 실제 academicField에서 계열 선택지를 생성한다', () => {
+  assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시' }), ['humanities', 'natural', 'arts', 'other-unknown']);
+  assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시', university: '부산대학교' }), ['humanities', 'natural', 'arts', 'other-unknown']);
+});
+
 test('대학을 선택하면 해당 대학의 공식 모집단위만 중복 없이 반환한다', () => {
   assert.deepEqual(getAvailableDepartments(FIXTURE, { university: '부산대학교' }), ['건축학과', '국어국문학과', '컴퓨터공학과']);
   assert.deepEqual(getAvailableDepartments(FIXTURE, {}), []);
@@ -106,6 +112,21 @@ test('상위 지역 변경으로 무효가 된 대학·모집단위·전형명�
   assert.equal(filters.university, '');
   assert.equal(filters.department, '');
   assert.equal(filters.admissionName, '');
+});
+
+test('상위 지역 변경으로 존재하지 않게 된 계열도 전체로 초기화한다', () => {
+  const fieldRecords = [
+    result({ region: '부산광역시', university: '부산대학교', department: '회화과', academicField: 'arts' }),
+    result({ region: '서울특별시', university: '서울대학교', department: '국어국문학과', academicField: 'humanities' }),
+    result({ region: '서울특별시', university: '서울대학교', department: '미래융합학과', academicField: undefined, field: undefined }),
+  ];
+  const filters = reconcileAdmissionFilters(fieldRecords, {
+    region: '서울특별시',
+    university: '',
+    field: 'arts',
+  }, UNIVERSITY_FIXTURE);
+  assert.equal(filters.field, '');
+  assert.deepEqual(getAvailableAcademicFields(fieldRecords, { region: '서울특별시' }), ['humanities', 'other-unknown']);
 });
 
 test('건축 검색은 명칭을 합치지 않고 관련 공식 모집단위명을 그대로 반환한다', () => {

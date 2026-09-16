@@ -10,6 +10,12 @@ test('지원자격 제한 전형은 이름이 명확할 때만 분류하고 고�
   assert.equal(classifyAdmissionEligibility({ admissionName: '학생부종합(고른기회)' }).eligibilityType, 'unknown');
 });
 
+test('미분류 자격값은 전형명이 명확할 때만 다시 분류한다', () => {
+  assert.equal(classifyAdmissionEligibility({ admissionName: '학생부종합(학생부종합전형)', eligibilityType: 'unknown' }).eligibilityType, 'general');
+  assert.equal(classifyAdmissionEligibility({ admissionName: '학생부종합(농어촌학생)', eligibilityType: 'unknown' }).eligibilityType, 'rural');
+  assert.equal(classifyAdmissionEligibility({ admissionName: '미래인재전형', eligibilityType: 'unknown' }).eligibilityType, 'unknown');
+});
+
 test('공식 지원지역이 확인된 지역인재만 부산 학생 기본 검색에 포함한다', () => {
   const rural = ADMISSION_REFERENCE_DATA.find((item) => item.eligibilityType === 'rural');
   const regional = ADMISSION_REFERENCE_DATA.find((item) => item.eligibilityType === 'regional' && item.regionalEligibility?.verified && item.studentDefaultVisible);
