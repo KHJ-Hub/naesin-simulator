@@ -15,8 +15,18 @@ import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailab
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260916-semester-summary1';
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
+import {
+  createStudentProfile,
+  getCurrentStudentId,
+  getCurrentStudentProfile,
+  getStudentDraft,
+  migrateLegacyStudentData,
+  resetCurrentStudentInput,
+  restoreStudentProfile,
+  saveCurrentStudentProfile,
+  saveStudentDraft,
+} from './student-profile-store.mjs?v=20260916-student-profiles1';
 
-const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
   student: { studentId: '', studentName: '' },
@@ -63,11 +73,10 @@ setupHiddenTeacherEntry();
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    migrateLegacyStudentData({ storage: localStorage, transform: normalizeState });
+    const saved = getCurrentStudentProfile(localStorage) ?? getStudentDraft(localStorage);
     if (!saved || !Array.isArray(saved.actual)) return defaultState();
-    const normalized = normalizeState(saved);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-    return normalized;
+    return normalizeState(saved);
   } catch {
     return defaultState();
   }
@@ -122,7 +131,16 @@ function normalizeInputModes(saved = {}) {
   SEMESTERS.forEach(({ id }) => { result[id] = saved?.actual?.[id] === 'quick' || saved?.[id] === 'quick' ? 'quick' : 'detailed'; });
   return result;
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveState() {
+  const studentId = String(state.student?.studentId ?? '').replace(/\D/g, '').slice(0, 5);
+  const studentName = String(state.student?.studentName ?? '').trim();
+  if (!/^\d{5}$/.test(studentId) || !studentName) {
+    saveStudentDraft(state, localStorage);
+    return;
+  }
+  if (getCurrentStudentId(localStorage)) saveCurrentStudentProfile(state, localStorage);
+  else createStudentProfile(studentId, studentName, state, localStorage);
+}
 function records() { return state.actual; }
 function semesterLabel(id) { return SEMESTERS.find((item) => item.id === id)?.label ?? id; }
 function quickAverage(semesterId) { return Number(state.quickAverages?.[semesterId]); }
@@ -475,17 +493,40 @@ $('#import-input').addEventListener('change', async (event) => {
   try {
     const imported = JSON.parse(await file.text());
     if (!Array.isArray(imported.actual)) throw new Error('형식 오류');
-    state = normalizeState(imported); saveState(); render(); showToast('데이터를 불러왔습니다.');
+    if (getCurrentStudentId(localStorage)) saveCurrentStudentProfile(state, localStorage);
+    state = normalizeState(imported);
+    const importedId = state.student.studentId;
+    const importedName = state.student.studentName.trim();
+    if (/^\d{5}$/.test(importedId) && importedName) restoreStudentProfile(state, localStorage);
+    else saveStudentDraft(state, localStorage);
+    render(); showToast('데이터를 불러왔습니다.');
   } catch (error) { console.error(error); showToast('백업 파일 형식을 확인해 주세요.', 'error'); }
   event.target.value = '';
 });
 $('#reset-button').addEventListener('click', () => {
-  if (!confirm('이 브라우저에 저장된 성적 데이터를 모두 삭제할까요?')) return;
-  state = defaultState(); saveState(); render(); showToast('저장된 데이터를 초기화했습니다.');
+  if (!confirm('현재 학생의 성적과 목표 입력을 초기화할까요?')) return;
+  const student = { ...state.student };
+  const admissionInterests = [...state.admissionInterests];
+  const admissionGradeScaleMode = state.admissionGradeScaleMode;
+  state = { ...defaultState(), student, admissionInterests, admissionGradeScaleMode };
+  if (getCurrentStudentId(localStorage)) resetCurrentStudentInput(state, localStorage);
+  else saveState();
+  render(); showToast('현재 학생의 입력을 초기화했습니다.');
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
 document.querySelector('.student-form').addEventListener('input', (event) => {
-  if (event.target.id === 'student-id') { state.student.studentId = event.target.value.replace(/\D/g, '').slice(0, 5); event.target.value = state.student.studentId; }
+  if (event.target.id === 'student-id') {
+    const enteredId = event.target.value.replace(/\D/g, '').slice(0, 5);
+    const currentId = getCurrentStudentId(localStorage);
+    if (currentId && enteredId !== currentId) {
+      state.student.studentId = currentId;
+      event.target.value = currentId;
+      showToast('다른 학생은 학생 프로필 선택 또는 새 학생 추가 기능으로 전환해 주세요.', 'error');
+    } else {
+      state.student.studentId = enteredId;
+      event.target.value = enteredId;
+    }
+  }
   if (event.target.id === 'student-name') { state.student.studentName = event.target.value.trimStart().replace(/\s+$/g, ''); event.target.value = state.student.studentName; }
   const valid = /^\d{5}$/.test(state.student.studentId) && Boolean(state.student.studentName.trim());
   if (valid) saveState();
