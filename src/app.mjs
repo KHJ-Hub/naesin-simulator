@@ -11,9 +11,10 @@ import {
 import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store2';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
 import { ADMISSION_REFERENCE_DATA, ADMISSION_REFERENCE_SETTINGS, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, classifyAdmissionReference, describeAdmissionDifference, filterAdmissionReferences, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields2';
-import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailableAdmissionCategories, getAvailableAdmissionNames, getAvailableDepartments, getAvailableRegions, getAvailableUniversities, reconcileAdmissionFilters } from './admission-filter-options.mjs?v=20260916-academic-fields2';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, getAvailableAcademicFields, getAvailableAdmissionCategories, getAvailableAdmissionNames, getAvailableDepartments, getAvailableRegions, getAvailableUniversities, reconcileAdmissionFilters } from './admission-filter-options.mjs?v=20260916-university-master1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260916-semester-summary1';
+import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
 
 const STORAGE_KEY = 'naesin-simulator:v1';
 const defaultState = () => ({
@@ -310,6 +311,22 @@ function renderAdmissionInterests() {
   if (!state.admissionInterests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없습니다.</p>'; return; }
   container.innerHTML = state.admissionInterests.map((item) => `<article class="interest-item"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><small>${escapeHtml(item.referenceYear)}학년도 · 70% cut ${fmt(item.cut70)} · ${item.comparisonBasis === 'reference' ? '전년도 등록자 내신 참고' : item.comparisonBasis === 'target' ? '목표 내신' : '현재 내신'}${item.comparisonScore == null ? '' : ` ${fmt(item.comparisonScore)}`}</small></div><button class="icon-button" data-admission-remove="${escapeHtml(admissionInterestKey(item))}">삭제</button></article>`).join('');
 }
+function admissionEmptyStateMessage() {
+  if (!admissionFilters.university) return '선택한 조건에 맞는 참고 자료가 없습니다.';
+  const universityRecords = ADMISSION_REFERENCE_DATA.filter((item) => item.university === admissionFilters.university);
+  if (universityRecords.length) return '공식 입시결과는 확보되어 있지만 현재 선택 조건에 맞는 기본 노출 자료가 없습니다.';
+
+  const audit = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === admissionFilters.university);
+  const statuses = admissionFilters.admissionCategory === '학생부교과'
+    ? [audit?.subjectAdmissionStatus]
+    : admissionFilters.admissionCategory === '학생부종합'
+      ? [audit?.comprehensiveAdmissionStatus]
+      : [audit?.subjectAdmissionStatus, audit?.comprehensiveAdmissionStatus];
+  if (statuses.some((status) => status === 'not-checked')) return '아직 공식 입시결과를 확인 중인 대학입니다.';
+  if (statuses.every((status) => status === 'not-published')) return '대학이 해당 공식 입시결과 수치를 공개하지 않았습니다.';
+  if (statuses.every((status) => ['no-subject-admission', 'no-comprehensive-admission'].includes(status))) return '해당 전형 또는 모집단위의 공식 결과가 없습니다.';
+  return '현재 공식 입시결과를 확보하지 못했습니다.';
+}
 function renderAdmissionReferences() {
   document.querySelectorAll('input[name="admission-scale"]').forEach((input) => { input.checked = input.value === state.admissionGradeScaleMode; });
   const notice = document.querySelector('.admission-conversion-notice'); if (notice) notice.textContent = state.admissionGradeScaleMode === 'original9' ? '전년도 공식 입시결과의 9등급제 원본 값입니다.' : ADMISSION_CONVERSION_NOTICE;
@@ -322,7 +339,7 @@ function renderAdmissionReferences() {
   if (!ADMISSION_REFERENCE_DATA.length) { result.innerHTML = '<div class="empty-state">등록된 전년도 입시결과 데이터가 없습니다.<br /><small>대교협 대입정보포털 어디가의 공개 자료를 확인한 뒤 연도별 데이터 파일에 추가합니다.</small></div>'; renderAdmissionInterests(); return; }
   const filtered = filterAdmissionReferences(ADMISSION_REFERENCE_DATA, admissionFilters).map((item) => ({ item, band: state.admissionGradeScaleMode === 'converted5' && isComparableAdmissionRecord(item) ? classifyAdmissionReference(comparison.value, admissionComparisonCut(item, 'converted')) : state.admissionGradeScaleMode === 'converted5' ? 'reference' : 'original' }));
   const bandKeys = state.admissionGradeScaleMode === 'converted5' ? [...Object.keys(ADMISSION_REFERENCE_SETTINGS.bands), 'reference'] : ['original'];
-  result.innerHTML = filtered.length ? bandKeys.map((key) => { const items = filtered.filter((entry) => entry.band === key); const label = key === 'original' ? '9등급제 원본 자료' : key === 'reference' ? '전년도 등록자 내신 참고' : ADMISSION_REFERENCE_SETTINGS.bands[key].label; return items.length ? `<section class="admission-band"><h3>${label}</h3><div class="admission-card-grid">${items.map(({ item }) => admissionResultCard(item, comparison)).join('')}</div></section>` : ''; }).join('') : '<div class="empty-state">선택한 조건에 맞는 참고 자료가 없습니다.</div>';
+  result.innerHTML = filtered.length ? bandKeys.map((key) => { const items = filtered.filter((entry) => entry.band === key); const label = key === 'original' ? '9등급제 원본 자료' : key === 'reference' ? '전년도 등록자 내신 참고' : ADMISSION_REFERENCE_SETTINGS.bands[key].label; return items.length ? `<section class="admission-band"><h3>${label}</h3><div class="admission-card-grid">${items.map(({ item }) => admissionResultCard(item, comparison)).join('')}</div></section>` : ''; }).join('') : `<div class="empty-state">${escapeHtml(admissionEmptyStateMessage())}</div>`;
   renderAdmissionInterests();
 }
 function goalDetails() {

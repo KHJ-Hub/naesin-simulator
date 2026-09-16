@@ -16,6 +16,7 @@ import {
 } from '../src/admission-filter-options.mjs';
 import { inferAcademicFieldFromDepartment, normalizeAdmissionRecord } from '../src/admission-record-normalizer.mjs';
 import { createOfficialAdmissionResult } from '../src/admission-results/admission-result-factory.mjs';
+import { UNIVERSITIES } from '../src/data/universities.mjs';
 
 function result(overrides = {}) {
   return {
@@ -45,6 +46,14 @@ const FIXTURE = Object.freeze([
   result({ region: '서울특별시', university: '서울대학교', department: '건축학전공', admissionName: '지역균형전형' }),
 ]);
 
+const UNIVERSITY_FIXTURE = Object.freeze([
+  { universityId: 'pusan', name: '부산대학교', region: '부산광역시' },
+  { universityId: 'donga', name: '동아대학교', region: '부산' },
+  { universityId: 'busan-no-result', name: '부산미확보대학교', region: 'busan' },
+  { universityId: 'seoul', name: '서울대학교', region: '서울특별시' },
+  { universityId: 'pusan-duplicate', name: '부산대학교', region: '부산광역시' },
+]);
+
 const FIELD_FIXTURE = Object.freeze([
   result({ department: '국어국문학과', academicField: 'humanities' }),
   result({ department: '컴퓨터공학과', academicField: 'natural' }),
@@ -54,15 +63,29 @@ const FIELD_FIXTURE = Object.freeze([
 ]);
 
 test('지역 선택에 따라 대학 목록을 좁히고 중복을 제거해 가나다순으로 반환한다', () => {
-  assert.deepEqual(getAvailableUniversities(FIXTURE, { region: '부산광역시' }), ['동아대학교', '부산대학교']);
-  assert.deepEqual(getAvailableUniversities(FIXTURE, { region: '서울특별시' }), ['서울대학교']);
-  assert.equal(getAvailableUniversities(FIXTURE, { region: '서울특별시' }).includes('부산대학교'), false);
+  assert.deepEqual(getAvailableUniversities(FIXTURE, { region: '부산광역시' }, UNIVERSITY_FIXTURE), ['동아대학교', '부산대학교', '부산미확보대학교']);
+  assert.deepEqual(getAvailableUniversities(FIXTURE, { region: '서울특별시' }, UNIVERSITY_FIXTURE), ['서울대학교']);
+  assert.equal(getAvailableUniversities(FIXTURE, { region: '서울특별시' }, UNIVERSITY_FIXTURE).includes('부산대학교'), false);
 });
 
 test('지역은 대학 감사에서 정의한 순서를 유지한다', () => {
-  const regions = getAvailableRegions(FIXTURE);
+  const regions = getAvailableRegions(FIXTURE, {}, UNIVERSITY_FIXTURE);
   assert.deepEqual(regions, ['서울특별시', '부산광역시']);
   assert.ok(ADMISSION_REGION_ORDER.indexOf(regions[0]) < ADMISSION_REGION_ORDER.indexOf(regions[1]));
+});
+
+test('부산대학교와 입결 레코드가 없는 대학도 대학 마스터 기준으로 노출한다', () => {
+  const withoutPusanResults = FIXTURE.filter((item) => item.university !== '부산대학교');
+  const universities = getAvailableUniversities(withoutPusanResults, { region: '부산' }, UNIVERSITY_FIXTURE);
+  assert.ok(universities.includes('부산대학교'));
+  assert.ok(universities.includes('부산미확보대학교'));
+  assert.equal(universities.filter((name) => name === '부산대학교').length, 1);
+});
+
+test('실제 부산 대학 마스터에는 부산대학교가 포함된다', () => {
+  const universities = getAvailableUniversities([], { region: 'busan' }, UNIVERSITIES);
+  assert.ok(universities.includes('부산대학교'));
+  assert.equal(universities.length, 14);
 });
 
 test('대학을 선택하면 해당 대학의 공식 모집단위만 중복 없이 반환한다', () => {
@@ -78,7 +101,7 @@ test('상위 지역 변경으로 무효가 된 대학·모집단위·전형명�
     department: '컴퓨터공학과',
     admissionName: '학교장추천',
     admissionCategory: '학생부교과',
-  });
+  }, UNIVERSITY_FIXTURE);
   assert.equal(filters.region, '서울특별시');
   assert.equal(filters.university, '');
   assert.equal(filters.department, '');

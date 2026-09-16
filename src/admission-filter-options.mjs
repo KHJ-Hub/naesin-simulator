@@ -5,6 +5,7 @@ import {
   validAdmissionRecord,
 } from './admission-record-normalizer.mjs';
 import { isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
+import { UNIVERSITIES } from './data/universities.mjs';
 
 /** 대학 감사에서 사용하는 지역 순서를 학생 검색에도 그대로 적용한다. */
 export const ADMISSION_REGION_ORDER = Object.freeze([
@@ -45,6 +46,36 @@ export const ADMISSION_ACADEMIC_FIELD_FILTERS = Object.freeze([
 
 const koSort = (left, right) => String(left).localeCompare(String(right), 'ko');
 const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort(koSort);
+const REGION_ALIASES = Object.freeze({
+  서울: '서울특별시', seoul: '서울특별시',
+  경기: '경기도', gyeonggi: '경기도',
+  인천: '인천광역시', incheon: '인천광역시',
+  부산: '부산광역시', busan: '부산광역시',
+  울산: '울산광역시', ulsan: '울산광역시',
+  경남: '경상남도', gyeongnam: '경상남도',
+  대구: '대구광역시', daegu: '대구광역시',
+  경북: '경상북도', gyeongbuk: '경상북도',
+  대전: '대전광역시', daejeon: '대전광역시',
+  세종: '세종특별자치시', sejong: '세종특별자치시',
+  충남: '충청남도', chungnam: '충청남도',
+  충북: '충청북도', chungbuk: '충청북도',
+  광주: '광주광역시', gwangju: '광주광역시',
+  전남: '전라남도', jeonnam: '전라남도',
+  전북: '전북특별자치도', jeonbuk: '전북특별자치도',
+  강원: '강원특별자치도', gangwon: '강원특별자치도',
+  제주: '제주특별자치도', jeju: '제주특별자치도',
+});
+
+export function normalizeAdmissionRegion(region) {
+  const value = String(region ?? '').trim();
+  return REGION_ALIASES[value] ?? REGION_ALIASES[value.toLocaleLowerCase('en-US')] ?? value;
+}
+
+function masterUniversities(universities = UNIVERSITIES) {
+  return universities
+    .filter((item) => item && item.name)
+    .map((item) => ({ ...item, region: normalizeAdmissionRegion(item.region) }));
+}
 const selectedAcademicField = (filters = {}) => filters.academicField || filters.field || '';
 const itemAcademicField = (item = {}) => normalizeAcademicField(item.academicField ?? item.field);
 const academicFieldMatches = (item, selected) => selected === 'other-unknown'
@@ -72,7 +103,7 @@ function matches(item, filters = {}, ignored = []) {
   const skip = new Set(ignored);
   const academicField = selectedAcademicField(filters);
   return (
-    (skip.has('region') || !filters.region || item.region === filters.region)
+    (skip.has('region') || !filters.region || normalizeAdmissionRegion(item.region) === normalizeAdmissionRegion(filters.region))
     && (skip.has('university') || !filters.university || item.university === filters.university)
     && (skip.has('academicField') || !academicField || academicFieldMatches(item, academicField))
     && (skip.has('department') || !filters.department || item.department === filters.department)
@@ -89,17 +120,20 @@ export function filterAdmissionRecords(data, filters = {}) {
   return visibleRecords(data, filters).filter((item) => matches(item, filters));
 }
 
-export function getAvailableRegions(data, filters = {}) {
-  const present = new Set(visibleRecords(data, filters).map((item) => item.region));
+export function getAvailableRegions(data, filters = {}, universities = UNIVERSITIES) {
+  const present = new Set(masterUniversities(universities).map((item) => item.region));
   const ordered = ADMISSION_REGION_ORDER.filter((region) => present.has(region));
   const extras = [...present].filter((region) => !ADMISSION_REGION_ORDER.includes(region)).sort(koSort);
   return [...ordered, ...extras];
 }
 
-export function getAvailableUniversities(data, filters = {}) {
-  // 대학 목록은 지역·계열·전형 구분과 연동하되, 이전 대학에서 고른 학과/전형명에는 묶이지 않는다.
-  const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['university', 'department', 'admissionName']));
-  return uniqueSorted(records.map((item) => item.university));
+export function getAvailableUniversities(data, filters = {}, universities = UNIVERSITIES) {
+  // 대학 자체와 입시결과 공개 여부는 별개다. 대학 목록은 마스터의 지역만으로 만들고,
+  // 계열·전형·자격 및 입시결과 레코드 존재 여부는 대학 선택 후 결과 조회에만 적용한다.
+  const selectedRegion = normalizeAdmissionRegion(filters.region);
+  const entries = masterUniversities(universities)
+    .filter((item) => !selectedRegion || item.region === selectedRegion);
+  return uniqueSorted(entries.map((item) => item.name));
 }
 
 export function getAvailableAcademicFields(data, filters = {}) {
@@ -171,9 +205,9 @@ export function summarizeAdmissionAcademicFields(data) {
 }
 
 /** 상위 조건 변경 뒤에도 유효한 선택은 유지하고, 범위를 벗어난 하위 선택만 전체로 되돌린다. */
-export function reconcileAdmissionFilters(data, filters = {}) {
+export function reconcileAdmissionFilters(data, filters = {}, universities = UNIVERSITIES) {
   const next = {
-    region: String(filters.region ?? ''),
+    region: normalizeAdmissionRegion(filters.region),
     university: String(filters.university ?? ''),
     field: String(selectedAcademicField(filters)),
     department: String(filters.department ?? ''),
@@ -182,8 +216,8 @@ export function reconcileAdmissionFilters(data, filters = {}) {
     includeSpecialEligibility: filters.includeSpecialEligibility === true,
   };
 
-  if (next.region && !getAvailableRegions(data, next).includes(next.region)) next.region = '';
-  if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', admissionName: '' }).includes(next.university)) next.university = '';
+  if (next.region && !getAvailableRegions(data, next, universities).includes(next.region)) next.region = '';
+  if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', admissionName: '' }, universities).includes(next.university)) next.university = '';
   if (next.field && !getAvailableAcademicFields(data, { ...next, department: '', admissionName: '' }).includes(next.field)) next.field = '';
   if (next.department && (!next.university || !getAvailableDepartments(data, { ...next, admissionName: '' }).includes(next.department))) next.department = '';
   if (next.admissionName && !getAvailableAdmissionNames(data, next).includes(next.admissionName)) next.admissionName = '';
