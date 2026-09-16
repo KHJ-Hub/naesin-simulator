@@ -1,3 +1,3 @@
-import { admissionResults2026ChungbukGenerated } from './generated/chungbuk.mjs';
+import { admissionResults2026ChungbukVerified } from './verified/chungbuk.mjs';
 
-export const admissionResults2026Chungbuk = admissionResults2026ChungbukGenerated;
+export const admissionResults2026Chungbuk = admissionResults2026ChungbukVerified;
