@@ -4,7 +4,7 @@ import { UNIVERSITIES } from './universities.mjs';
 import { universityAudit2026SeoulVerified as universityAudit2026Seoul } from './university-audits/2026-verified/seoul.mjs';
 import { universityAudit2026GyeonggiVerified as universityAudit2026Gyeonggi } from './university-audits/2026-verified/gyeonggi.mjs';
 import { universityAudit2026IncheonVerified as universityAudit2026Incheon } from './university-audits/2026-verified/incheon.mjs';
-import { universityAudit2026Busan } from './university-audits/2026/busan.mjs';
+import { universityAudit2026BusanVerified as universityAudit2026Busan } from './university-audits/2026-verified/busan.mjs';
 import { universityAudit2026Ulsan } from './university-audits/2026/ulsan.mjs';
 import { universityAudit2026Gyeongnam } from './university-audits/2026/gyeongnam.mjs';
 import { universityAudit2026Daegu } from './university-audits/2026/daegu.mjs';

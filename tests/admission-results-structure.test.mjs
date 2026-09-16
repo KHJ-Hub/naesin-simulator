@@ -76,6 +76,16 @@ test('인천 공식 2026 모집단위별 결과를 중복 없이 보존한다', 
   assert.ok(rows.filter((item) => item.admissionName === '자기추천전형').every((item) => item.eligibilityType === 'general'));
 });
 
+test('부산 공식 2026 결과와 검증된 지역인재 지원자격을 함께 보존한다', () => {
+  const rows = admissionResultsByRegion2026.busan;
+  assert.equal(rows.length, 1_814);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 1_251);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 563);
+  const verifiedRegional = rows.filter((item) => item.eligibilityType === 'regional' && item.regionalEligibility?.verified);
+  assert.equal(verifiedRegional.length, 7);
+  assert.ok(verifiedRegional.every((item) => item.studentDefaultVisible));
+});
+
 test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {
   const rows = Object.values(admissionResultsByRegion2026).flat();
   const keys = rows.map((item) => [item.referenceYear, item.university, item.department, item.admissionCategory, item.admissionName].join('|'));

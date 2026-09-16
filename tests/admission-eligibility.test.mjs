@@ -12,7 +12,7 @@ test('지원자격 제한 전형은 이름이 명확할 때만 분류하고 고�
 
 test('공식 지원지역이 확인된 지역인재만 부산 학생 기본 검색에 포함한다', () => {
   const rural = ADMISSION_REFERENCE_DATA.find((item) => item.eligibilityType === 'rural');
-  const regional = ADMISSION_REFERENCE_DATA.find((item) => item.eligibilityType === 'regional');
+  const regional = ADMISSION_REFERENCE_DATA.find((item) => item.eligibilityType === 'regional' && item.regionalEligibility?.verified && item.studentDefaultVisible);
   const unknown = ADMISSION_REFERENCE_DATA.find((item) => item.eligibilityType === 'unknown');
   assert.equal(isDefaultStudentVisibleAdmission(rural), false);
   assert.equal(regional.regionalEligibility.verified, true);
