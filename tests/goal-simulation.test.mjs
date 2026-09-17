@@ -4,7 +4,16 @@ import {
   aggregateScenarioSemesterResults,
   createGoalScenarioSummaries,
   createScenarioTargets,
+  getRemainingSimulationSemesters,
 } from '../src/goal-simulation.mjs';
+
+test('중간 학기가 비어 있어도 3-1까지 미입력 학기를 모두 남은 학기로 분류한다', () => {
+  assert.deepEqual(
+    getRemainingSimulationSemesters(['1-1', '2-1']).map(({ id }) => id),
+    ['1-2', '2-2', '3-1'],
+  );
+  assert.deepEqual(getRemainingSimulationSemesters([]), []);
+});
 
 const actual = [
   { semesterId: '1-1', subjectName: '국어', credit: 4, gradeValue: 2 },

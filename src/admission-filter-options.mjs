@@ -4,8 +4,8 @@ import {
   normalizeAdmissionRecord,
   validAdmissionRecord,
 } from './admission-record-normalizer.mjs';
-import { ADMISSION_ELIGIBILITY_TYPES, isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
-import { UNIVERSITIES } from './data/universities.mjs';
+import { ADMISSION_ELIGIBILITY_TYPES, isStudentVisibleAdmissionForSchool } from './admission-eligibility.mjs';
+import { UNIVERSITIES, UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 
 /** 대학 감사에서 사용하는 지역 순서를 학생 검색에도 그대로 적용한다. */
 export const ADMISSION_REGION_ORDER = Object.freeze([
@@ -76,6 +76,16 @@ function masterUniversities(universities = UNIVERSITIES) {
     .filter((item) => item && item.name)
     .map((item) => ({ ...item, region: normalizeAdmissionRegion(item.region) }));
 }
+function universityInfo(item = {}) {
+  return item.universityInfo
+    ?? UNIVERSITY_BY_ID[item.universityId]
+    ?? UNIVERSITY_BY_NAME[item.university]
+    ?? null;
+}
+function genderConditionMatches(item = {}, schoolGender = '') {
+  if (!schoolGender || schoolGender === 'coeducational' || schoolGender === 'female') return true;
+  return universityInfo(item)?.undergraduateGender !== 'women-only';
+}
 const selectedAcademicField = (filters = {}) => filters.academicField || filters.field || '';
 const itemAcademicField = (item = {}) => normalizeAcademicField(item.academicField ?? item.field);
 const academicFieldMatches = (item, selected) => selected === 'other-unknown'
@@ -96,7 +106,8 @@ function visibleRecords(data, filters = {}) {
     .map(normalizedEntry)
     .filter((entry) => entry.valid)
     .map((entry) => entry.item)
-    .filter((item) => filters.includeSpecialEligibility === true || isDefaultStudentVisibleAdmission(item));
+    .filter((item) => genderConditionMatches(item, filters.schoolGender))
+    .filter((item) => filters.includeSpecialEligibility === true || isStudentVisibleAdmissionForSchool(item, { schoolRegion: filters.schoolRegion }));
 }
 
 function matches(item, filters = {}, ignored = []) {
@@ -122,7 +133,7 @@ export function filterAdmissionRecords(data, filters = {}) {
 
 /**
  * 학생 화면의 실제 필터 순서를 단계별 건수로 돌려준다.
- * 현재 데이터에는 대학 성별·학교 설정 전용 필드가 없으므로 두 단계는 명시적인 no-op이다.
+ * 학교 공통 설정(지역·성별)과 전형 자격을 서로 다른 단계로 추적한다.
  */
 export function traceAdmissionFilterPipeline(data, filters = {}) {
   const stages = [];
@@ -133,8 +144,8 @@ export function traceAdmissionFilterPipeline(data, filters = {}) {
   let records = snapshot('all-valid-records', data.map(normalizedEntry).filter((entry) => entry.valid).map((entry) => entry.item));
   const category = filters.admissionCategory || filters.category || '';
   records = snapshot('admission-category', category ? records.filter((item) => item.admissionCategory === category) : records, Boolean(category));
-  records = snapshot('school-settings', records, false);
-  records = snapshot('gender', records, false);
+  records = snapshot('school-settings', records, Boolean(filters.schoolRegion));
+  records = snapshot('gender', filters.schoolGender ? records.filter((item) => genderConditionMatches(item, filters.schoolGender)) : records, Boolean(filters.schoolGender));
 
   if (filters.includeSpecialEligibility !== true) {
     const generallyEligible = new Set([
@@ -143,7 +154,7 @@ export function traceAdmissionFilterPipeline(data, filters = {}) {
       ADMISSION_ELIGIBILITY_TYPES.REGIONAL,
     ]);
     records = snapshot('eligibility-type', records.filter((item) => generallyEligible.has(item.eligibilityType)));
-    records = snapshot('regional-eligibility', records.filter((item) => item.eligibilityType !== ADMISSION_ELIGIBILITY_TYPES.REGIONAL || isDefaultStudentVisibleAdmission(item)));
+    records = snapshot('regional-eligibility', records.filter((item) => item.eligibilityType !== ADMISSION_ELIGIBILITY_TYPES.REGIONAL || isStudentVisibleAdmissionForSchool(item, { schoolRegion: filters.schoolRegion })));
   } else {
     records = snapshot('eligibility-type', records, false);
     records = snapshot('regional-eligibility', records, false);
@@ -174,7 +185,8 @@ export function getAvailableUniversities(data, filters = {}, universities = UNIV
   // 계열·전형·자격 및 입시결과 레코드 존재 여부는 대학 선택 후 결과 조회에만 적용한다.
   const selectedRegion = normalizeAdmissionRegion(filters.region);
   const entries = masterUniversities(universities)
-    .filter((item) => !selectedRegion || item.region === selectedRegion);
+    .filter((item) => !selectedRegion || item.region === selectedRegion)
+    .filter((item) => genderConditionMatches(item, filters.schoolGender));
   return uniqueSorted(entries.map((item) => item.name));
 }
 
@@ -256,6 +268,8 @@ export function reconcileAdmissionFilters(data, filters = {}, universities = UNI
     admissionName: String(filters.admissionName ?? ''),
     admissionCategory: String(filters.admissionCategory ?? filters.category ?? ''),
     includeSpecialEligibility: filters.includeSpecialEligibility === true,
+    schoolRegion: String(filters.schoolRegion ?? ''),
+    schoolGender: String(filters.schoolGender ?? ''),
   };
 
   if (next.region && !getAvailableRegions(data, next, universities).includes(next.region)) next.region = '';

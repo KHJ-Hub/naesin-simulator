@@ -1,9 +1,10 @@
 import {
-  ADMISSION_REGION_ORDER,
   filterAdmissionRecords,
   getAvailableAcademicFields,
   getAvailableAdmissionNames,
   getAvailableDepartments,
+  getAvailableRegions,
+  getAvailableUniversities,
   normalizeAdmissionRegion,
 } from './admission-filter-options.mjs';
 import {
@@ -24,7 +25,6 @@ export const ADMISSION_SUBJECT_GROUPS = Object.freeze({
 });
 
 const koSort = (left, right) => String(left ?? '').localeCompare(String(right ?? ''), 'ko');
-const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort(koSort);
 const convertedCut70 = (item) => item.cut70Converted != null && item.cut70Converted !== '' && Number.isFinite(Number(item.cut70Converted))
   ? Number(item.cut70Converted)
   : null;
@@ -156,20 +156,16 @@ export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, 
   const admissionCategory = admissionCategoryForViewMode(admissionViewMode);
   if (!admissionCategory) return Object.freeze({ regions: [], universities: [], academicFields: [], departments: [], admissionNames: [] });
   const scopedFilters = { ...filters, admissionCategory };
-  const visibility = { admissionCategory, includeSpecialEligibility: filters.includeSpecialEligibility === true };
-  const regionRecords = filterAdmissionRecords(data, visibility);
-  const presentRegions = new Set(regionRecords.map((item) => normalizeAdmissionRegion(item.region)));
-  const regions = [
-    ...ADMISSION_REGION_ORDER.filter((region) => presentRegions.has(region)),
-    ...[...presentRegions].filter((region) => !ADMISSION_REGION_ORDER.includes(region)).sort(koSort),
-  ];
-  const universityRecords = filterAdmissionRecords(data, {
-    ...visibility,
-    region: filters.region,
-  });
+  const visibility = {
+    admissionCategory,
+    includeSpecialEligibility: filters.includeSpecialEligibility === true,
+    schoolRegion: filters.schoolRegion,
+    schoolGender: filters.schoolGender,
+  };
+  const regions = getAvailableRegions(data, visibility);
   return Object.freeze({
     regions: Object.freeze(regions),
-    universities: Object.freeze(uniqueSorted(universityRecords.map((item) => item.university))),
+    universities: Object.freeze(getAvailableUniversities(data, { ...visibility, region: filters.region })),
     academicFields: Object.freeze(getAvailableAcademicFields(data, scopedFilters)),
     departments: Object.freeze(getAvailableDepartments(data, scopedFilters)),
     admissionNames: Object.freeze(getAvailableAdmissionNames(data, scopedFilters)),
@@ -184,6 +180,8 @@ export function reconcileAdmissionViewFilters(data, { admissionViewMode = null, 
     department: String(filters.department ?? ''),
     admissionName: String(filters.admissionName ?? ''),
     includeSpecialEligibility: filters.includeSpecialEligibility === true,
+    schoolRegion: String(filters.schoolRegion ?? ''),
+    schoolGender: String(filters.schoolGender ?? ''),
   };
   if (!normalizeAdmissionViewMode(admissionViewMode)) return { ...next, region: '', university: '', field: '', department: '', admissionName: '' };
   let options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });

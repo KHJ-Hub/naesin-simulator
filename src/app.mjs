@@ -24,7 +24,7 @@ import {
   resetAdmissionGroupLimits,
 } from './admission-result-view.mjs?v=20260917-view-mode1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
-import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260916-semester-summary1';
+import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-integrated-audit1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
 import { renderAdmissionCardDetails } from './admission-card-details.mjs?v=20260917-conditional-details1';
 import {
@@ -49,6 +49,8 @@ import {
   selectStudentProfile,
   startNewStudentProfile,
 } from './student-profile-store.mjs?v=20260916-student-profiles1';
+import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
+import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -69,7 +71,12 @@ function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-$
 let state = loadState();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
-const admissionFilters = { region: '', university: '', field: '', department: '', admissionName: '' };
+const schoolSettings = getSchoolSettings(localStorage);
+const admissionFilters = {
+  region: '', university: '', field: '', department: '', admissionName: '',
+  schoolRegion: schoolSettings.schoolRegion,
+  schoolGender: schoolSettings.schoolGender,
+};
 let admissionViewMode = null;
 let admissionVisibleResultLimits = resetAdmissionGroupLimits();
 let admissionExpandedSubjectGroup = ADMISSION_SUBJECT_GROUPS.SIMILAR;
@@ -208,14 +215,12 @@ function effectiveRecords() {
   return output;
 }
 function usesQuickAverage() { return SEMESTERS.some(({ id }) => !detailedStatus(id).complete && Number.isFinite(quickAverage(id))); }
-function completedSemesterIndexes() {
-  const completed = SEMESTERS.map(({ id }, index) => (detailedStatus(id).complete || validAverageInput(quickAverage(id)) ? index : -1)).filter((index) => index >= 0);
-  return completed;
+function completedSemesterIds() {
+  return SEMESTERS.filter(({ id }) => detailedStatus(id).complete || validAverageInput(quickAverage(id))).map(({ id }) => id);
 }
 function fallbackRemainingSemesters() {
-  const completed = completedSemesterIndexes();
-  if (!completed.length) return [];
-  const remainingSemesters = SEMESTERS.slice(Math.max(...completed) + 1);
+  const remainingSemesters = getRemainingSimulationSemesters(completedSemesterIds());
+  if (!remainingSemesters.length) return [];
   if (usesQuickAverage()) return remainingSemesters.map(({ id }) => ({ id: `remaining-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 남은 학기`, subjectGroup: '', credit: 1 }));
   const detailedCourses = remainingSemesters.flatMap(({ id }) => coursesForSemester(id).filter((course) => ['grade', 'both'].includes(course.gradingType)).map((course) => ({ ...recordFromCourse(course, `remaining-${course.id}`), gradeValue: '', subjectName: `${course.subjectName} (남은 학기)` })));
   return detailedCourses.length ? detailedCourses : remainingSemesters.map(({ id }) => ({ id: `remaining-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 남은 학기`, subjectGroup: '', credit: 1 }));
@@ -455,7 +460,7 @@ function renderAdmissionUniversityAccordion(group, comparison, groupKey) {
   const closestText = summary.closestDifference == null ? '' : `<span>가장 가까운 차이 ${fmt(summary.closestDifference)}</span>`;
   const similarText = summary.similarCount ? `<span>비슷한 입결 ${summary.similarCount}개</span>` : '';
   const isOpen = admissionOpenUniversityKeys.has(disclosureKey);
-  return `<details class="admission-university" data-admission-university-accordion data-admission-university-key="${escapeHtml(disclosureKey)}"${isOpen ? ' open' : ''}><summary><div class="admission-university-title"><strong>${escapeHtml(group.universityName)}</strong><span>${group.resultCount}개 모집단위</span></div><div class="admission-university-meta">${closestText}${similarText}</div></summary><div class="admission-university-content"><div class="admission-university-results">${visibleResults.map((entry) => admissionResultCardWithinUniversity(entry, comparison, groupKey)).join('')}</div>${remainingCount ? `<button class="quiet-button admission-university-more" data-admission-university-load-more="${escapeHtml(disclosureKey)}">이 대학 모집단위 더 보기 (${remainingCount}개)</button>` : ''}</div></details>`;
+  return `<details class="admission-university" data-admission-university-accordion data-admission-university-key="${escapeHtml(disclosureKey)}"${isOpen ? ' open' : ''}><summary aria-expanded="${isOpen}"><div class="admission-university-title"><strong>${escapeHtml(group.universityName)}</strong><span>${group.resultCount}개 모집단위</span></div><div class="admission-university-meta">${closestText}${similarText}</div></summary><div class="admission-university-content"><div class="admission-university-results">${visibleResults.map((entry) => admissionResultCardWithinUniversity(entry, comparison, groupKey)).join('')}</div>${remainingCount ? `<button class="quiet-button admission-university-more" data-admission-university-load-more="${escapeHtml(disclosureKey)}">이 대학 모집단위 더 보기 (${remainingCount}개)</button>` : ''}</div></details>`;
 }
 function createAdmissionUniversityGroupView(entries = []) {
   const groups = new Map();
@@ -695,6 +700,7 @@ $('#admission-reference-result').addEventListener('toggle', (event) => {
   if (!key) return;
   if (disclosure.open) admissionOpenUniversityKeys.add(key);
   else admissionOpenUniversityKeys.delete(key);
+  disclosure.querySelector(':scope > summary')?.setAttribute('aria-expanded', String(disclosure.open));
 }, true);
 $('#admission-reference-result').addEventListener('click', (event) => {
   const resultGroupSummary = event.target.closest('.admission-result-group > summary');
@@ -737,6 +743,7 @@ document.querySelector('#admission-reference-panel').addEventListener('click', (
     disclosure.open = !disclosure.open;
     if (disclosure.open) admissionOpenUniversityKeys.add(key);
     else admissionOpenUniversityKeys.delete(key);
+    universitySummaryControl.setAttribute('aria-expanded', String(disclosure.open));
     return;
   }
   const modeControl = event.target.closest('[data-admission-view-mode]');
@@ -792,15 +799,14 @@ document.querySelector('#admission-reference-panel').addEventListener('click', (
 });
 $('#export-button').addEventListener('click', () => {
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-  const blob = new Blob([JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(createStudentBackup(state), null, 2)], { type: 'application/json' });
   const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `naesin-simulator-backup-${stamp}.json`; link.click(); URL.revokeObjectURL(link.href);
   showToast('백업 파일을 내려받았습니다.');
 });
 $('#import-input').addEventListener('change', async (event) => {
   const file = event.target.files?.[0]; if (!file) return;
   try {
-    const imported = JSON.parse(await file.text());
-    if (!Array.isArray(imported.actual)) throw new Error('형식 오류');
+    const imported = parseStudentBackup(await file.text());
     if (getCurrentStudentId(localStorage)) saveCurrentStudentProfile(state, localStorage);
     state = normalizeState(imported);
     const importedId = state.student.studentId;
@@ -865,6 +871,7 @@ $('#clear-students-button').addEventListener('click', () => {
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
 document.querySelector('.student-form').addEventListener('input', (event) => {
+  if (!['student-id', 'student-name'].includes(event.target.id)) return;
   if (event.target.id === 'student-id') {
     const enteredId = event.target.value.replace(/\D/g, '').slice(0, 5);
     const currentId = getCurrentStudentId(localStorage);

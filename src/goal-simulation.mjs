@@ -6,6 +6,13 @@ function clampGrade(value) {
   return Math.max(1, Math.min(5, Number(value)));
 }
 
+/** 성적이 하나라도 있을 때, 3-1까지의 미입력 학기를 누락 없이 남은 학기로 반환한다. */
+export function getRemainingSimulationSemesters(completedSemesterIds = []) {
+  const completed = new Set(completedSemesterIds.filter((id) => SEMESTER_ORDER.has(id)));
+  if (!completed.size) return [];
+  return SEMESTERS.filter(({ id }) => !completed.has(id));
+}
+
 export function aggregateRemainingBySemester(records = []) {
   const grouped = new Map();
 

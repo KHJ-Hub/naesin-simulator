@@ -164,7 +164,11 @@ export const ADIGA_UNIVERSITIES_2026 = Object.freeze([
 export const UNIVERSITIES = Object.freeze(mergeCatalogs(
   LEGACY_UNIVERSITIES,
   ADIGA_UNIVERSITIES_2026,
-));
+).map((university) => Object.freeze({
+  ...university,
+  // 학교 성별 조건은 입결 유무와 별개의 대학 마스터 속성이다.
+  undergraduateGender: university.name.includes('여자대학교') ? 'women-only' : 'coeducational-or-unspecified',
+})));
 
 export const UNIVERSITY_BY_ID = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.universityId, item])));
 export const UNIVERSITY_BY_NAME = Object.freeze(Object.fromEntries(UNIVERSITIES.map((item) => [item.name, item])));

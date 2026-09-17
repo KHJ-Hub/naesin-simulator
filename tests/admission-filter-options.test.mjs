@@ -107,6 +107,18 @@ test('실제 부산 대학 마스터에는 부산대학교가 포함된다', () 
   assert.equal(universities.length, 14);
 });
 
+test('부산 남고 설정에서 여자대학교는 결과와 대학 선택지에서 제외한다', () => {
+  const womenOnly = result({
+    universityId: 'ewha', university: '이화여자대학교', region: '서울특별시',
+    department: '국어국문학과', academicField: 'humanities',
+  });
+  assert.equal(filterAdmissionRecords([womenOnly], { schoolGender: 'male' }).length, 0);
+  assert.equal(filterAdmissionRecords([womenOnly], { schoolGender: 'female' }).length, 1);
+  const seoulForMaleSchool = getAvailableUniversities([], { region: '서울', schoolGender: 'male' }, UNIVERSITIES);
+  assert.equal(seoulForMaleSchool.includes('이화여자대학교'), false);
+  assert.equal(getAvailableUniversities([], { region: '서울' }, UNIVERSITIES).includes('이화여자대학교'), true);
+});
+
 test('부산과 부산대학교의 실제 academicField에서 계열 선택지를 생성한다', () => {
   assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시' }), ['humanities', 'natural', 'arts', 'other-unknown']);
   assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시', university: '부산대학교' }), ['humanities', 'natural', 'arts', 'other-unknown']);

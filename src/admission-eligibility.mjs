@@ -58,3 +58,12 @@ export function isDefaultStudentVisibleAdmission(item = {}) {
   return item.studentDefaultVisible === true
     || (DEFAULT_STUDENT_ELIGIBILITY_TYPES.includes(item.eligibilityType) && item.studentDefaultVisible !== false);
 }
+
+/** 학교 지역이 바뀌어도 저장된 기본 노출값에 의존하지 않고 지역인재 자격을 다시 판정한다. */
+export function isStudentVisibleAdmissionForSchool(item = {}, { schoolRegion = DEFAULT_SCHOOL_REGION } = {}) {
+  if (item.eligibilityType === ADMISSION_ELIGIBILITY_TYPES.REGIONAL) {
+    return isSchoolRegionEligible(item.regionalEligibility, schoolRegion);
+  }
+  return DEFAULT_STUDENT_ELIGIBILITY_TYPES.includes(item.eligibilityType)
+    && item.studentDefaultVisible !== false;
+}
