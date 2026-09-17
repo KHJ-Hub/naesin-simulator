@@ -16,8 +16,17 @@ test('입시결과 주요 필터를 아코디언 없이 모두 노출한다', ()
 test('학과 검색은 대학 선택 없이 사용할 수 있는 검색 입력과 자동완성 후보를 갖는다', () => {
   assert.match(html, /id="admission-department"[^>]+type="search"/);
   assert.match(html, /list="admission-department-suggestions"/);
-  assert.match(html, /placeholder="예: 경제, 간호, 컴퓨터"/);
+  assert.match(html, /enterkeyhint="search"/);
+  assert.match(html, /placeholder="학과\/모집단위 검색 \(예: 경제, 간호, 공학\)"/);
   assert.match(app, /departmentInput\.disabled = !admissionViewMode/);
   assert.equal(app.includes("key === 'department' && !admissionFilters.university"), false);
   assert.equal(app.includes('대학을 먼저 선택하세요'), false);
+});
+
+test('학과 자유 입력은 자동완성 선택 없이 입력·Enter·변경 시 결과를 다시 렌더링한다', () => {
+  assert.match(app, /DEPARTMENT_SEARCH_DEBOUNCE_MS = 180/);
+  assert.match(app, /admissionFilters\.department = event\.target\.value\.trim\(\)/);
+  assert.match(app, /departmentSearchTimer = window\.setTimeout\(\(\) => \{[\s\S]*?renderAdmissionReferences\(\)/);
+  assert.match(app, /if \(key === 'department'\)[\s\S]*?renderAdmissionReferences\(\)/);
+  assert.match(app, /if \(event\.key !== 'Enter'\) return;[\s\S]*?renderAdmissionReferences\(\)/);
 });

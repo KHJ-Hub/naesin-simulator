@@ -233,6 +233,28 @@ test('대학 미선택 상태에서도 지역·계열과 학과 검색어를 조
   assert.deepEqual(searchAvailableDepartments(economic, { region: '부산', field: 'humanities' }, '경제').map((item) => item.department), ['경제금융학부', '경제학부']);
 });
 
+test('자동완성 선택 없이 자유 검색어를 공식 모집단위명과 보조 키워드에 부분일치시킨다', () => {
+  const departments = [
+    result({ university: '부산대학교', department: '경제학과', academicField: 'humanities', majorSearchGroup: '경제' }),
+    result({ university: '동아대학교', department: '경제금융학부', academicField: 'humanities', normalizedMajorKeyword: '경제금융' }),
+    result({ university: '서울대학교', region: '서울특별시', department: '글로벌경제학과', academicField: 'humanities' }),
+    result({ university: '검증대학교', department: '글로벌비즈니스학부', academicField: 'humanities', majorSearchGroup: '경제' }),
+    result({ university: '부산대학교', department: '기계공학과', academicField: 'natural' }),
+    result({ university: '동아대학교', department: '전자공학과', academicField: 'natural' }),
+    result({ university: '인제대학교', department: '간호학과', academicField: 'natural' }),
+  ];
+
+  assert.equal(filterAdmissionRecords(departments, { department: '경제' }).length, 4);
+  assert.equal(filterAdmissionRecords(departments, { department: '공학' }).length, 2);
+  assert.deepEqual(filterAdmissionRecords(departments, { department: '간호' }).map((item) => item.department), ['간호학과']);
+  assert.deepEqual(filterAdmissionRecords(departments, { department: '경제학과' }).map((item) => item.department), ['경제학과', '글로벌경제학과']);
+  assert.equal(filterAdmissionRecords(departments, { region: '부산', field: 'humanities', department: ' 경제 ' }).length, 3);
+  assert.deepEqual(filterAdmissionRecords(departments, { university: '부산대학교', department: '공학' }).map((item) => item.department), ['기계공학과']);
+  assert.equal(filterAdmissionRecords(departments, { field: 'natural', department: '공학' }).length, 2);
+  assert.equal(filterAdmissionRecords(departments, { department: '   ' }).length, departments.length);
+  assert.equal(filterAdmissionRecords(departments, { department: '존재하지않는학과' }).length, 0);
+});
+
 test('상위 지역이 바뀌어도 학과 검색어가 새 범위에서 유효하면 유지한다', () => {
   const economic = [
     result({ university: '부산대학교', department: '경제학부', academicField: 'humanities', majorSearchGroup: '경제' }),

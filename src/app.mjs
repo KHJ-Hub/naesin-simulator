@@ -68,6 +68,8 @@ const admissionOpenUniversityKeys = new Set();
 const admissionUniversityResultLimits = new Map();
 const admissionUniversityGroupLimits = new Map();
 const admissionResultGroupExpanded = createAdmissionAccordionState();
+const DEPARTMENT_SEARCH_DEBOUNCE_MS = 180;
+let departmentSearchTimer = null;
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -626,6 +628,13 @@ document.querySelector('#admission-filters').addEventListener('change', (event) 
   const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName' };
   const key = map[event.target.id];
   if (!key) return;
+  if (key === 'department') {
+    clearTimeout(departmentSearchTimer);
+    admissionFilters.department = event.target.value.trim();
+    resetAdmissionViewPaging();
+    renderAdmissionReferences();
+    return;
+  }
   admissionFilters[key] = event.target.value;
   Object.assign(admissionFilters, reconcileAdmissionViewFilters(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters }));
   resetAdmissionViewPaging();
@@ -636,11 +645,19 @@ $('#admission-department').addEventListener('input', (event) => {
   resetAdmissionViewPaging();
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
   $('#admission-department-suggestions').innerHTML = options.departmentSuggestions.map(({ department }) => `<option value="${escapeHtml(department)}"></option>`).join('');
+  clearTimeout(departmentSearchTimer);
+  if (event.isComposing) return;
+  departmentSearchTimer = window.setTimeout(() => {
+    departmentSearchTimer = null;
+    renderAdmissionReferences();
+  }, DEPARTMENT_SEARCH_DEBOUNCE_MS);
 });
 $('#admission-department').addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return;
   event.preventDefault();
-  Object.assign(admissionFilters, reconcileAdmissionViewFilters(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters }));
+  clearTimeout(departmentSearchTimer);
+  departmentSearchTimer = null;
+  admissionFilters.department = event.target.value.trim();
   resetAdmissionViewPaging();
   renderAdmissionReferences();
 });

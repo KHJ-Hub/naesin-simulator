@@ -52,7 +52,7 @@
               <label>지역<select id="admission-region" class="input"><option value="">전체 지역</option></select></label>
               <label>대학<select id="admission-university" class="input"><option value="">전체 대학</option></select></label>
               <label>계열<select id="admission-field" class="input"><option value="">전체 계열</option></select></label>
-              <label>학과/모집단위 검색<input id="admission-department" class="input" type="search" list="admission-department-suggestions" autocomplete="off" placeholder="예: 경제, 간호, 컴퓨터" /><datalist id="admission-department-suggestions"></datalist></label>
+              <label>학과/모집단위 검색<input id="admission-department" class="input" type="search" list="admission-department-suggestions" autocomplete="off" enterkeyhint="search" placeholder="학과/모집단위 검색 (예: 경제, 간호, 공학)" /><datalist id="admission-department-suggestions"></datalist></label>
               <label>전형명<select id="admission-name" class="input"><option value="">전체 전형명</option></select></label>
             </div>
           </div>
@@ -69,6 +69,6 @@
     </main>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260917-progressive-scenarios1"></script>
+    <script type="module" src="./src/app.mjs?v=20260917-free-department-search1"></script>
   </body>
 </html>
