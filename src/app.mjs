@@ -33,25 +33,8 @@ import {
   createAdmissionAccordionState,
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
-import {
-  clearAllStudentProfiles,
-  createStudentProfile,
-  deleteStudentProfile,
-  getCurrentStudentId,
-  getCurrentStudentProfile,
-  getStudentDraft,
-  getStudentProfiles,
-  migrateLegacyStudentData,
-  resetCurrentStudentInput,
-  restoreStudentProfile,
-  saveCurrentStudentProfile,
-  saveStudentDraft,
-  selectStudentProfile,
-  startNewStudentProfile,
-} from './student-profile-store.mjs?v=20260916-student-profiles1';
 import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
-import { createStudentRuntimeStorage } from './student-runtime-storage.mjs?v=20260917-test-mode1';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -69,11 +52,6 @@ const defaultState = () => ({
 });
 
 function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
-const studentRuntime = createStudentRuntimeStorage({
-  search: window.location.search,
-  persistentStorage: localStorage,
-});
-const studentStorage = studentRuntime.storage;
 let state = loadState();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
@@ -116,14 +94,8 @@ function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', t
 setupHiddenTeacherEntry();
 
 function loadState() {
-  try {
-    migrateLegacyStudentData({ storage: studentStorage, transform: normalizeState });
-    const saved = getCurrentStudentProfile(studentStorage) ?? getStudentDraft(studentStorage);
-    if (!saved || !Array.isArray(saved.actual)) return defaultState();
-    return normalizeState(saved);
-  } catch {
-    return defaultState();
-  }
+  // 학생 개인 데이터는 브라우저 저장소에서 읽지 않고 페이지마다 빈 상태로 시작한다.
+  return defaultState();
 }
 function normalizeRecord(record = {}) {
   const configured = courseById(record.courseId);
@@ -190,14 +162,8 @@ function normalizeInputModes(saved = {}) {
   return result;
 }
 function saveState() {
-  const studentId = String(state.student?.studentId ?? '').replace(/\D/g, '').slice(0, 5);
-  const studentName = String(state.student?.studentName ?? '').trim();
-  if (!/^\d{5}$/.test(studentId) || !studentName) {
-    saveStudentDraft(state, studentStorage);
-    return;
-  }
-  if (getCurrentStudentId(studentStorage)) saveCurrentStudentProfile(state, studentStorage);
-  else createStudentProfile(studentId, studentName, state, studentStorage);
+  // 현재 페이지의 state가 세션 저장소다. 학생 데이터는 브라우저 영구 저장소에 쓰지 않는다.
+  return state;
 }
 function records() { return state.actual; }
 function semesterLabel(id) { return SEMESTERS.find((item) => item.id === id)?.label ?? id; }
@@ -605,16 +571,6 @@ function render() {
   const validStudentName = Boolean(state.student.studentName.trim());
   $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해주세요.' : '';
   $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
-  const profiles = getStudentProfiles(studentStorage);
-  const currentStudentId = getCurrentStudentId(studentStorage);
-  const profileSelect = $('#student-profile-select');
-  profileSelect.innerHTML = `<option value="">새 학생</option>${Object.values(profiles)
-    .sort((a, b) => a.studentNumber.localeCompare(b.studentNumber, 'ko'))
-    .map((profile) => `<option value="${escapeHtml(profile.studentNumber)}">${escapeHtml(profile.studentNumber)} · ${escapeHtml(profile.name)}</option>`)
-    .join('')}`;
-  profileSelect.value = currentStudentId ?? '';
-  $('#delete-student-button').disabled = !currentStudentId;
-  $('#clear-students-button').disabled = Object.keys(profiles).length === 0;
 }
 
 $('#semester-tabs').addEventListener('click', (event) => {
@@ -813,86 +769,33 @@ $('#import-input').addEventListener('change', async (event) => {
   const file = event.target.files?.[0]; if (!file) return;
   try {
     const imported = parseStudentBackup(await file.text());
-    if (getCurrentStudentId(studentStorage)) saveCurrentStudentProfile(state, studentStorage);
     state = normalizeState(imported);
-    const importedId = state.student.studentId;
-    const importedName = state.student.studentName.trim();
-    if (/^\d{5}$/.test(importedId) && importedName) restoreStudentProfile(state, studentStorage);
-    else saveStudentDraft(state, studentStorage);
     render(); showToast('데이터를 불러왔습니다.');
   } catch (error) { console.error(error); showToast('백업 파일 형식을 확인해 주세요.', 'error'); }
   event.target.value = '';
 });
 $('#reset-button').addEventListener('click', () => {
-  if (!confirm('현재 학생의 성적과 목표 입력을 초기화할까요?')) return;
-  const student = { ...state.student };
-  const admissionInterests = [...state.admissionInterests];
-  const admissionGradeScaleMode = state.admissionGradeScaleMode;
-  state = { ...defaultState(), student, admissionInterests, admissionGradeScaleMode };
-  if (getCurrentStudentId(studentStorage)) resetCurrentStudentInput(state, studentStorage);
-  else saveState();
-  render(); showToast('현재 학생의 입력을 초기화했습니다.');
-});
-$('#student-profile-select').addEventListener('change', (event) => {
-  const studentId = event.target.value;
-  if (!studentId) {
-    state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: studentStorage }));
-    render();
-    showToast('새 학생 정보를 입력해 주세요.');
-    return;
-  }
-  const selected = selectStudentProfile(studentId, { currentProfile: state, storage: studentStorage });
-  if (!selected) {
-    showToast('저장된 학생 정보를 찾을 수 없습니다.', 'error');
-    render();
-    return;
-  }
-  state = normalizeState(selected);
-  render();
-  showToast(`${state.student.studentName} 학생의 데이터를 불러왔습니다.`);
-});
-$('#new-student-button').addEventListener('click', () => {
-  state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: studentStorage }));
-  render();
-  $('#student-id').focus();
-  showToast('새 학생 정보를 입력해 주세요.');
-});
-$('#delete-student-button').addEventListener('click', () => {
-  const currentStudentId = getCurrentStudentId(studentStorage);
-  if (!currentStudentId) return;
-  const currentName = getCurrentStudentProfile(studentStorage)?.name ?? '';
-  if (!confirm(`${currentStudentId} ${currentName} 학생의 저장 데이터를 삭제할까요?`)) return;
-  deleteStudentProfile(currentStudentId, studentStorage);
-  state = normalizeState(getCurrentStudentProfile(studentStorage) ?? defaultState());
-  render();
-  showToast('현재 학생 프로필을 삭제했습니다.');
-});
-$('#clear-students-button').addEventListener('click', () => {
-  const profileCount = Object.keys(getStudentProfiles(studentStorage)).length;
-  if (!profileCount || !confirm(`이 기기에 저장된 학생 ${profileCount}명의 데이터를 모두 삭제할까요?`)) return;
-  clearAllStudentProfiles(studentStorage);
+  if (!confirm('입력한 학생 데이터와 성적을 초기화할까요?')) return;
   state = defaultState();
+  admissionViewMode = null;
+  admissionFilters.region = '';
+  admissionFilters.university = '';
+  admissionFilters.field = '';
+  admissionFilters.department = '';
+  admissionFilters.admissionName = '';
+  resetAdmissionViewPaging();
   render();
-  showToast('모든 학생 데이터를 삭제했습니다.');
+  showToast('입력한 학생 데이터와 성적을 초기화했습니다.');
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
 document.querySelector('.student-form').addEventListener('input', (event) => {
   if (!['student-id', 'student-name'].includes(event.target.id)) return;
   if (event.target.id === 'student-id') {
     const enteredId = event.target.value.replace(/\D/g, '').slice(0, 5);
-    const currentId = getCurrentStudentId(studentStorage);
-    if (currentId && enteredId !== currentId) {
-      state.student.studentId = currentId;
-      event.target.value = currentId;
-      showToast('다른 학생은 학생 프로필 선택 또는 새 학생 추가 기능으로 전환해 주세요.', 'error');
-    } else {
-      state.student.studentId = enteredId;
-      event.target.value = enteredId;
-    }
+    state.student.studentId = enteredId;
+    event.target.value = enteredId;
   }
   if (event.target.id === 'student-name') { state.student.studentName = event.target.value.trimStart().replace(/\s+$/g, ''); event.target.value = state.student.studentName; }
-  const valid = /^\d{5}$/.test(state.student.studentId) && Boolean(state.student.studentName.trim());
-  if (valid) saveState();
   render();
 });
 

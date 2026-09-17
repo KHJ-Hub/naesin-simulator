@@ -11,10 +11,10 @@
     <main class="app-shell">
       <header class="topbar">
         <div class="brand"><span class="brand-icon" id="teacher-entry-trigger" role="button" tabindex="0" aria-label="현정T의 내신 설계 노트">✨</span><div><h1>현정T의 내신 설계 노트</h1><p class="eyebrow">내 성적을 돌아보고, 다음 목표를 차근차근 세워요.</p></div></div>
-        <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="export-button" class="secondary-button">내 데이터 백업</button><label class="secondary-button file-button">백업 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label><button id="reset-button" class="quiet-button">내 데이터 초기화</button></div>
+        <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="reset-button" class="quiet-button">내 데이터 초기화</button><button id="export-button" class="secondary-button">내 데이터 백업</button><label class="secondary-button file-button">백업 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label></div>
       </header>
 
-      <section class="notice-card"><strong>내 기기에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송하지 않고 이 브라우저에만 저장됩니다. 브라우저 데이터를 삭제하면 저장 내용도 사라질 수 있어요.</p></section>
+      <section class="notice-card"><strong>현재 화면에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송하거나 브라우저에 자동 저장하지 않습니다. 필요하면 백업 파일을 내려받아 보관해 주세요.</p></section>
 
       <section class="hero-grid">
         <div><p class="eyebrow">현재까지의 흐름을 한눈에</p><h2>내 성적을 확인하고<br /><span>앞으로의 목표를 세워보세요.</span></h2><p class="hero-copy">현재 성적을 입력하면 내신을 계산하고,<br />목표 내신까지 필요한 성적을 확인할 수 있습니다.</p></div>
@@ -24,14 +24,10 @@
       <section class="summary-grid" id="summary-cards"></section>
 
       <section class="panel student-panel">
-        <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>인쇄 결과표에만 사용되며, 이 브라우저에만 저장됩니다.</p></div></div>
+        <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>학번과 이름은 현재 화면과 백업 파일에만 포함됩니다.</p></div></div>
         <div class="student-form">
-          <label>저장된 학생 <select id="student-profile-select" class="input" aria-label="저장된 학생 선택"><option value="">새 학생</option></select></label>
           <label>학번 <input id="student-id" class="input" type="text" maxlength="5" inputmode="numeric" autocomplete="off" placeholder="예: 10101" /></label>
-          <label>이름 <input id="student-name" class="input" type="text" maxlength="30" autocomplete="name" placeholder="예: 김철수" /></label>
-          <button id="new-student-button" class="secondary-button" type="button">새 학생 추가</button>
-          <button id="delete-student-button" class="quiet-button" type="button">현재 학생 삭제</button>
-          <button id="clear-students-button" class="quiet-button" type="button">모든 학생 삭제</button>
+          <label>이름 <input id="student-name" class="input" type="text" maxlength="30" autocomplete="off" placeholder="예: 김철수" /></label>
         </div>
         <p id="student-info-error" class="field-error" role="alert" aria-live="polite"></p>
         <p id="student-info-summary" class="student-info-summary" aria-live="polite"></p>
@@ -75,14 +71,14 @@
         <details class="admission-help"><summary>70% cut · 50% cut 안내</summary><p><strong>70% cut</strong>은 전년도 최종등록자 성적 분포에서 참고할 수 있는 지표입니다. <strong>50% cut</strong>도 같은 방식의 참고 지표이며, 어느 수치도 합격선이나 최저 합격등급을 뜻하지 않습니다.</p></details>
         <div id="admission-reference-result" class="admission-reference-result"></div>
         <p class="admission-conversion-notice">5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값입니다. 실제 대학별 2028학년도 평가·환산 방식과 다를 수 있습니다.</p>
-        <section class="admission-interests"><div class="section-title"><div><h3>관심 대학</h3><p class="muted">저장한 항목은 이 브라우저와 JSON 백업에만 보관되며 결과표에 포함됩니다.</p></div></div><div id="admission-interests"></div></section>
+        <section class="admission-interests"><div class="section-title"><div><h3>관심 대학</h3><p class="muted">저장한 항목은 현재 화면과 백업 파일에만 보관되며 결과표에 포함됩니다.</p></div></div><div id="admission-interests"></div></section>
         <details class="admission-disclaimer"><summary>입시결과 이용 안내</summary><p>본 결과는 전년도 공개 입시결과와 현재 입력 내신을 단순 비교한 참고자료입니다. 실제 합격 가능성을 의미하지 않습니다. 대학별 학생부 반영 교과, 학년별 반영 비율, 진로선택과목 처리, 가산점 및 전형방법에 따라 결과가 달라질 수 있습니다.</p></details>
       </section>
 
-      <footer><p>이 도구는 성적 계산을 위한 시뮬레이션이며 대학 합격 가능성을 의미하지 않습니다.</p><p>입력 데이터는 이 브라우저의 저장소에만 보관됩니다.</p></footer>
+      <footer><p>이 도구는 성적 계산을 위한 시뮬레이션이며 대학 합격 가능성을 의미하지 않습니다.</p><p>입력 데이터는 현재 화면을 닫거나 새로고침하면 사라집니다.</p></footer>
     </main>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260917-admission-details2"></script>
+    <script type="module" src="./src/app.mjs?v=20260917-session-only1"></script>
   </body>
 </html>

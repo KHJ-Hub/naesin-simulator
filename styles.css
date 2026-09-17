@@ -62,7 +62,7 @@ h3 { margin-bottom:8px; color:#5b4d97; font-size:clamp(.95rem,1.2vw,1.05rem); }
 .add-button { border:1px dashed var(--lavender-300); background:var(--lavender-100); color:var(--lavender-500); }
 .side-help { padding:15px; border-radius:16px; background:var(--pink-50); color:var(--muted); font-size:.87rem; line-height:1.65; }
 .side-help ul { margin:0; padding-left:18px; }
-.student-form { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.student-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .student-form label,.goal-form label { display:grid; gap:5px; color:var(--muted); font-size:clamp(.8rem,1.1vw,.9rem); font-weight:800; }
 .dashboard-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
 .goal-form { display:grid; gap:10px; }
@@ -2498,7 +2498,7 @@ h3:not(.hero-grid h2),
 .top-actions > #reset-button,
 .top-actions > #export-button,
 .top-actions > .file-button {
-  min-height: 40px !important;
+  min-height: 46px !important;
 }
 
 @media (max-width: 767px) {
@@ -2512,7 +2512,7 @@ h3:not(.hero-grid h2),
 
 
 .top-actions {
-  grid-auto-rows: minmax(40px, auto);
+  grid-auto-rows: minmax(46px, auto);
 }
 
 @media (max-width: 767px) {
