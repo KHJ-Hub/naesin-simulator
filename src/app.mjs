@@ -25,6 +25,11 @@ import {
 } from './admission-result-view.mjs?v=20260917-view-mode1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260916-semester-summary1';
+import {
+  ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
+  ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
+  createAdmissionAccordionState,
+} from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
 import {
   clearAllStudentProfiles,
@@ -66,11 +71,10 @@ const admissionFilters = { region: '', university: '', field: '', department: ''
 let admissionViewMode = null;
 let admissionVisibleResultLimits = resetAdmissionGroupLimits();
 let admissionExpandedSubjectGroup = ADMISSION_SUBJECT_GROUPS.SIMILAR;
-const ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT = 5;
-const ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT = 12;
 const admissionOpenUniversityKeys = new Set();
 const admissionUniversityResultLimits = new Map();
 const admissionUniversityGroupLimits = new Map();
+const admissionResultGroupExpanded = createAdmissionAccordionState();
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -311,6 +315,7 @@ function admissionOptions(values, placeholder, labels = {}) {
 function resetAdmissionViewPaging() {
   admissionVisibleResultLimits = resetAdmissionGroupLimits();
   admissionExpandedSubjectGroup = ADMISSION_SUBJECT_GROUPS.SIMILAR;
+  admissionResultGroupExpanded.reset();
   admissionOpenUniversityKeys.clear();
   admissionUniversityResultLimits.clear();
   admissionUniversityGroupLimits.clear();
@@ -450,11 +455,11 @@ function createAdmissionUniversityGroupView(entries = []) {
 }
 function renderAdmissionUniversityGroup({ key, title, description = '', groupView, comparison }) {
   if (!groupView?.universityGroups?.length) return '';
-  const openByDefault = ['similar', 'comprehensive-similar', 'subjectReference'].includes(key);
+  const isExpanded = admissionResultGroupExpanded.isExpanded(key);
   const universityLimit = admissionUniversityGroupLimits.get(key) ?? ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT;
   const visibleUniversities = groupView.universityGroups.slice(0, universityLimit);
   const remainingUniversities = Math.max(0, groupView.universityGroups.length - visibleUniversities.length);
-  return `<details class="admission-result-group admission-result-group-${escapeHtml(key)}"${openByDefault ? ' open' : ''}><summary class="admission-result-group-heading"><div><h3>${escapeHtml(title)}</h3>${description ? `<p>${escapeHtml(description)}</p>` : ''}</div><span>${groupView.totalCount}개</span></summary><div class="admission-university-list">${visibleUniversities.map((group) => renderAdmissionUniversityAccordion(group, comparison, key)).join('')}</div>${remainingUniversities ? `<button class="quiet-button admission-university-group-more" data-admission-university-group-load-more="${escapeHtml(key)}">대학 더 보기 (${remainingUniversities}곳)</button>` : ''}</details>`;
+  return `<details class="admission-result-group admission-result-group-${escapeHtml(key)}" data-admission-result-group-key="${escapeHtml(key)}"${isExpanded ? ' open' : ''}><summary class="admission-result-group-heading" aria-expanded="${isExpanded}"><div><h3>${escapeHtml(title)}</h3>${description ? `<p>${escapeHtml(description)}</p>` : ''}</div><span>${groupView.totalCount}개</span></summary><div class="admission-university-list">${visibleUniversities.map((group) => renderAdmissionUniversityAccordion(group, comparison, key)).join('')}</div>${remainingUniversities ? `<button class="quiet-button admission-university-group-more" data-admission-university-group-load-more="${escapeHtml(key)}">대학 더 보기 (${remainingUniversities}곳)</button>` : ''}</details>`;
 }
 function renderAdmissionInterests() {
   const container = $('#admission-interests');
@@ -678,6 +683,18 @@ $('#admission-reference-result').addEventListener('toggle', (event) => {
   else admissionOpenUniversityKeys.delete(key);
 }, true);
 $('#admission-reference-result').addEventListener('click', (event) => {
+  const resultGroupSummary = event.target.closest('.admission-result-group > summary');
+  if (resultGroupSummary) {
+    event.preventDefault();
+    event.stopPropagation();
+    const disclosure = resultGroupSummary.parentElement;
+    const key = disclosure?.dataset.admissionResultGroupKey;
+    if (!disclosure || !key) return;
+    const isExpanded = admissionResultGroupExpanded.toggle(key);
+    disclosure.open = isExpanded;
+    resultGroupSummary.setAttribute('aria-expanded', String(isExpanded));
+    return;
+  }
   const universityGroupMore = event.target.closest('[data-admission-university-group-load-more]');
   if (universityGroupMore) {
     event.stopPropagation();
