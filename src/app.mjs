@@ -343,13 +343,13 @@ function ensureAdmissionViewModeControls() {
 function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
   const configurations = [
-    ['region', options.regions, '전체 지역'],
-    ['university', options.universities, '전체 대학'],
-    ['field', options.academicFields, '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
-    ['admissionName', options.admissionNames, '전체 전형명'],
+    ['region', 'admission-region', options.regions, '전체 지역'],
+    ['university', 'admission-university', options.universities, '전체 대학'],
+    ['field', 'admission-field', options.academicFields, '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
+    ['admissionName', 'admission-name', options.admissionNames, '전체 전형명'],
   ];
-  configurations.forEach(([key, values, placeholder, labels]) => {
-    const element = $(`#admission-${key}`);
+  configurations.forEach(([key, elementId, values, placeholder, labels]) => {
+    const element = $(`#${elementId}`);
     if (!element) return;
     element.innerHTML = admissionOptions(values, placeholder, labels);
     element.value = admissionFilters[key];
