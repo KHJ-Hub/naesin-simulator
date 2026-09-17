@@ -15,12 +15,14 @@ export function validAverageInput(value) {
 export function validRecord(record) {
   const grade = Number(record.gradeValue);
   const credit = Number(record.credit);
-  return Boolean(String(record.subjectName || '').trim()) && Number.isFinite(grade) && grade >= MIN_GRADE && grade <= MAX_GRADE && Number.isFinite(credit) && credit > 0;
+  const gradeEligible = !record.gradingType || ['grade', 'both'].includes(record.gradingType);
+  return gradeEligible && record.fiveLevelEligible !== false && Boolean(String(record.subjectName || '').trim()) && Number.isFinite(grade) && grade >= MIN_GRADE && grade <= MAX_GRADE && Number.isFinite(credit) && credit > 0;
 }
 
 export function validCourseRecord(record) {
   const credit = Number(record.credit);
-  return Boolean(String(record.subjectName || '').trim()) && Number.isFinite(credit) && credit > 0;
+  const gradeEligible = !record.gradingType || ['grade', 'both'].includes(record.gradingType);
+  return gradeEligible && record.fiveLevelEligible !== false && Boolean(String(record.subjectName || '').trim()) && Number.isFinite(credit) && credit > 0;
 }
 
 export function calculateAverage(records = [], weighted = true) {

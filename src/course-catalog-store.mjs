@@ -36,8 +36,30 @@ export function sortCoursesForDisplay(items) {
 
 export function catalogCourses({ includeInactive = true } = {}) { return cloneCourses(includeInactive ? courses : courses.filter((course) => course.active !== false && course.enabled !== false)); }
 export function catalogCourseById(id) { return courses.find((course) => course.id === id) ?? null; }
-export function coursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR) { return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear && course.semesterId === semesterId && course.active !== false && course.enabled !== false)); }
-export function commonCourses(entryYear = ACTIVE_ENTRY_YEAR, classNumber = null) { return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear && course.autoGenerate && course.active !== false && course.enabled !== false && (!course.classConditions?.length || course.classConditions.includes(String(classNumber))))); }
+export function isGradeInputCourse(course = {}) { return ['grade', 'both'].includes(course.gradingType) && course.fiveLevelEligible !== false; }
+export function isSupplementalAchievementCourse(course = {}) { return !isGradeInputCourse(course); }
+export function coursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR, { includeAchievementCourses = false } = {}) {
+  return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear
+    && course.semesterId === semesterId
+    && course.active !== false
+    && course.enabled !== false
+    && (includeAchievementCourses || isGradeInputCourse(course))));
+}
+export function achievementCoursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR) {
+  return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear
+    && course.semesterId === semesterId
+    && course.active !== false
+    && course.enabled !== false
+    && isSupplementalAchievementCourse(course)));
+}
+export function commonCourses(entryYear = ACTIVE_ENTRY_YEAR, classNumber = null, { includeAchievementCourses = false } = {}) {
+  return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear
+    && course.autoGenerate
+    && course.active !== false
+    && course.enabled !== false
+    && (!course.classConditions?.length || course.classConditions.includes(String(classNumber)))
+    && (includeAchievementCourses || isGradeInputCourse(course))));
+}
 export function saveCatalog(nextCourses) {
   courses = cloneCourses(nextCourses.filter(validCourse));
   globalThis.localStorage?.setItem(CATALOG_STORAGE_KEY, JSON.stringify({ version: 1, courses, savedAt: new Date().toISOString() }));

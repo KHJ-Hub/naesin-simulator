@@ -50,6 +50,7 @@ const defaultState = () => ({
   inputModes: {},
   admissionInterests: [],
   admissionGradeScaleMode: 'converted5',
+  includeAchievementCourses: false,
 });
 
 function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -118,7 +119,8 @@ function allowedAchievements(record) {
 function normalizeState(saved = {}) {
   const base = defaultState();
   const savedActual = Array.isArray(saved.actual) ? saved.actual.map(normalizeRecord) : [];
-  const commonActual = commonCourses().filter((course) => !savedActual.some((record) => record.courseId === course.id)).map((course) => recordFromCourse(course, makeId()));
+  const includeAchievementCourses = saved.includeAchievementCourses === true;
+  const commonActual = commonCourses(undefined, null, { includeAchievementCourses }).filter((course) => !savedActual.some((record) => record.courseId === course.id)).map((course) => recordFromCourse(course, makeId()));
   return {
     ...base,
     actual: [...savedActual, ...commonActual],
@@ -130,6 +132,7 @@ function normalizeState(saved = {}) {
     inputModes: normalizeInputModes(saved.inputModes),
     admissionInterests: normalizeAdmissionInterests(saved.admissionInterests),
     admissionGradeScaleMode: saved.admissionGradeScaleMode === 'original9' || saved.admissionScale === 'original' ? 'original9' : 'converted5',
+    includeAchievementCourses,
   };
 }
 function normalizeQuickAverages(saved = {}) {
@@ -222,7 +225,8 @@ function renderInputMode() {
   $('#quick-entry').innerHTML = mode === 'quick' ? `<label>이 학기 평균 내신 <input id="quick-average" class="input" type="number" min="1" max="5" step="0.01" value="${value}" placeholder="예: 2.14" /></label><p class="muted">1.00~5.00 범위로 입력하면 과목별 입력 없이도 전체 계산과 목표 시뮬레이션에 반영됩니다.</p>` : '';
 }
 function renderGradeList() {
-  const list = records().filter((record) => record.semesterId === state.activeSemester);
+  const list = records().filter((record) => record.semesterId === state.activeSemester
+    && (state.includeAchievementCourses || ['grade', 'both'].includes(record.gradingType)));
   $('#active-semester-title').textContent = semesterLabel(state.activeSemester);
   const mode = state.inputModes?.[state.activeSemester] ?? 'detailed';
   if (mode === 'quick') {
@@ -251,7 +255,7 @@ function renderCourseSelection() {
   const container = $('#course-selection');
   if ((state.inputModes?.[state.activeSemester] ?? 'detailed') === 'quick') { container.innerHTML = ''; return; }
   const used = new Set(records().filter((record) => record.semesterId === state.activeSemester).map((record) => record.courseId));
-  const available = coursesForSemester(state.activeSemester).filter((course) => !used.has(course.id));
+  const available = coursesForSemester(state.activeSemester, undefined, { includeAchievementCourses: state.includeAchievementCourses }).filter((course) => !used.has(course.id));
   const firstGradeNote = state.activeSemester.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택하세요.</p>' : '';
   container.innerHTML = available.length ? `${firstGradeNote}<label>학교 개설 과목 <select id="course-picker" class="input"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button id="add-grade" class="add-button">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
 }
