@@ -142,8 +142,9 @@ function groupView(entries, limit) {
   const visibleResults = entries.slice(0, visibleResultLimit);
   return Object.freeze({
     totalCount: entries.length,
+    allResults: Object.freeze(entries),
     visibleResults: Object.freeze(visibleResults),
-    universityGroups: groupResultsByUniversity(visibleResults),
+    universityGroups: groupResultsByUniversity(entries),
     visibleResultLimit,
     hasMore: visibleResults.length < entries.length,
     remainingResultCount: Math.max(0, entries.length - visibleResults.length),

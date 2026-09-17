@@ -61,6 +61,11 @@ const admissionFilters = { region: '', university: '', field: '', department: ''
 let admissionViewMode = null;
 let admissionVisibleResultLimits = resetAdmissionGroupLimits();
 let admissionExpandedSubjectGroup = ADMISSION_SUBJECT_GROUPS.SIMILAR;
+const ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT = 5;
+const ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT = 12;
+const admissionOpenUniversityKeys = new Set();
+const admissionUniversityResultLimits = new Map();
+const admissionUniversityGroupLimits = new Map();
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -301,6 +306,9 @@ function admissionOptions(values, placeholder, labels = {}) {
 function resetAdmissionViewPaging() {
   admissionVisibleResultLimits = resetAdmissionGroupLimits();
   admissionExpandedSubjectGroup = ADMISSION_SUBJECT_GROUPS.SIMILAR;
+  admissionOpenUniversityKeys.clear();
+  admissionUniversityResultLimits.clear();
+  admissionUniversityGroupLimits.clear();
 }
 function setAdmissionViewMode(mode) {
   const normalized = normalizeAdmissionViewMode(mode);
@@ -379,6 +387,70 @@ function admissionResultCard(item, comparison, subjectGroup = null) {
   const availabilityLine = item.dataAvailability === 'cut70-only' ? '<small>공식 70% cut만 공개</small>' : item.dataAvailability === 'average-only' ? '<small>공식 평균등급 참고</small>' : '';
   return `<article class="admission-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)}</span></div><span class="admission-band-label ${bandKey}">${band.label}</span></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores"><span class="admission-score-cut">전년도 70% cut ${scoreLine}</span>${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div><details class="admission-card-details"><summary>세부 정보</summary><div class="admission-card-details-body">${item.cut50Original != null ? `<span>50% cut 원본 <b>${fmt(Number(item.cut50Original))}</b></span>` : ''}${item.cut50Converted != null ? `<span>50% cut 환산 참고 <b>${fmt(Number(item.cut50Converted))}</b></span>` : ''}<small>${escapeHtml(item.referenceYear)}학년도 · ${escapeHtml(item.source)}${item.updatedAt ? ` · ${escapeHtml(item.updatedAt)} 갱신` : ''}</small></div></details></article>`;
 }
+function admissionUniversityDisclosureKey(groupKey, group) {
+  return `${groupKey}:${group.universityId ?? group.universityName}`;
+}
+function admissionUniversitySummary(group) {
+  const differences = group.results
+    .map((entry) => entry.absoluteDifference ?? entry.referenceAbsoluteDifference ?? Number.POSITIVE_INFINITY)
+    .filter(Number.isFinite);
+  const similarCount = group.results.filter((entry) => {
+    const difference = entry.difference ?? entry.referenceDifference;
+    return Number.isFinite(difference) && Math.abs(difference) <= 0.2;
+  }).length;
+  return {
+    closestDifference: differences.length ? Math.min(...differences) : null,
+    similarCount,
+  };
+}
+function admissionResultCardWithinUniversity(entry, comparison, groupKey) {
+  const item = entry.item;
+  const originalMode = state.admissionGradeScaleMode === 'original9';
+  const comparable = isComparableAdmissionRecord(item);
+  const comprehensive = isStudentRecordComprehensive(item);
+  const referenceCut = admissionComparisonCut(item, originalMode ? 'original' : 'converted');
+  const difference = originalMode || !comparable ? null : admissionDifference(comparison.value, referenceCut);
+  const key = admissionInterestKey(item);
+  const saved = state.admissionInterests.some((interest) => admissionInterestKey(interest) === key);
+  const scoreLine = originalMode
+    ? `<span>원본 9등급제 <b>${fmt(Number(item.cut70Original ?? item.cut70))}</b></span>`
+    : `<span>5등급제 환산 참고 <b>${fmt(Number(item.cut70Converted))}</b></span><small>원본 9등급제 ${fmt(Number(item.cut70Original ?? item.cut70))}</small>`;
+  const differenceLine = originalMode ? '<p class="admission-difference">원본 9등급제 값은 5등급제 학생 내신과 직접 비교하지 않습니다.</p>' : comprehensive ? '<p class="admission-difference">학생부종합 전형은 전년도 등록자 내신 참고로만 제공합니다.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
+  const currentLine = originalMode || !comparable ? '' : `<span class="admission-score-current">${comparison.label} <b>${fmt(comparison.value)}</b></span>`;
+  const availabilityLine = item.dataAvailability === 'cut70-only' ? '<small>공식 70% cut만 공개</small>' : item.dataAvailability === 'average-only' ? '<small>공식 평균등급 참고</small>' : '';
+  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores"><span class="admission-score-cut">전년도 70% cut ${scoreLine}</span>${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div><details class="admission-card-details"><summary>세부 정보</summary><div class="admission-card-details-body">${item.cut50Original != null ? `<span>50% cut 원본 <b>${fmt(Number(item.cut50Original))}</b></span>` : ''}${item.cut50Converted != null ? `<span>50% cut 환산 참고 <b>${fmt(Number(item.cut50Converted))}</b></span>` : ''}<small>${escapeHtml(item.referenceYear)}학년도 · ${escapeHtml(item.source)}${item.updatedAt ? ` · ${escapeHtml(item.updatedAt)} 갱신` : ''}</small></div></details></article>`;
+}
+function renderAdmissionUniversityAccordion(group, comparison, groupKey) {
+  const disclosureKey = admissionUniversityDisclosureKey(groupKey, group);
+  const visibleLimit = admissionUniversityResultLimits.get(disclosureKey) ?? ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT;
+  const visibleResults = group.results.slice(0, visibleLimit);
+  const remainingCount = Math.max(0, group.results.length - visibleResults.length);
+  const summary = admissionUniversitySummary(group);
+  const closestText = summary.closestDifference == null ? '' : `<span>가장 가까운 차이 ${fmt(summary.closestDifference)}</span>`;
+  const similarText = summary.similarCount ? `<span>비슷한 입결 ${summary.similarCount}개</span>` : '';
+  const isOpen = admissionOpenUniversityKeys.has(disclosureKey);
+  return `<details class="admission-university" data-admission-university-accordion data-admission-university-key="${escapeHtml(disclosureKey)}"${isOpen ? ' open' : ''}><summary><div class="admission-university-title"><strong>${escapeHtml(group.universityName)}</strong><span>${group.resultCount}개 모집단위</span></div><div class="admission-university-meta">${closestText}${similarText}</div></summary><div class="admission-university-content"><div class="admission-university-results">${visibleResults.map((entry) => admissionResultCardWithinUniversity(entry, comparison, groupKey)).join('')}</div>${remainingCount ? `<button class="quiet-button admission-university-more" data-admission-university-load-more="${escapeHtml(disclosureKey)}">이 대학 모집단위 더 보기 (${remainingCount}개)</button>` : ''}</div></details>`;
+}
+function createAdmissionUniversityGroupView(entries = []) {
+  const groups = new Map();
+  entries.forEach((entry) => {
+    const item = entry.item;
+    const key = item.universityId ?? item.university;
+    if (!groups.has(key)) groups.set(key, { universityId: item.universityId ?? null, universityName: item.university, resultCount: 0, results: [] });
+    const group = groups.get(key);
+    group.results.push(entry);
+    group.resultCount += 1;
+  });
+  return { totalCount: entries.length, universityGroups: [...groups.values()] };
+}
+function renderAdmissionUniversityGroup({ key, title, description = '', groupView, comparison }) {
+  if (!groupView?.universityGroups?.length) return '';
+  const openByDefault = ['similar', 'comprehensive-similar', 'subjectReference'].includes(key);
+  const universityLimit = admissionUniversityGroupLimits.get(key) ?? ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT;
+  const visibleUniversities = groupView.universityGroups.slice(0, universityLimit);
+  const remainingUniversities = Math.max(0, groupView.universityGroups.length - visibleUniversities.length);
+  return `<details class="admission-result-group admission-result-group-${escapeHtml(key)}"${openByDefault ? ' open' : ''}><summary class="admission-result-group-heading"><div><h3>${escapeHtml(title)}</h3>${description ? `<p>${escapeHtml(description)}</p>` : ''}</div><span>${groupView.totalCount}개</span></summary><div class="admission-university-list">${visibleUniversities.map((group) => renderAdmissionUniversityAccordion(group, comparison, key)).join('')}</div>${remainingUniversities ? `<button class="quiet-button admission-university-group-more" data-admission-university-group-load-more="${escapeHtml(key)}">대학 더 보기 (${remainingUniversities}곳)</button>` : ''}</details>`;
+}
 function renderAdmissionInterests() {
   const container = $('#admission-interests');
   if (!state.admissionInterests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없습니다.</p>'; return; }
@@ -429,27 +501,34 @@ function renderAdmissionReferences() {
     visibleResultLimits: admissionVisibleResultLimits,
   });
   const originalSubjectMode = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT && state.admissionGradeScaleMode === 'original9';
-  const activeGroup = originalSubjectMode ? 'subjectReference' : admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? admissionExpandedSubjectGroup : 'comprehensive';
-  const activeView = originalSubjectMode ? view.subjectReference : admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? view.subjectGroups[activeGroup] : view.comprehensive;
   result.dataset.totalMatchedResults = String(view.totalMatchedResults);
-  result.dataset.visibleResults = String(activeView.visibleResults.length);
-  result.dataset.visibleResultLimit = String(activeView.visibleResultLimit);
+  result.dataset.visibleResults = String(view.totalMatchedResults);
+  result.dataset.visibleResultLimit = String(view.totalMatchedResults);
   result.dataset.admissionCategory = view.admissionCategory;
   result.dataset.subjectSimilarCount = String(view.subjectSimilarCount);
   result.dataset.subjectHigherCount = String(view.subjectHigherCount);
   result.dataset.subjectLowerCount = String(view.subjectLowerCount);
-  result.dataset.expandedSubjectGroup = admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? admissionExpandedSubjectGroup : '';
-  loadMoreButtons.forEach((button) => {
-    const buttonGroup = button.dataset.admissionLoadMore || activeGroup;
-    const target = originalSubjectMode ? view.subjectReference : admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT ? view.subjectGroups[buttonGroup] : view.comprehensive;
-    button.hidden = !target?.hasMore;
-    button.disabled = !target?.hasMore;
-    button.dataset.remainingResults = String(target?.remainingResultCount ?? 0);
-  });
-  const visible = activeView.visibleResults;
-  result.innerHTML = visible.length
-    ? `<div class="admission-card-grid">${visible.map(({ item }) => admissionResultCard(item, comparison, activeGroup)).join('')}</div>`
-    : `<div class="empty-state">${escapeHtml(admissionEmptyStateMessage())}</div>`;
+  result.dataset.expandedSubjectGroup = '';
+  const sections = [];
+  if (originalSubjectMode) {
+    sections.push(renderAdmissionUniversityGroup({ key: 'subjectReference', title: '9등급제 원본 참고', description: '전년도 공개 입시결과 원본 값입니다.', groupView: view.subjectReference, comparison }));
+  } else if (admissionViewMode === ADMISSION_VIEW_MODES.SUBJECT) {
+    sections.push(
+      renderAdmissionUniversityGroup({ key: ADMISSION_SUBJECT_GROUPS.SIMILAR, title: '내 내신과 비슷한 입결 ±0.2', groupView: view.subjectGroups.similar, comparison }),
+      renderAdmissionUniversityGroup({ key: ADMISSION_SUBJECT_GROUPS.HIGHER, title: '내 내신보다 입결이 높은 결과', groupView: view.subjectGroups.higher, comparison }),
+      renderAdmissionUniversityGroup({ key: ADMISSION_SUBJECT_GROUPS.LOWER, title: '내 내신보다 입결이 낮은 결과', groupView: view.subjectGroups.lower, comparison }),
+    );
+  } else {
+    const referenceGroups = view.comprehensiveReferenceGroups;
+    sections.push(
+      renderAdmissionUniversityGroup({ key: 'comprehensive-similar', title: '등록자 내신 참고값이 비슷한 범위 ±0.2', description: '전년도 등록자 내신 참고용으로만 확인하세요.', groupView: referenceGroups?.similar, comparison }),
+      renderAdmissionUniversityGroup({ key: 'comprehensive-higher', title: '등록자 내신 참고값이 높은 결과', description: '전년도 등록자 내신 참고용입니다.', groupView: referenceGroups?.higher, comparison }),
+      renderAdmissionUniversityGroup({ key: 'comprehensive-lower', title: '등록자 내신 참고값이 낮은 결과', description: '전년도 등록자 내신 참고용입니다.', groupView: referenceGroups?.lower, comparison }),
+    );
+    const unavailableEntries = (view.comprehensive?.allResults ?? []).filter(({ item }) => ![item.cut70Converted, item.averageGradeConverted, item.cut50Converted].some((value) => value != null && value !== '' && Number.isFinite(Number(value))));
+    sections.push(renderAdmissionUniversityGroup({ key: 'comprehensive-unavailable', title: '내신 수치 미공개', description: '전년도 공개 자료에 내신 수치가 없는 모집단위입니다.', groupView: createAdmissionUniversityGroupView(unavailableEntries), comparison }));
+  }
+  result.innerHTML = sections.filter(Boolean).join('') || `<div class="empty-state">${escapeHtml(admissionEmptyStateMessage())}</div>`;
   renderAdmissionInterests();
 }
 function goalDetails() {
@@ -575,7 +654,45 @@ document.querySelector('#admission-reference-panel').addEventListener('change', 
   renderAdmissionReferences();
   renderPrintReport();
 });
+$('#admission-reference-result').addEventListener('toggle', (event) => {
+  const disclosure = event.target.closest('[data-admission-university-accordion]');
+  if (!disclosure) return;
+  const key = disclosure.dataset.admissionUniversityKey;
+  if (!key) return;
+  if (disclosure.open) admissionOpenUniversityKeys.add(key);
+  else admissionOpenUniversityKeys.delete(key);
+}, true);
+$('#admission-reference-result').addEventListener('click', (event) => {
+  const universityGroupMore = event.target.closest('[data-admission-university-group-load-more]');
+  if (universityGroupMore) {
+    event.stopPropagation();
+    const key = universityGroupMore.dataset.admissionUniversityGroupLoadMore;
+    const currentLimit = admissionUniversityGroupLimits.get(key) ?? ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT;
+    admissionUniversityGroupLimits.set(key, currentLimit + ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT);
+    renderAdmissionReferences();
+    return;
+  }
+  const universityMore = event.target.closest('[data-admission-university-load-more]');
+  if (!universityMore) return;
+  event.stopPropagation();
+  const key = universityMore.dataset.admissionUniversityLoadMore;
+  const currentLimit = admissionUniversityResultLimits.get(key) ?? ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT;
+  admissionUniversityResultLimits.set(key, currentLimit + ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT);
+  admissionOpenUniversityKeys.add(key);
+  renderAdmissionReferences();
+});
 document.querySelector('#admission-reference-panel').addEventListener('click', (event) => {
+  const universitySummaryControl = event.target.closest('.admission-university > summary');
+  if (universitySummaryControl) {
+    event.preventDefault();
+    const disclosure = universitySummaryControl.closest('[data-admission-university-accordion]');
+    const key = disclosure?.dataset.admissionUniversityKey;
+    if (!disclosure || !key) return;
+    disclosure.open = !disclosure.open;
+    if (disclosure.open) admissionOpenUniversityKeys.add(key);
+    else admissionOpenUniversityKeys.delete(key);
+    return;
+  }
   const modeControl = event.target.closest('[data-admission-view-mode]');
   if (modeControl && modeControl.tagName !== 'INPUT') {
     setAdmissionViewMode(modeControl.dataset.admissionViewMode ?? modeControl.value);
@@ -586,6 +703,23 @@ document.querySelector('#admission-reference-panel').addEventListener('click', (
   if (groupControl) {
     const group = groupControl.dataset.admissionSubjectGroup;
     if (Object.values(ADMISSION_SUBJECT_GROUPS).includes(group)) admissionExpandedSubjectGroup = group;
+    renderAdmissionReferences();
+    return;
+  }
+  const universityGroupLoadMoreControl = event.target.closest('[data-admission-university-group-load-more]');
+  if (universityGroupLoadMoreControl) {
+    const key = universityGroupLoadMoreControl.dataset.admissionUniversityGroupLoadMore;
+    const currentLimit = admissionUniversityGroupLimits.get(key) ?? ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT;
+    admissionUniversityGroupLimits.set(key, currentLimit + ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT);
+    renderAdmissionReferences();
+    return;
+  }
+  const universityLoadMoreControl = event.target.closest('[data-admission-university-load-more]');
+  if (universityLoadMoreControl) {
+    const key = universityLoadMoreControl.dataset.admissionUniversityLoadMore;
+    const currentLimit = admissionUniversityResultLimits.get(key) ?? ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT;
+    admissionUniversityResultLimits.set(key, currentLimit + ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT);
+    admissionOpenUniversityKeys.add(key);
     renderAdmissionReferences();
     return;
   }
