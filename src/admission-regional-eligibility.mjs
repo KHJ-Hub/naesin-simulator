@@ -17,6 +17,7 @@ const eligibility = (requirementSummary, sourceUrl, additionalRequirements = nul
 
 // 공식 모집요강 또는 어디가의 해당 학년도 전형 안내에서 확인한 대학·전형 단위 지원자격이다.
 const REGIONAL_ELIGIBILITY_BY_ADMISSION = Object.freeze({
+  '부산대학교|지역인재전형': eligibility('부산·울산·경남 지역 소재 고등학교에서 입학일부터 졸업일까지 전 교육과정을 이수한 졸업(예정)자입니다.', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0000014'),
   '울산대학교|학생부교과(지역교과 전형)': eligibility('부산·울산·경남 지역 고등학교에서 입학일부터 졸업(예정)일까지 전 교육과정을 이수한 졸업(예정)자입니다.', 'https://iphak.ulsan.ac.kr/upload/board/2026/04/30/6f0e0191-3030-4a2e-855f-4c11dc598e76.pdf', '의예과는 2022학년도 이후 중학교 입학자에게 비수도권 중학교 전 교육과정 이수와 재학기간 지역 거주 요건이 추가됩니다.'),
   '경상국립대학교|학생부교과(지역인재전형)': eligibility('경남·부산·울산 지역 소재 고등학교에서 입학부터 졸업(예정)까지 전 과정을 이수한 졸업(예정)자입니다.', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0000007'),
   '경상국립대학교|학생부교과(지역인재전형)|간호학과': eligibility('경남·부산·울산 지역 소재 고등학교에서 입학부터 졸업(예정)까지 전 과정을 이수한 졸업(예정)자입니다.', 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0000007', '간호학과는 2022학년도 이후 중학교 입학자에게 비수도권 중학교 전 교육과정 이수와 재학기간 지역 거주 요건이 추가됩니다.'),

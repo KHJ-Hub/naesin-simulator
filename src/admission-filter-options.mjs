@@ -243,9 +243,20 @@ export function searchAvailableDepartments(data, filters = {}, query = '', { lim
   return [...departments.values()].sort((left, right) => koSort(left.department, right.department)).slice(0, Math.max(0, limit));
 }
 
+/** 상위 전형 분류를 그대로 복사한 값은 하위 전형명 선택지로 사용하지 않는다. */
+export function isMeaningfulAdmissionNameOption(item = {}) {
+  const admissionName = String(item.admissionName ?? '').trim();
+  if (!admissionName) return false;
+  const compact = (value) => String(value ?? '').replace(/\s/g, '');
+  const name = compact(admissionName);
+  const category = compact(item.admissionCategory ?? item.category);
+  const type = compact(item.admissionType);
+  return name !== category && (!type || name !== type);
+}
+
 export function getAvailableAdmissionNames(data, filters = {}) {
   const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['admissionName']));
-  return uniqueSorted(records.map((item) => item.admissionName));
+  return uniqueSorted(records.filter(isMeaningfulAdmissionNameOption).map((item) => String(item.admissionName).trim()));
 }
 
 export function getAvailableAdmissionCategories(data, filters = {}) {

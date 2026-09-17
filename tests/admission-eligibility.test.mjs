@@ -26,7 +26,9 @@ test('공식 지원지역이 확인된 지역인재만 부산 학생 기본 검�
   assert.equal(isSchoolRegionEligible(regional.regionalEligibility, '대구'), false);
   assert.equal(isDefaultStudentVisibleAdmission(regional), true);
   assert.equal(isDefaultStudentVisibleAdmission(unknown), false);
-  assert.equal(filterAdmissionReferences(ADMISSION_REFERENCE_DATA).filter((item) => item.eligibilityType === 'regional').length, 15);
+  const visibleRegional = filterAdmissionReferences(ADMISSION_REFERENCE_DATA).filter((item) => item.eligibilityType === 'regional');
+  assert.equal(visibleRegional.length, 72);
+  assert.equal(visibleRegional.filter((item) => item.university === '부산대학교').length, 57);
   assert.equal(filterAdmissionReferences(ADMISSION_REFERENCE_DATA).some((item) => item.eligibilityType === 'rural' || item.eligibilityType === 'unknown'), false);
   assert.equal(filterAdmissionReferences(ADMISSION_REFERENCE_DATA, { includeSpecialEligibility: true }).length, ADMISSION_REFERENCE_DATA.length);
 });

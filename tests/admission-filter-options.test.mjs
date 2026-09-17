@@ -25,15 +25,15 @@ test('학종 필터 파이프라인은 전형 구분과 자격 유형을 별도 
   const counts = Object.fromEntries(trace.stages.map(({ stage, count }) => [stage, count]));
   assert.equal(counts['admission-category'], 6123);
   assert.equal(counts['eligibility-type'], 2413);
-  assert.equal(counts['regional-eligibility'], 2084);
-  assert.equal(trace.finalRecords.length, 2084);
+  assert.equal(counts['regional-eligibility'], 2098);
+  assert.equal(trace.finalRecords.length, 2098);
 
   const pusan = traceAdmissionFilterPipeline(ADMISSION_REFERENCE_DATA, {
     admissionCategory: '학생부종합',
     region: '부산광역시',
     university: '부산대학교',
   });
-  assert.equal(pusan.finalRecords.length, 69);
+  assert.equal(pusan.finalRecords.length, 83);
   assert.ok(pusan.finalRecords.every((item) => item.admissionCategory === '학생부종합' && item.university === '부산대학교'));
 });
 
@@ -217,6 +217,29 @@ test('학생부교과·종합과 계열 조건이 선택지와 실제 결과에 
   const comprehensive = filterAdmissionRecords(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합', field: 'humanities' });
   assert.equal(comprehensive.length, 1);
   assert.equal(comprehensive[0].department, '국어국문학과');
+});
+
+test('전형명 선택지는 실제 admissionName만 중복 없이 사용한다', () => {
+  const records = [
+    result({ admissionName: '일반전형' }),
+    result({ admissionName: '일반전형' }),
+    result({ admissionName: '  ' }),
+    result({ admissionName: null }),
+    result({ admissionName: '학생부교과' }),
+    result({ admissionName: '별도전형', admissionType: '별도전형' }),
+  ];
+  assert.deepEqual(getAvailableAdmissionNames(records, { includeSpecialEligibility: true }), ['일반전형']);
+});
+
+test('부산대학교 학종은 공식 하위 전형명을 선택지로 제공한다', () => {
+  const filters = {
+    admissionCategory: '학생부종합',
+    region: '부산광역시',
+    university: '부산대학교',
+    schoolRegion: '부산광역시',
+    schoolGender: 'male',
+  };
+  assert.deepEqual(getAvailableAdmissionNames(ADMISSION_REFERENCE_DATA, filters), ['지역인재전형', '학생부종합전형']);
 });
 
 test('대학 미선택 상태에서도 지역·계열과 학과 검색어를 조합한다', () => {

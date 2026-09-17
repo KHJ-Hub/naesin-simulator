@@ -82,7 +82,8 @@ test('부산 공식 2026 결과와 검증된 지역인재 지원자격을 함께
   assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 1_251);
   assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 563);
   const verifiedRegional = rows.filter((item) => item.eligibilityType === 'regional' && item.regionalEligibility?.verified);
-  assert.equal(verifiedRegional.length, 7);
+  assert.equal(verifiedRegional.length, 64);
+  assert.equal(verifiedRegional.filter((item) => item.university === '부산대학교').length, 57);
   assert.ok(verifiedRegional.every((item) => item.studentDefaultVisible));
 });
 
