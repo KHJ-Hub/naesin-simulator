@@ -13,6 +13,17 @@ test('입시결과 주요 필터를 아코디언 없이 모두 노출한다', ()
   assert.match(html, /학과\/모집단위 검색/);
 });
 
+test('표시 기준 토글 없이 카드에서 5등급 환산과 9등급 원본을 함께 표시한다', () => {
+  assert.equal(html.includes('name="admission-scale"'), false);
+  assert.equal(html.includes('등급제 표시'), false);
+  assert.equal(html.includes('<span>표시 기준</span>'), false);
+  assert.equal(app.includes('admissionGradeScaleMode'), false);
+  assert.equal(app.includes("admissionComparisonCut(item, 'original')"), false);
+  assert.match(app, /5등급제 환산 참고/);
+  assert.match(app, /원본 9등급제/);
+  assert.match(app, /comparisonEnabled: true/);
+});
+
 test('학과 검색은 대학 선택 없이 사용할 수 있는 검색 입력과 자동완성 후보를 갖는다', () => {
   assert.match(html, /id="admission-department"[^>]+type="search"/);
   assert.match(html, /list="admission-department-suggestions"/);

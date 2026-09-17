@@ -2365,7 +2365,7 @@ select {
 /* Final admission comparison hierarchy. */
 .admission-reference-panel .admission-overview {
   display: grid;
-  grid-template-columns: minmax(190px, 1.15fr) minmax(190px, 1fr) minmax(190px, 1fr) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.2fr);
   align-items: stretch;
   gap: 12px;
   padding: 14px;
@@ -2393,7 +2393,6 @@ select {
 
 @media (max-width: 1199px) {
   .admission-reference-panel .admission-overview { grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr); }
-  .admission-reference-panel .admission-status { grid-column: 1 / -1; }
   .admission-reference-panel .admission-overview > .primary-button { width: 100%; }
 }
 

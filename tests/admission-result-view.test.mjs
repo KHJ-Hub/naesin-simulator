@@ -74,6 +74,16 @@ test('학생 내신 2.00 기준 ±0.20 경계를 포함하고 등급 숫자 방�
   assert.equal(classifySubjectAdmissionRange(2, 2.21), ADMISSION_SUBJECT_GROUPS.LOWER);
 });
 
+test('교과 ±0.2 그룹은 9등급 원본이 아니라 5등급 환산값으로만 계산한다', () => {
+  const view = subjectView([
+    subject({ universityId: 'converted-check', cut70Original: 1.1, cut70Converted: 2.1 }),
+  ]);
+  assert.equal(view.subjectSimilarCount, 1);
+  assert.equal(view.subjectHigherCount, 0);
+  assert.equal(view.subjectLowerCount, 0);
+  assert.equal(view.subjectGroups.similar.allResults.length, 1);
+});
+
 test('대학별 그룹은 universityId로 묶고 차이 정보가 없으면 대학명 가나다순으로 정렬한다', () => {
   const results = [
     { item: subject({ universityId: 'pusan', university: '부산대학교', department: '경영학과' }) },
