@@ -52,6 +52,15 @@ export function achievementCoursesForSemester(semesterId, entryYear = ACTIVE_ENT
     && course.enabled !== false
     && isSupplementalAchievementCourse(course)));
 }
+/** 학생이 직접 추가할 수 있는 학교 개설 과목. 자동 생성 대상과 달리 성취도/P·F 과목도 포함한다. */
+export function selectableCoursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR, { classNumber = null } = {}) {
+  const normalizedClass = classNumber === null || classNumber === undefined || classNumber === '' ? null : String(Number(classNumber));
+  return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear
+    && course.semesterId === semesterId
+    && course.active !== false
+    && course.enabled !== false
+    && (!course.classConditions?.length || normalizedClass === null || course.classConditions.includes(normalizedClass))));
+}
 export function commonCourses(entryYear = ACTIVE_ENTRY_YEAR, classNumber = null, { includeAchievementCourses = false } = {}) {
   return sortCoursesForDisplay(courses.filter((course) => course.entryYear === entryYear
     && course.autoGenerate

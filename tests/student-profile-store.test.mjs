@@ -168,3 +168,29 @@ test('JSON 복원용 명시적 교체는 대상 학생만 갱신한다', () => {
   assert.equal(profiles['10101'].admissionInterests[0].university, '복원대학교');
   assert.equal(profiles['10102'].actual[0].gradeValue, 4);
 });
+
+test('학생이 추가한 성취도 전용 과목은 프로필 저장과 복원에서 그대로 유지한다', () => {
+  const storage = new MemoryStorage();
+  const data = profileData('10101', '학생 A', 2);
+  data.actual.push({
+    id: 'music-selected',
+    courseId: 'music-1',
+    semesterId: '1-1',
+    subjectName: '음악',
+    subjectGroup: '예술',
+    credit: 2,
+    gradingType: 'achievement',
+    fiveLevelEligible: false,
+    achievementScale: 'a-c',
+    gradeValue: '',
+    achievement: 'A',
+  });
+  createStudentProfile('10101', '학생 A', data, storage);
+
+  const restored = getCurrentStudentProfile(storage);
+  const music = restored.actual.find((record) => record.courseId === 'music-1');
+  assert.equal(music.gradingType, 'achievement');
+  assert.equal(music.fiveLevelEligible, false);
+  assert.equal(music.gradeValue, '');
+  assert.equal(music.achievement, 'A');
+});

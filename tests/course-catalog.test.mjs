@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commonCourses, coursesForSemester, gradingInputs } from '../src/course-catalog.mjs';
+import { commonCourses, coursesForSemester, gradingInputs, recordFromCourse } from '../src/course-catalog.mjs';
 
 test('2026 입학생 1학년 공통 과목과 반별 지정 과목을 구분한다', () => {
   assert.equal(commonCourses().some((item) => item.subjectName === '공통국어1'), true);
@@ -32,4 +32,14 @@ test('grade·achievement·passfail·both 렌더링 입력 계약을 구분한다
   assert.deepEqual(gradingInputs('achievement'), { grade: false, achievement: true, passfail: false });
   assert.deepEqual(gradingInputs('passfail'), { grade: false, achievement: false, passfail: true });
   assert.deepEqual(gradingInputs('both'), { grade: true, achievement: true, passfail: false });
+});
+
+test('성취도 전용 과목 레코드는 숫자 등급 없이 A/B/C 입력 구조를 유지한다', () => {
+  const music = coursesForSemester('1-1').find((item) => item.subjectName === '음악');
+  const record = recordFromCourse(music, 'selected-music');
+  assert.equal(record.gradingType, 'achievement');
+  assert.equal(record.fiveLevelEligible, false);
+  assert.equal(record.gradeValue, '');
+  assert.equal(record.achievement, '');
+  assert.deepEqual(gradingInputs(record.gradingType), { grade: false, achievement: true, passfail: false });
 });

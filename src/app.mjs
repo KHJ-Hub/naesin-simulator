@@ -8,7 +8,7 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260914-quickinput3';
-import { commonCourses, catalogCourseById as courseById, coursesForSemester } from './course-catalog-store.mjs?v=20260914-teacher-store2';
+import { commonCourses, catalogCourseById as courseById, coursesForSemester, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260917-achievement-select1';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
 import { ADMISSION_REFERENCE_DATA, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields3';
 import { ADMISSION_ACADEMIC_FIELD_LABELS } from './admission-filter-options.mjs?v=20260916-university-master1';
@@ -117,14 +117,26 @@ function normalizeRecord(record = {}) {
     const normalized = recordFromCourse(configured, typeof record.id === 'string' && record.id ? record.id : makeId());
     return { ...normalized, gradeValue: ['grade', 'both'].includes(normalized.gradingType) ? record.gradeValue ?? '' : '', achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '' };
   }
-  return {
+  const gradingType = ['grade', 'achievement', 'passfail', 'both'].includes(record.gradingType) ? record.gradingType : 'grade';
+  const achievementScale = ['none', 'a-c', 'a-e', 'pass'].includes(record.achievementScale)
+    ? record.achievementScale
+    : gradingType === 'passfail' ? 'pass' : gradingType === 'achievement' || gradingType === 'both' ? 'a-c' : 'none';
+  const normalized = {
     id: typeof record.id === 'string' && record.id ? record.id : makeId(),
     semesterId: SEMESTERS.some((semester) => semester.id === record.semesterId) ? record.semesterId : SEMESTERS[0].id,
     subjectName: String(record.subjectName ?? '').slice(0, 80),
-    subjectGroup: ['국어', '수학', '영어', '사회', '과학', '기타'].includes(record.subjectGroup) ? record.subjectGroup : '기타',
-    credit: record.credit ?? '', gradeValue: record.gradeValue ?? '',
-    achievement: ['A', 'B', 'C'].includes(record.achievement) ? record.achievement : '', requirement: 'legacy', gradingType: 'grade', achievementScale: 'none',
+    subjectGroup: String(record.subjectGroup ?? '기타').trim().slice(0, 40) || '기타',
+    credit: record.credit ?? '',
+    gradeValue: ['grade', 'both'].includes(gradingType) ? record.gradeValue ?? '' : '',
+    achievement: '',
+    requirement: String(record.requirement ?? 'legacy'),
+    gradingType,
+    fiveLevelEligible: ['grade', 'both'].includes(gradingType) && record.fiveLevelEligible !== false,
+    achievementOnly: gradingType === 'achievement',
+    achievementScale,
   };
+  normalized.achievement = allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '';
+  return normalized;
 }
 function allowedAchievements(record) {
   if (record.achievementScale === 'pass') return ['P', 'F'];
@@ -135,7 +147,7 @@ function normalizeState(saved = {}) {
   const base = defaultState();
   const savedActual = Array.isArray(saved.actual) ? saved.actual.map(normalizeRecord) : [];
   const includeAchievementCourses = saved.includeAchievementCourses === true;
-  const commonActual = commonCourses(undefined, null, { includeAchievementCourses }).filter((course) => !savedActual.some((record) => record.courseId === course.id)).map((course) => recordFromCourse(course, makeId()));
+  const commonActual = commonCourses().filter((course) => !savedActual.some((record) => record.courseId === course.id)).map((course) => recordFromCourse(course, makeId()));
   return {
     ...base,
     actual: [...savedActual, ...commonActual],
@@ -240,8 +252,7 @@ function renderInputMode() {
   $('#quick-entry').innerHTML = mode === 'quick' ? `<label>이 학기 평균 내신 <input id="quick-average" class="input" type="number" min="1" max="5" step="0.01" value="${value}" placeholder="예: 2.14" /></label><p class="muted">1.00~5.00 범위로 입력하면 과목별 입력 없이도 전체 계산과 목표 시뮬레이션에 반영됩니다.</p>` : '';
 }
 function renderGradeList() {
-  const list = records().filter((record) => record.semesterId === state.activeSemester
-    && (state.includeAchievementCourses || ['grade', 'both'].includes(record.gradingType)));
+  const list = records().filter((record) => record.semesterId === state.activeSemester);
   $('#active-semester-title').textContent = semesterLabel(state.activeSemester);
   const mode = state.inputModes?.[state.activeSemester] ?? 'detailed';
   if (mode === 'quick') {
@@ -270,12 +281,15 @@ function renderCourseSelection() {
   const container = $('#course-selection');
   if ((state.inputModes?.[state.activeSemester] ?? 'detailed') === 'quick') { container.innerHTML = ''; return; }
   const used = new Set(records().filter((record) => record.semesterId === state.activeSemester).map((record) => record.courseId));
-  const available = coursesForSemester(state.activeSemester, undefined, { includeAchievementCourses: state.includeAchievementCourses }).filter((course) => !used.has(course.id));
+  const studentId = String(state.student?.studentId ?? '');
+  const classNumber = /^\d{5}$/.test(studentId) ? Number(studentId.slice(1, 3)) : null;
+  const available = selectableCoursesForSemester(state.activeSemester, undefined, { classNumber }).filter((course) => !used.has(course.id));
   const firstGradeNote = state.activeSemester.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택하세요.</p>' : '';
   container.innerHTML = available.length ? `${firstGradeNote}<label>학교 개설 과목 <select id="course-picker" class="input"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button id="add-grade" class="add-button">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
 }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
-function validRows(type) { return records(type).filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }
+function gradeInputRows() { return records().filter((record) => ['grade', 'both'].includes(record.gradingType) && record.fiveLevelEligible !== false); }
+function validRows() { return gradeInputRows().filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }
 
 function renderSummary() {
   const actual = state.calculated ? effectiveRecords() : [];
@@ -633,7 +647,7 @@ $('#grade-list').addEventListener('click', (event) => {
   state.actual = records().filter((item) => item.id !== row.dataset.id); state.calculated = false; state.goalCalculated = false;
   saveState(); render();
 });
-$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${records().length - validRows().length}개입니다.`); });
+$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개입니다.`); });
 $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculated = true; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderSummary(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderSummary(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });

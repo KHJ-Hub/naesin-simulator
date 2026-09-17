@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { achievementCoursesForSemester, catalogCourses, coursesForSemester, commonCourses, isGradeInputCourse, sortCoursesForDisplay } from '../src/course-catalog-store.mjs';
+import { achievementCoursesForSemester, catalogCourses, coursesForSemester, commonCourses, isGradeInputCourse, selectableCoursesForSemester, sortCoursesForDisplay } from '../src/course-catalog-store.mjs';
 
 test('카탈로그 기본 항목은 개설 상태와 표시 순서를 가진다', () => {
   const courses = catalogCourses();
@@ -40,6 +40,23 @@ test('학생용 학기 조회도 성취도 과목을 기본 제외하고 옵션�
   const included = coursesForSemester('1-1', 2026, { includeAchievementCourses: true });
   assert.ok(defaults.every(isGradeInputCourse));
   assert.ok(included.length > defaults.length);
+});
+
+test('학교 개설과목 선택 목록에는 성취도 전용 과목을 유지한다', () => {
+  const selectable = selectableCoursesForSemester('1-1', 2026);
+  assert.ok(selectable.some((course) => course.subjectName === '과학탐구실험1' && course.gradingType === 'achievement'));
+  assert.ok(selectable.some((course) => course.subjectName === '체육1' && course.gradingType === 'achievement'));
+  assert.ok(selectable.some((course) => course.subjectName === '음악' && course.gradingType === 'achievement'));
+  assert.ok(selectable.some((course) => course.subjectName === '미술' && course.gradingType === 'achievement'));
+});
+
+test('반 정보가 있으면 해당 학기·반에 개설된 성취도 과목만 선택지에 제공한다', () => {
+  const classOne = selectableCoursesForSemester('1-1', 2026, { classNumber: 1 });
+  const classFour = selectableCoursesForSemester('1-1', 2026, { classNumber: 4 });
+  assert.equal(classOne.some((course) => course.subjectName === '음악'), true);
+  assert.equal(classOne.some((course) => course.subjectName === '미술'), false);
+  assert.equal(classFour.some((course) => course.subjectName === '음악'), false);
+  assert.equal(classFour.some((course) => course.subjectName === '미술'), true);
 });
 
 test('1학년만 교과군 우선순위로 정렬하고 2·3학년 원본 순서는 보존한다', () => {
