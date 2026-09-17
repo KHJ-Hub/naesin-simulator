@@ -2823,7 +2823,7 @@ h3:not(.hero-grid h2),
 }
 
 
-/* Admission filter flow: core filters visible, advanced filters collapsible */
+/* Admission filter flow: every frequently used filter stays visible. */
 .admission-filter-shell {
   display: grid;
   gap: .75rem;
@@ -2835,7 +2835,7 @@ h3:not(.hero-grid h2),
   padding: 0;
 }
 
-.admission-filter-core {
+.admission-filter-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .75rem;
@@ -2845,8 +2845,7 @@ h3:not(.hero-grid h2),
   background: var(--lavender-50);
 }
 
-.admission-filter-core label,
-.admission-filter-advanced label {
+.admission-filter-grid label {
   display: grid;
   gap: .35rem;
   min-width: 0;
@@ -2856,12 +2855,7 @@ h3:not(.hero-grid h2),
   line-height: 1.4;
 }
 
-.admission-filter-core label::after {
-  color: var(--lavender-500);
-}
-
-.admission-filter-core .input,
-.admission-filter-advanced .input {
+.admission-filter-grid .input {
   width: 100%;
   min-width: 0;
   min-height: 46px;
@@ -2869,36 +2863,6 @@ h3:not(.hero-grid h2),
   color: var(--ink);
   font-size: 15px;
   font-weight: 500;
-}
-
-.admission-filter-details {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-}
-
-.admission-filter-details > summary {
-  min-height: 44px;
-  padding: .65rem .85rem;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.admission-filter-details > summary::after {
-  color: var(--lavender-500);
-  content: '▾';
-}
-
-.admission-filter-details[open] > summary::after {
-  content: '▴';
-}
-
-.admission-filter-advanced {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .75rem;
-  padding: 0 .85rem .85rem;
 }
 
 .admission-filter-shell + #admission-view-button {
@@ -2909,23 +2873,20 @@ h3:not(.hero-grid h2),
 }
 
 @media (max-width: 767px) {
-  .admission-filter-core,
-  .admission-filter-advanced {
+  .admission-filter-grid {
     grid-template-columns: 1fr;
-  }
-
-  .admission-filter-core {
     gap: .65rem;
     padding: .8rem;
   }
 
-  .admission-filter-advanced {
-    gap: .65rem;
-    padding-inline: .8rem;
-  }
-
   .admission-filter-shell + #admission-view-button {
     width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .admission-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

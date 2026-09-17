@@ -11,7 +11,7 @@ import {
 import { commonCourses, catalogCourseById as courseById, coursesForSemester, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260917-achievement-select1';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
 import { ADMISSION_REFERENCE_DATA, ADMISSION_CONVERSION_NOTICE, admissionComparisonCut, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields3';
-import { ADMISSION_ACADEMIC_FIELD_LABELS } from './admission-filter-options.mjs?v=20260916-university-master1';
+import { ADMISSION_ACADEMIC_FIELD_LABELS } from './admission-filter-options.mjs?v=20260917-major-search1';
 import {
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
@@ -22,7 +22,7 @@ import {
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
-} from './admission-result-view.mjs?v=20260917-view-mode1';
+} from './admission-result-view.mjs?v=20260917-major-search1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-integrated-audit1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
@@ -337,10 +337,6 @@ function ensureAdmissionViewModeControls() {
     selector.innerHTML = '<span>전형 방식 선택</span><div class="admission-basis" role="radiogroup" aria-label="전형 방식 선택"><label><input type="radio" name="admission-view-mode" value="student-record-subject" data-admission-view-mode="student-record-subject" /> 학생부교과</label><label><input type="radio" name="admission-view-mode" value="student-record-comprehensive" data-admission-view-mode="student-record-comprehensive" /> 학생부종합</label></div>';
     overview.before(selector);
   }
-
-  const legacyCategory = $('#admission-category');
-  const legacyCategoryField = legacyCategory?.closest('label');
-  if (legacyCategoryField) legacyCategoryField.hidden = true;
 }
 function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
@@ -348,18 +344,20 @@ function renderAdmissionFilterOptions() {
     ['region', options.regions, '전체 지역'],
     ['university', options.universities, '전체 대학'],
     ['field', options.academicFields, '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
-    ['department', options.departments, admissionFilters.university ? '전체 모집단위' : '대학을 먼저 선택하세요'],
-    ['admissionName', options.admissionNames, options.admissionNames.length ? '전체 전형명' : '대학을 먼저 선택하세요'],
+    ['admissionName', options.admissionNames, '전체 전형명'],
   ];
   configurations.forEach(([key, values, placeholder, labels]) => {
     const element = $(`#admission-${key}`);
     if (!element) return;
     element.innerHTML = admissionOptions(values, placeholder, labels);
     element.value = admissionFilters[key];
-    element.disabled = !admissionViewMode || (key === 'department' && !admissionFilters.university) || (key === 'admissionName' && values.length === 0);
+    element.disabled = !admissionViewMode || (key === 'admissionName' && values.length === 0);
   });
-  const legacyCategory = $('#admission-category');
-  if (legacyCategory) legacyCategory.value = admissionCategoryForViewMode(admissionViewMode) ?? '';
+  const departmentInput = $('#admission-department');
+  const departmentSuggestions = $('#admission-department-suggestions');
+  departmentInput.value = admissionFilters.department;
+  departmentInput.disabled = !admissionViewMode;
+  departmentSuggestions.innerHTML = options.departmentSuggestions.map(({ department }) => `<option value="${escapeHtml(department)}"></option>`).join('');
   document.querySelectorAll('[data-admission-view-mode]').forEach((control) => {
     const active = normalizeAdmissionViewMode(control.dataset.admissionViewMode ?? control.value) === admissionViewMode;
     control.setAttribute('aria-pressed', String(active));
@@ -625,15 +623,23 @@ $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculat
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
 document.querySelector('#admission-filters').addEventListener('change', (event) => {
-  if (event.target.id === 'admission-category') {
-    setAdmissionViewMode(event.target.value);
-    renderAdmissionReferences();
-    return;
-  }
   const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName' };
   const key = map[event.target.id];
   if (!key) return;
   admissionFilters[key] = event.target.value;
+  Object.assign(admissionFilters, reconcileAdmissionViewFilters(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters }));
+  resetAdmissionViewPaging();
+  renderAdmissionReferences();
+});
+$('#admission-department').addEventListener('input', (event) => {
+  admissionFilters.department = event.target.value.trim();
+  resetAdmissionViewPaging();
+  const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
+  $('#admission-department-suggestions').innerHTML = options.departmentSuggestions.map(({ department }) => `<option value="${escapeHtml(department)}"></option>`).join('');
+});
+$('#admission-department').addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
   Object.assign(admissionFilters, reconcileAdmissionViewFilters(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters }));
   resetAdmissionViewPaging();
   renderAdmissionReferences();

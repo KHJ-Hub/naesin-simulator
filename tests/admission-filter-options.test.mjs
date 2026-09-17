@@ -124,9 +124,9 @@ test('부산과 부산대학교의 실제 academicField에서 계열 선택지�
   assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시', university: '부산대학교' }), ['humanities', 'natural', 'arts', 'other-unknown']);
 });
 
-test('대학을 선택하면 해당 대학의 공식 모집단위만 중복 없이 반환한다', () => {
+test('대학 선택 여부와 관계없이 현재 범위의 공식 모집단위를 중복 없이 반환한다', () => {
   assert.deepEqual(getAvailableDepartments(FIXTURE, { university: '부산대학교' }), ['건축학과', '국어국문학과', '컴퓨터공학과']);
-  assert.deepEqual(getAvailableDepartments(FIXTURE, {}), []);
+  assert.deepEqual(getAvailableDepartments(FIXTURE, {}), ['건축공학과', '건축학과', '건축학전공', '국어국문학과', '컴퓨터공학과']);
 });
 
 test('상위 지역 변경으로 무효가 된 대학·모집단위·전형명은 전체 선택으로 초기화한다', () => {
@@ -209,7 +209,7 @@ test('새 공식 데이터는 제공된 academicField를 저장하고 공식값�
 });
 
 test('학생부교과·종합과 계열 조건이 선택지와 실제 결과에 함께 적용된다', () => {
-  assert.deepEqual(getAvailableAdmissionNames(FIXTURE), []);
+  assert.deepEqual(getAvailableAdmissionNames(FIXTURE), ['교과우수전형', '지역균형전형', '지역인재', '학교장추천', '학생부종합일반']);
   assert.deepEqual(getAvailableDepartments(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합' }), ['국어국문학과']);
   assert.deepEqual(getAvailableAcademicFields(FIXTURE, { university: '부산대학교', admissionCategory: '학생부교과' }), ['natural']);
   assert.deepEqual(getAvailableAdmissionNames(FIXTURE, { university: '부산대학교', field: 'humanities' }), ['학생부종합일반']);
@@ -217,4 +217,29 @@ test('학생부교과·종합과 계열 조건이 선택지와 실제 결과에 
   const comprehensive = filterAdmissionRecords(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합', field: 'humanities' });
   assert.equal(comprehensive.length, 1);
   assert.equal(comprehensive[0].department, '국어국문학과');
+});
+
+test('대학 미선택 상태에서도 지역·계열과 학과 검색어를 조합한다', () => {
+  const economic = [
+    result({ university: '부산대학교', department: '경제학부', academicField: 'humanities', majorSearchGroup: '경제' }),
+    result({ university: '동아대학교', department: '경제금융학부', academicField: 'humanities', majorSearchGroup: '경제' }),
+    result({ region: '서울특별시', university: '서울대학교', department: '경제학부', academicField: 'humanities', majorSearchGroup: '경제' }),
+    result({ university: '부산대학교', department: '컴퓨터공학과', academicField: 'natural' }),
+  ];
+  assert.equal(filterAdmissionRecords(economic, { department: '경제' }).length, 3);
+  assert.deepEqual(filterAdmissionRecords(economic, { region: '부산', department: '경제' }).map((item) => item.department), ['경제학부', '경제금융학부']);
+  assert.equal(filterAdmissionRecords(economic, { field: 'humanities', department: '경제' }).length, 3);
+  assert.deepEqual(filterAdmissionRecords(economic, { university: '부산대학교', department: '경제' }).map((item) => item.department), ['경제학부']);
+  assert.deepEqual(searchAvailableDepartments(economic, { region: '부산', field: 'humanities' }, '경제').map((item) => item.department), ['경제금융학부', '경제학부']);
+});
+
+test('상위 지역이 바뀌어도 학과 검색어가 새 범위에서 유효하면 유지한다', () => {
+  const economic = [
+    result({ university: '부산대학교', department: '경제학부', academicField: 'humanities', majorSearchGroup: '경제' }),
+    result({ region: '서울특별시', university: '서울대학교', department: '경제학부', academicField: 'humanities', majorSearchGroup: '경제' }),
+  ];
+  const filters = reconcileAdmissionFilters(economic, {
+    region: '서울특별시', university: '', field: 'humanities', department: '경제', admissionCategory: '학생부교과',
+  }, UNIVERSITY_FIXTURE);
+  assert.equal(filters.department, '경제');
 });

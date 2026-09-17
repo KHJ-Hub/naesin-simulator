@@ -6,6 +6,7 @@ import {
   getAvailableRegions,
   getAvailableUniversities,
   normalizeAdmissionRegion,
+  searchAvailableDepartments,
 } from './admission-filter-options.mjs';
 import {
   ADMISSION_CATEGORIES,
@@ -154,7 +155,7 @@ function groupView(entries, limit) {
 /** 선택된 최상위 모드 안에서만 종속 필터 선택지를 계산한다. */
 export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, filters = {} } = {}) {
   const admissionCategory = admissionCategoryForViewMode(admissionViewMode);
-  if (!admissionCategory) return Object.freeze({ regions: [], universities: [], academicFields: [], departments: [], admissionNames: [] });
+  if (!admissionCategory) return Object.freeze({ regions: [], universities: [], academicFields: [], departments: [], departmentSuggestions: [], admissionNames: [] });
   const scopedFilters = { ...filters, admissionCategory };
   const visibility = {
     admissionCategory,
@@ -163,11 +164,15 @@ export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, 
     schoolGender: filters.schoolGender,
   };
   const regions = getAvailableRegions(data, visibility);
+  const departmentSuggestions = filters.department
+    ? searchAvailableDepartments(data, { ...scopedFilters, department: '', admissionName: '' }, filters.department, { limit: 30 })
+    : [];
   return Object.freeze({
     regions: Object.freeze(regions),
     universities: Object.freeze(getAvailableUniversities(data, { ...visibility, region: filters.region })),
     academicFields: Object.freeze(getAvailableAcademicFields(data, scopedFilters)),
-    departments: Object.freeze(getAvailableDepartments(data, scopedFilters)),
+    departments: Object.freeze(filters.university ? getAvailableDepartments(data, scopedFilters) : []),
+    departmentSuggestions: Object.freeze(departmentSuggestions),
     admissionNames: Object.freeze(getAvailableAdmissionNames(data, scopedFilters)),
   });
 }
@@ -191,7 +196,12 @@ export function reconcileAdmissionViewFilters(data, { admissionViewMode = null, 
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
   if (next.field && !options.academicFields.includes(next.field)) next.field = '';
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
-  if (next.department && !options.departments.includes(next.department)) next.department = '';
+  if (next.department && !searchAvailableDepartments(data, {
+    ...next,
+    department: '',
+    admissionName: '',
+    admissionCategory: admissionCategoryForViewMode(admissionViewMode),
+  }, next.department, { limit: 1 }).length) next.department = '';
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
   if (next.admissionName && !options.admissionNames.includes(next.admissionName)) next.admissionName = '';
   return next;

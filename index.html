@@ -53,16 +53,13 @@
         </div>
         <div class="admission-filter-shell">
           <div class="admission-filters" id="admission-filters">
-            <div class="admission-filter-core">
+            <div class="admission-filter-grid">
               <label>지역<select id="admission-region" class="input"><option value="">전체 지역</option></select></label>
               <label>대학<select id="admission-university" class="input"><option value="">전체 대학</option></select></label>
               <label>계열<select id="admission-field" class="input"><option value="">전체 계열</option></select></label>
-            </div>
-            <details class="admission-filter-details"><summary>필터 더보기</summary><div class="admission-filter-advanced">
-              <label>학과/모집단위<select id="admission-department" class="input"><option value="">전체 모집단위</option></select></label>
+              <label>학과/모집단위 검색<input id="admission-department" class="input" type="search" list="admission-department-suggestions" autocomplete="off" placeholder="예: 경제, 간호, 컴퓨터" /><datalist id="admission-department-suggestions"></datalist></label>
               <label>전형명<select id="admission-name" class="input"><option value="">전체 전형명</option></select></label>
-              <label>전형 구분<select id="admission-category" class="input"><option value="">전체 전형 구분</option><option value="학생부교과">학생부교과</option><option value="학생부종합">학생부종합</option></select></label>
-            </div></details>
+            </div>
           </div>
         </div>
         <button id="admission-view-button" class="primary-button">전년도 입시결과 보기</button>
@@ -77,6 +74,6 @@
     </main>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260917-summary-flow1"></script>
+    <script type="module" src="./src/app.mjs?v=20260917-major-search1"></script>
   </body>
 </html>

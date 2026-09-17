@@ -93,6 +93,11 @@ const academicFieldMatches = (item, selected) => selected === 'other-unknown'
   : itemAcademicField(item) === selected;
 const normalizedRecordCache = new WeakMap();
 
+const normalizeDepartmentSearchText = (value) => String(value ?? '')
+  .normalize('NFKC')
+  .toLocaleLowerCase('ko-KR')
+  .replace(/[\s·ㆍ・,()\[\]{}\-_/]/g, '');
+
 function normalizedEntry(record) {
   if (record && typeof record === 'object' && normalizedRecordCache.has(record)) return normalizedRecordCache.get(record);
   const item = normalizeAdmissionRecord(record);
@@ -117,13 +122,21 @@ function matches(item, filters = {}, ignored = []) {
     (skip.has('region') || !filters.region || normalizeAdmissionRegion(item.region) === normalizeAdmissionRegion(filters.region))
     && (skip.has('university') || !filters.university || item.university === filters.university)
     && (skip.has('academicField') || !academicField || academicFieldMatches(item, academicField))
-    && (skip.has('department') || !filters.department || item.department === filters.department)
+    && (skip.has('department') || !filters.department || departmentMatchesSearch(item, filters.department))
     && (skip.has('admissionName') || !filters.admissionName || item.admissionName === filters.admissionName)
     && (skip.has('admissionType') || !filters.admissionType || item.admissionType === filters.admissionType)
     && (skip.has('admissionCategory') || !filters.admissionCategory || item.admissionCategory === filters.admissionCategory)
     && (skip.has('category') || !filters.category || item.admissionCategory === filters.category)
     && (skip.has('eligibilityType') || !filters.eligibilityType || item.eligibilityType === filters.eligibilityType)
   );
+}
+
+/** 공식 모집단위명과 검색 보조 키워드를 함께 사용하되 원본 명칭은 변경하지 않는다. */
+export function departmentMatchesSearch(item, query = '') {
+  const needle = normalizeDepartmentSearchText(query);
+  if (!needle) return true;
+  const metadata = departmentSearchMetadata(item);
+  return normalizeDepartmentSearchText(`${metadata.department} ${metadata.normalizedMajorKeyword} ${metadata.majorSearchGroup ?? ''}`).includes(needle);
 }
 
 /** 실제 결과 조회용 필터. 선택지 계산과 분리해 같은 규칙을 독립적으로 검증한다. */
@@ -167,7 +180,7 @@ export function traceAdmissionFilterPipeline(data, filters = {}) {
   filterStep('university', (item) => item.university === filters.university, Boolean(filters.university));
   const academicField = selectedAcademicField(filters);
   filterStep('academic-field', (item) => academicFieldMatches(item, academicField), Boolean(academicField));
-  filterStep('department', (item) => item.department === filters.department, Boolean(filters.department));
+  filterStep('department', (item) => departmentMatchesSearch(item, filters.department), Boolean(filters.department));
   filterStep('admission-name', (item) => item.admissionName === filters.admissionName, Boolean(filters.admissionName));
   filterStep('admission-type', (item) => item.admissionType === filters.admissionType, Boolean(filters.admissionType));
   return Object.freeze({ stages: Object.freeze(stages), finalRecords: Object.freeze(records) });
@@ -213,26 +226,24 @@ function departmentRecords(data, filters = {}) {
   return visibleRecords(data, filters).filter((item) => matches(item, filters, ['department', 'admissionName']));
 }
 
-/** 대학을 고른 경우에만 짧은 select 목록을 제공한다. 전국 검색은 searchAvailableDepartments를 사용한다. */
+/** 현재 지역·대학·계열 범위의 공식 모집단위명 목록을 제공한다. */
 export function getAvailableDepartments(data, filters = {}) {
-  if (!filters.university) return [];
   return uniqueSorted(departmentRecords(data, filters).map((item) => item.department));
 }
 
 export function searchAvailableDepartments(data, filters = {}, query = '', { limit = 50 } = {}) {
-  const needle = String(query).normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s/g, '');
+  const needle = normalizeDepartmentSearchText(query);
   if (!needle) return [];
   const departments = new Map();
   departmentRecords(data, filters).forEach((item) => {
     const metadata = departmentSearchMetadata(item);
-    const haystack = `${metadata.normalizedMajorKeyword} ${metadata.majorSearchGroup ?? ''}`.toLocaleLowerCase('ko-KR').replace(/\s/g, '');
+    const haystack = normalizeDepartmentSearchText(`${metadata.department} ${metadata.normalizedMajorKeyword} ${metadata.majorSearchGroup ?? ''}`);
     if (haystack.includes(needle) && !departments.has(item.department)) departments.set(item.department, metadata);
   });
   return [...departments.values()].sort((left, right) => koSort(left.department, right.department)).slice(0, Math.max(0, limit));
 }
 
 export function getAvailableAdmissionNames(data, filters = {}) {
-  if (!filters.university) return [];
   const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['admissionName']));
   return uniqueSorted(records.map((item) => item.admissionName));
 }
@@ -275,7 +286,7 @@ export function reconcileAdmissionFilters(data, filters = {}, universities = UNI
   if (next.region && !getAvailableRegions(data, next, universities).includes(next.region)) next.region = '';
   if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', admissionName: '' }, universities).includes(next.university)) next.university = '';
   if (next.field && !getAvailableAcademicFields(data, { ...next, department: '', admissionName: '' }).includes(next.field)) next.field = '';
-  if (next.department && (!next.university || !getAvailableDepartments(data, { ...next, admissionName: '' }).includes(next.department))) next.department = '';
+  if (next.department && !searchAvailableDepartments(data, { ...next, department: '', admissionName: '' }, next.department, { limit: 1 }).length) next.department = '';
   if (next.admissionName && !getAvailableAdmissionNames(data, next).includes(next.admissionName)) next.admissionName = '';
   if (next.admissionCategory && !getAvailableAdmissionCategories(data, next).includes(next.admissionCategory)) next.admissionCategory = '';
   return next;
