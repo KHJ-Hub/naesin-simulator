@@ -74,7 +74,7 @@ test('학생 내신 2.00 기준 ±0.20 경계를 포함하고 등급 숫자 방�
   assert.equal(classifySubjectAdmissionRange(2, 2.21), ADMISSION_SUBJECT_GROUPS.LOWER);
 });
 
-test('대학별 그룹은 universityId를 기준으로 묶고 기존 결과 순서를 보존한다', () => {
+test('대학별 그룹은 universityId로 묶고 차이 정보가 없으면 대학명 가나다순으로 정렬한다', () => {
   const results = [
     { item: subject({ universityId: 'pusan', university: '부산대학교', department: '경영학과' }) },
     { item: subject({ universityId: 'pusan', university: '부산대학교', department: '국어국문학과' }) },
@@ -82,10 +82,43 @@ test('대학별 그룹은 universityId를 기준으로 묶고 기존 결과 순�
   ];
   const groups = groupResultsByUniversity(results);
   assert.deepEqual(groups.map(({ universityId, universityName, resultCount }) => ({ universityId, universityName, resultCount })), [
-    { universityId: 'pusan', universityName: '부산대학교', resultCount: 2 },
     { universityId: 'donga', universityName: '동아대학교', resultCount: 1 },
+    { universityId: 'pusan', universityName: '부산대학교', resultCount: 2 },
   ]);
-  assert.deepEqual(groups[0].results.map(({ item }) => item.department), ['경영학과', '국어국문학과']);
+  assert.deepEqual(groups[1].results.map(({ item }) => item.department), ['경영학과', '국어국문학과']);
+});
+
+test('대학은 closestDifference순, 내부 모집단위는 referenceGrade와 모집단위·전형명 순이다', () => {
+  const results = [
+    { item: subject({ universityId: 'ga', university: '가대학교', department: '사회학과', admissionName: '나전형' }), absoluteDifference: 0.1, referenceGrade: 1.42 },
+    { item: subject({ universityId: 'na', university: '나대학교', department: '경제학과', admissionName: '다전형' }), absoluteDifference: 0.05, referenceGrade: 1.35 },
+    { item: subject({ universityId: 'na', university: '나대학교', department: '경영학과', admissionName: '나전형' }), absoluteDifference: 0.2, referenceGrade: 1.21 },
+    { item: subject({ universityId: 'na', university: '나대학교', department: '경영학과', admissionName: '가전형' }), absoluteDifference: 0.15, referenceGrade: 1.21 },
+    { item: subject({ universityId: 'da', university: '다대학교', department: '행정학과', admissionName: '일반전형' }), absoluteDifference: 0.05, referenceGrade: 1.28 },
+  ];
+  const groups = groupResultsByUniversity(results);
+
+  assert.deepEqual(groups.map(({ universityName, closestDifference }) => ({ universityName, closestDifference })), [
+    { universityName: '나대학교', closestDifference: 0.05 },
+    { universityName: '다대학교', closestDifference: 0.05 },
+    { universityName: '가대학교', closestDifference: 0.1 },
+  ]);
+  assert.deepEqual(groups[0].results.map(({ referenceGrade, item }) => `${referenceGrade}|${item.department}|${item.admissionName}`), [
+    '1.21|경영학과|가전형',
+    '1.21|경영학과|나전형',
+    '1.35|경제학과|다전형',
+  ]);
+});
+
+test('학종 참고 그룹에도 대학별 closestDifference와 referenceGrade 정렬을 동일하게 적용한다', () => {
+  const results = [
+    { item: comprehensive({ universityId: 'pusan', university: '부산대학교', department: '국어국문학과' }), referenceAbsoluteDifference: 0.08, referenceGrade: 1.51 },
+    { item: comprehensive({ universityId: 'pusan', university: '부산대학교', department: '경제학과' }), referenceAbsoluteDifference: 0.12, referenceGrade: 1.28 },
+    { item: comprehensive({ universityId: 'donga', university: '동아대학교', department: '간호학과' }), referenceAbsoluteDifference: 0.04, referenceGrade: 1.42 },
+  ];
+  const groups = groupResultsByUniversity(results);
+  assert.deepEqual(groups.map(({ universityName }) => universityName), ['동아대학교', '부산대학교']);
+  assert.deepEqual(groups[1].results.map(({ referenceGrade }) => referenceGrade), [1.28, 1.51]);
 });
 
 test('교과 모드에서만 차이를 계산하고 세 그룹별 건수를 제공한다', () => {

@@ -18,11 +18,12 @@ import {
   admissionCategoryForViewMode,
   getAdmissionViewFilterOptions,
   increaseAdmissionGroupLimit,
+  groupResultsByUniversity,
   normalizeAdmissionViewMode,
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
-} from './admission-result-view.mjs?v=20260917-major-search1';
+} from './admission-result-view.mjs?v=20260917-accordion-sort1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
@@ -407,7 +408,7 @@ function admissionUniversitySummary(group) {
     return Number.isFinite(difference) && Math.abs(difference) <= 0.2;
   }).length;
   return {
-    closestDifference: differences.length ? Math.min(...differences) : null,
+    closestDifference: group.closestDifference ?? (differences.length ? Math.min(...differences) : null),
     similarCount,
   };
 }
@@ -440,16 +441,10 @@ function renderAdmissionUniversityAccordion(group, comparison, groupKey) {
   return `<details class="admission-university" data-admission-university-accordion data-admission-university-key="${escapeHtml(disclosureKey)}"${isOpen ? ' open' : ''}><summary aria-expanded="${isOpen}"><div class="admission-university-title"><strong>${escapeHtml(group.universityName)}</strong><span>${group.resultCount}개 모집단위</span></div><div class="admission-university-meta">${closestText}${similarText}</div></summary><div class="admission-university-content"><div class="admission-university-results">${visibleResults.map((entry) => admissionResultCardWithinUniversity(entry, comparison, groupKey)).join('')}</div>${remainingCount ? `<button class="quiet-button admission-university-more" data-admission-university-load-more="${escapeHtml(disclosureKey)}">이 대학 모집단위 더 보기 (${remainingCount}개)</button>` : ''}</div></details>`;
 }
 function createAdmissionUniversityGroupView(entries = []) {
-  const groups = new Map();
-  entries.forEach((entry) => {
-    const item = entry.item;
-    const key = item.universityId ?? item.university;
-    if (!groups.has(key)) groups.set(key, { universityId: item.universityId ?? null, universityName: item.university, resultCount: 0, results: [] });
-    const group = groups.get(key);
-    group.results.push(entry);
-    group.resultCount += 1;
-  });
-  return { totalCount: entries.length, universityGroups: [...groups.values()] };
+  return {
+    totalCount: entries.length,
+    universityGroups: groupResultsByUniversity(entries, { referenceScale: state.admissionGradeScaleMode === 'original9' ? 'original' : 'converted' }),
+  };
 }
 function renderAdmissionUniversityGroup({ key, title, description = '', groupView, comparison }) {
   if (!groupView?.universityGroups?.length) return '';

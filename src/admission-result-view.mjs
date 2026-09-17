@@ -117,8 +117,44 @@ export function classifyComprehensiveReferenceRange(studentGrade, referenceGrade
   return difference < -0.2 ? ADMISSION_SUBJECT_GROUPS.HIGHER : ADMISSION_SUBJECT_GROUPS.LOWER;
 }
 
-/** 이미 정렬된 평면 결과의 순서를 유지하며 universityId 기준 아코디언 데이터를 만든다. */
-export function groupResultsByUniversity(results = []) {
+function finiteNumber(value) {
+  return value != null && value !== '' && Number.isFinite(Number(value)) ? Number(value) : null;
+}
+
+function entryDifference(entry) {
+  return finiteNumber(entry?.absoluteDifference ?? entry?.referenceAbsoluteDifference);
+}
+
+function entryReferenceGrade(entry, referenceScale = 'converted') {
+  const direct = finiteNumber(entry?.referenceGrade);
+  if (direct != null) return direct;
+  const item = entry?.item ?? entry ?? {};
+  const fields = referenceScale === 'original'
+    ? ['cut70Original', 'averageGradeOriginal', 'cut50Original']
+    : ['cut70Converted', 'averageGradeConverted', 'cut50Converted'];
+  for (const field of fields) {
+    const value = finiteNumber(item[field]);
+    if (value != null) return value;
+  }
+  return null;
+}
+
+function compareUniversityResults(left, right, referenceScale) {
+  const leftGrade = entryReferenceGrade(left, referenceScale);
+  const rightGrade = entryReferenceGrade(right, referenceScale);
+  if (leftGrade != null || rightGrade != null) {
+    if (leftGrade == null) return 1;
+    if (rightGrade == null) return -1;
+    if (leftGrade !== rightGrade) return leftGrade - rightGrade;
+  }
+  const leftItem = left?.item ?? left ?? {};
+  const rightItem = right?.item ?? right ?? {};
+  return koSort(leftItem.department, rightItem.department)
+    || koSort(leftItem.admissionName, rightItem.admissionName);
+}
+
+/** 대학은 가장 가까운 차이순, 대학 내부 모집단위는 입결 등급 숫자가 낮은 순으로 묶는다. */
+export function groupResultsByUniversity(results = [], { referenceScale = 'converted' } = {}) {
   const groups = new Map();
   results.forEach((result) => {
     const item = result?.item ?? result;
@@ -132,20 +168,30 @@ export function groupResultsByUniversity(results = []) {
     group.results.push(result);
     group.resultCount += 1;
   });
-  return Object.freeze([...groups.values()].map((group) => Object.freeze({
-    ...group,
-    results: Object.freeze(group.results),
-  })));
+  return Object.freeze([...groups.values()]
+    .map((group) => {
+      const differences = group.results.map(entryDifference).filter((value) => value != null);
+      return Object.freeze({
+        ...group,
+        closestDifference: differences.length ? Math.min(...differences) : null,
+        results: Object.freeze([...group.results].sort((left, right) => compareUniversityResults(left, right, referenceScale))),
+      });
+    })
+    .sort((left, right) => {
+      const leftDifference = left.closestDifference ?? Number.POSITIVE_INFINITY;
+      const rightDifference = right.closestDifference ?? Number.POSITIVE_INFINITY;
+      return leftDifference - rightDifference || koSort(left.universityName, right.universityName);
+    }));
 }
 
-function groupView(entries, limit) {
+function groupView(entries, limit, options = {}) {
   const visibleResultLimit = Math.max(0, Number(limit) || ADMISSION_RESULT_PAGE_SIZE);
   const visibleResults = entries.slice(0, visibleResultLimit);
   return Object.freeze({
     totalCount: entries.length,
     allResults: Object.freeze(entries),
     visibleResults: Object.freeze(visibleResults),
-    universityGroups: groupResultsByUniversity(entries),
+    universityGroups: groupResultsByUniversity(entries, options),
     visibleResultLimit,
     hasMore: visibleResults.length < entries.length,
     remainingResultCount: Math.max(0, entries.length - visibleResults.length),
@@ -273,7 +319,7 @@ export function prepareAdmissionResultView(data, {
     const entries = filtered
       .map((item) => ({ item, difference: null, absoluteDifference: null, group: null }))
       .sort(stableTextSort);
-    const subjectReference = groupView(entries, visibleResultLimits.subjectReference);
+    const subjectReference = groupView(entries, visibleResultLimits.subjectReference, { referenceScale: 'original' });
     return Object.freeze({
       admissionViewMode: normalizedMode, admissionCategory,
       totalMatchedResults: entries.length,
