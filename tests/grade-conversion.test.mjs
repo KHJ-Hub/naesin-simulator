@@ -1,6 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { convertGrade9ToGrade5, conversionDisplay } from '../src/grade-conversion/grade9-to-grade5.mjs';
+import {
+  convertGrade9ToGrade5,
+  conversionDataset,
+  conversionDisplay,
+} from '../src/grade-conversion/grade9-to-grade5.mjs';
+
+const JINHAK_PEN_REFERENCE_RANGES = Object.freeze([
+  { grade5: 1.00, grade9: [1.00, 1.18], maxDifference: 0.03 },
+  { grade5: 1.50, grade9: [2.28, 2.38], maxDifference: 0.07 },
+  { grade5: 2.00, grade9: [3.19, 3.29], maxDifference: 0.07 },
+  { grade5: 2.50, grade9: [4.10, 4.20], maxDifference: 0.05 },
+  { grade5: 3.00, grade9: [4.99, 5.09], maxDifference: 0.05 },
+  { grade5: 3.50, grade9: [5.86, 5.96], maxDifference: 0.07 },
+  { grade5: 4.00, grade9: [6.77, 6.87], maxDifference: 0.10 },
+  { grade5: 4.50, grade9: [7.68, 7.78], maxDifference: 0.16 },
+  { grade5: 5.00, grade9: [8.95, 9.00], maxDifference: 0.03 },
+]);
 
 test('공식 대응표의 정확한 기준점은 그대로 사용한다', () => {
   const value = convertGrade9ToGrade5(3.30);
@@ -23,4 +39,30 @@ test('범위 밖 값은 임의의 외삽 대신 표의 경계값으로 표시한
   assert.equal(value.convertedValue, 1);
   assert.equal(value.boundary, 'lower-bound');
   assert.equal(convertGrade9ToGrade5(9).convertedValue, 5);
+});
+
+test('진학PEN 주요 구간과의 현재 오차 범위를 유지한다', () => {
+  assert.equal(conversionDataset().id, 'busan-grade5-g2-1sem-15978');
+
+  JINHAK_PEN_REFERENCE_RANGES.forEach(({ grade5, grade9: [lower, upper], maxDifference }) => {
+    const middle = (lower + upper) / 2;
+    [lower, middle, upper].forEach((original) => {
+      const converted = convertGrade9ToGrade5(original)?.convertedValue;
+      assert.ok(Number.isFinite(converted), `${original} 환산값이 필요합니다.`);
+      assert.ok(
+        Math.abs(converted - grade5) <= maxDifference + Number.EPSILON,
+        `9등급 ${original}의 5등급 환산값 ${converted}이 기준 ${grade5}에서 ${maxDifference}를 초과했습니다.`,
+      );
+    });
+  });
+});
+
+test('9등급 1.00~9.00 환산값은 단조 증가한다', () => {
+  let previous = convertGrade9ToGrade5(1)?.convertedValue;
+  for (let step = 1; step <= 8000; step += 1) {
+    const original = 1 + step / 1000;
+    const current = convertGrade9ToGrade5(original)?.convertedValue;
+    assert.ok(current >= previous, `${original.toFixed(3)}에서 ${previous} → ${current}로 역전되었습니다.`);
+    previous = current;
+  }
 });
