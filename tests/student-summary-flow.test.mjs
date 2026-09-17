@@ -5,6 +5,14 @@ import fs from 'node:fs';
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const app = fs.readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
 
+test('상단 히어로 카드를 제거하고 안전 안내 다음에 학생 정보가 이어진다', () => {
+  assert.equal(html.includes('class="hero-grid"'), false);
+  assert.equal(html.includes('현재까지의 흐름을 한눈에'), false);
+  assert.equal(html.includes('내 성적을 확인하고<br'), false);
+  assert.ok(html.indexOf('class="topbar"') < html.indexOf('class="notice-card"'));
+  assert.ok(html.indexOf('class="notice-card"') < html.indexOf('class="panel student-panel"'));
+});
+
 test('상단 4개 요약 카드 대신 계산 버튼 아래에 현재 내신 결과를 둔다', () => {
   assert.equal(html.includes('id="summary-cards"'), false);
   assert.equal(html.includes('id="current-grade-result"'), true);
