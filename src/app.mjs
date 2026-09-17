@@ -27,15 +27,20 @@ import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInter
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260916-semester-summary1';
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
 import {
+  clearAllStudentProfiles,
   createStudentProfile,
+  deleteStudentProfile,
   getCurrentStudentId,
   getCurrentStudentProfile,
   getStudentDraft,
+  getStudentProfiles,
   migrateLegacyStudentData,
   resetCurrentStudentInput,
   restoreStudentProfile,
   saveCurrentStudentProfile,
   saveStudentDraft,
+  selectStudentProfile,
+  startNewStudentProfile,
 } from './student-profile-store.mjs?v=20260916-student-profiles1';
 
 const defaultState = () => ({
@@ -570,6 +575,16 @@ function render() {
   const validStudentName = Boolean(state.student.studentName.trim());
   $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해주세요.' : '';
   $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
+  const profiles = getStudentProfiles(localStorage);
+  const currentStudentId = getCurrentStudentId(localStorage);
+  const profileSelect = $('#student-profile-select');
+  profileSelect.innerHTML = `<option value="">새 학생</option>${Object.values(profiles)
+    .sort((a, b) => a.studentNumber.localeCompare(b.studentNumber, 'ko'))
+    .map((profile) => `<option value="${escapeHtml(profile.studentNumber)}">${escapeHtml(profile.studentNumber)} · ${escapeHtml(profile.name)}</option>`)
+    .join('')}`;
+  profileSelect.value = currentStudentId ?? '';
+  $('#delete-student-button').disabled = !currentStudentId;
+  $('#clear-students-button').disabled = Object.keys(profiles).length === 0;
 }
 
 $('#semester-tabs').addEventListener('click', (event) => {
@@ -774,6 +789,48 @@ $('#reset-button').addEventListener('click', () => {
   if (getCurrentStudentId(localStorage)) resetCurrentStudentInput(state, localStorage);
   else saveState();
   render(); showToast('현재 학생의 입력을 초기화했습니다.');
+});
+$('#student-profile-select').addEventListener('change', (event) => {
+  const studentId = event.target.value;
+  if (!studentId) {
+    state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: localStorage }));
+    render();
+    showToast('새 학생 정보를 입력해 주세요.');
+    return;
+  }
+  const selected = selectStudentProfile(studentId, { currentProfile: state, storage: localStorage });
+  if (!selected) {
+    showToast('저장된 학생 정보를 찾을 수 없습니다.', 'error');
+    render();
+    return;
+  }
+  state = normalizeState(selected);
+  render();
+  showToast(`${state.student.studentName} 학생의 데이터를 불러왔습니다.`);
+});
+$('#new-student-button').addEventListener('click', () => {
+  state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: localStorage }));
+  render();
+  $('#student-id').focus();
+  showToast('새 학생 정보를 입력해 주세요.');
+});
+$('#delete-student-button').addEventListener('click', () => {
+  const currentStudentId = getCurrentStudentId(localStorage);
+  if (!currentStudentId) return;
+  const currentName = getCurrentStudentProfile(localStorage)?.name ?? '';
+  if (!confirm(`${currentStudentId} ${currentName} 학생의 저장 데이터를 삭제할까요?`)) return;
+  deleteStudentProfile(currentStudentId, localStorage);
+  state = normalizeState(getCurrentStudentProfile(localStorage) ?? defaultState());
+  render();
+  showToast('현재 학생 프로필을 삭제했습니다.');
+});
+$('#clear-students-button').addEventListener('click', () => {
+  const profileCount = Object.keys(getStudentProfiles(localStorage)).length;
+  if (!profileCount || !confirm(`이 기기에 저장된 학생 ${profileCount}명의 데이터를 모두 삭제할까요?`)) return;
+  clearAllStudentProfiles(localStorage);
+  state = defaultState();
+  render();
+  showToast('모든 학생 데이터를 삭제했습니다.');
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
 document.querySelector('.student-form').addEventListener('input', (event) => {

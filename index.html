@@ -26,8 +26,12 @@
       <section class="panel student-panel">
         <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>인쇄 결과표에만 사용되며, 이 브라우저에만 저장됩니다.</p></div></div>
         <div class="student-form">
+          <label>저장된 학생 <select id="student-profile-select" class="input" aria-label="저장된 학생 선택"><option value="">새 학생</option></select></label>
           <label>학번 <input id="student-id" class="input" type="text" maxlength="5" inputmode="numeric" autocomplete="off" placeholder="예: 10101" /></label>
           <label>이름 <input id="student-name" class="input" type="text" maxlength="30" autocomplete="name" placeholder="예: 김철수" /></label>
+          <button id="new-student-button" class="secondary-button" type="button">새 학생 추가</button>
+          <button id="delete-student-button" class="quiet-button" type="button">현재 학생 삭제</button>
+          <button id="clear-students-button" class="quiet-button" type="button">모든 학생 삭제</button>
         </div>
         <p id="student-info-error" class="field-error" role="alert" aria-live="polite"></p>
         <p id="student-info-summary" class="student-info-summary" aria-live="polite"></p>
