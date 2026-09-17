@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getAdmissionCardDetailItems, renderAdmissionCardDetails } from '../src/admission-card-details.mjs';
+import {
+  getAdmissionCardDetailItems,
+  hasMeaningfulDetails,
+  hasMeaningfulValue,
+  renderAdmissionCardDetails,
+} from '../src/admission-card-details.mjs';
 
 const baseRecord = {
   referenceYear: 2026,
@@ -16,6 +21,7 @@ const baseRecord = {
 };
 
 test('기본 카드 정보 외 상세 데이터가 없으면 세부 정보 DOM을 만들지 않는다', () => {
+  assert.equal(hasMeaningfulDetails(baseRecord), false);
   assert.deepEqual(getAdmissionCardDetailItems(baseRecord), []);
   const html = renderAdmissionCardDetails(baseRecord);
   assert.equal(html, '');
@@ -23,11 +29,49 @@ test('기본 카드 정보 외 상세 데이터가 없으면 세부 정보 DOM�
 });
 
 test('상세 데이터가 하나라도 있으면 닫힌 세부 정보 아코디언을 만든다', () => {
+  assert.equal(hasMeaningfulDetails({ ...baseRecord, recruitmentCount: 24 }), true);
   const html = renderAdmissionCardDetails({ ...baseRecord, recruitmentCount: 24 });
   assert.match(html, /^<details class="admission-card-details">/);
   assert.match(html, /<summary>세부 정보<\/summary>/);
   assert.match(html, /모집인원 <b>24명<\/b>/);
   assert.doesNotMatch(html, /<details[^>]*\sopen/);
+});
+
+test('모집인원·경쟁률·50% cut·평균등급은 각각 단독으로도 실제 상세정보다', () => {
+  const cases = [
+    { recruitmentCount: 1 },
+    { competitionRate: 1.25 },
+    { cut50Original: 2.5 },
+    { averageGradeOriginal: 2.7 },
+  ];
+  cases.forEach((detail) => {
+    assert.equal(hasMeaningfulDetails({ ...baseRecord, ...detail }), true);
+    assert.match(renderAdmissionCardDetails({ ...baseRecord, ...detail }), /<details class="admission-card-details">/);
+  });
+});
+
+test('null·undefined·공백·빈 배열·빈 객체는 상세정보로 오인하지 않는다', () => {
+  const emptyValues = [null, undefined, '', '   ', [], {}];
+  emptyValues.forEach((value) => assert.equal(hasMeaningfulValue(value), false));
+  const record = {
+    ...baseRecord,
+    recruitmentCount: [],
+    competitionRate: {},
+    cut50Original: '   ',
+    cut50Converted: [],
+    averageGradeOriginal: {},
+    averageGradeConverted: '',
+    additionalAdmissionInfo: {},
+    eligibilityDescription: [],
+    regionalEligibility: {
+      requirementSummary: '   ',
+      eligibleSchoolRegions: [],
+      additionalRequirements: {},
+    },
+  };
+  assert.equal(hasMeaningfulDetails(record), false);
+  assert.deepEqual(getAdmissionCardDetailItems(record), []);
+  assert.equal(renderAdmissionCardDetails(record), '');
 });
 
 test('교과의 50% cut이 있으면 원본과 환산값을 실제 상세정보로 표시한다', () => {

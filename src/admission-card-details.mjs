@@ -8,13 +8,24 @@ const ELIGIBILITY_LABELS = Object.freeze({
   special: '기타 특별전형',
 });
 
+export function hasMeaningfulValue(value) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value === 'boolean') return value;
+  if (Array.isArray(value)) return value.some(hasMeaningfulValue);
+  if (typeof value === 'object') return Object.values(value).some(hasMeaningfulValue);
+  return false;
+}
+
 function numberOrNull(value) {
-  if (value === null || value === undefined || value === '') return null;
+  if (!hasMeaningfulValue(value) || (typeof value !== 'number' && typeof value !== 'string')) return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
 
 function textOrNull(value) {
+  if (!hasMeaningfulValue(value) || (typeof value !== 'string' && typeof value !== 'number')) return null;
   const text = String(value ?? '').trim();
   return text || null;
 }
@@ -83,6 +94,11 @@ export function getAdmissionCardDetailItems(item = {}) {
   return details;
 }
 
+/** 공통 메타정보가 아니라 카드 본문 밖의 실제 추가 정보가 있는지 판정한다. */
+export function hasMeaningfulDetails(item = {}) {
+  return getAdmissionCardDetailItems(item).some((detail) => detail.metadata !== true);
+}
+
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
 }
@@ -92,8 +108,8 @@ function formatDetailValue(detail) {
 }
 
 export function renderAdmissionCardDetails(item = {}) {
+  if (!hasMeaningfulDetails(item)) return '';
   const details = getAdmissionCardDetailItems(item);
-  if (!details.length) return '';
   const rows = details.map((detail) => {
     const value = escapeHtml(formatDetailValue(detail));
     const content = detail.href

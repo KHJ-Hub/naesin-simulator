@@ -26,7 +26,7 @@ import {
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-integrated-audit1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
-import { renderAdmissionCardDetails } from './admission-card-details.mjs?v=20260917-conditional-details1';
+import { renderAdmissionCardDetails } from './admission-card-details.mjs?v=20260917-conditional-details2';
 import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
