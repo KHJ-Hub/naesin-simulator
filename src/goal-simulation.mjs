@@ -1,6 +1,8 @@
 import { SEMESTERS, calculateTotalCredits } from './grade-calculator.mjs';
 
 const SEMESTER_ORDER = new Map(SEMESTERS.map(({ id }, index) => [id, index]));
+const MAX_TREND_SPAN = 0.6;
+const MAX_ADJACENT_CHANGE = 0.2;
 
 function clampGrade(value) {
   return Math.max(1, Math.min(5, Number(value)));
@@ -22,8 +24,9 @@ export function aggregateRemainingBySemester(records = []) {
     const credit = Number(record.credit);
     if (!Number.isFinite(credit) || credit <= 0) return;
 
-    const current = grouped.get(semesterId) ?? { semesterId, credit: 0 };
+    const current = grouped.get(semesterId) ?? { semesterId, credit: 0, count: 0 };
     current.credit += credit;
+    current.count += 1;
     grouped.set(semesterId, current);
   });
 
@@ -56,33 +59,44 @@ export function aggregateScenarioSemesterResults(records = []) {
     }));
 }
 
-export function createScenarioTargets(remainingRecords, requiredAverage, mode) {
+function scenarioWeight(semester, weighted) {
+  return weighted ? Number(semester.credit) : Number(semester.count);
+}
+
+function progressiveTargets(semesters, requiredAverage, mode, weighted) {
+  const direction = mode === 'early' ? 1 : -1;
+  const weights = semesters.map((semester) => scenarioWeight(semester, weighted));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const weightedCenter = semesters.reduce((sum, _, index) => sum + index * weights[index], 0) / totalWeight;
+  const coefficients = semesters.map((_, index) => direction * (index - weightedCenter));
+  const desiredStep = Math.min(MAX_ADJACENT_CHANGE, MAX_TREND_SPAN / (semesters.length - 1));
+  const boundedStep = coefficients.reduce((step, coefficient) => {
+    if (coefficient > 0) return Math.min(step, (5 - requiredAverage) / coefficient);
+    if (coefficient < 0) return Math.min(step, (requiredAverage - 1) / -coefficient);
+    return step;
+  }, desiredStep);
+  const step = Math.max(0, boundedStep);
+
+  return semesters.map((semester, index) => ({
+    ...semester,
+    target: clampGrade(requiredAverage + coefficients[index] * step),
+  }));
+}
+
+export function createScenarioTargets(remainingRecords, requiredAverage, mode, weighted = true) {
   const semesters = aggregateRemainingBySemester(remainingRecords);
   if (!semesters.length) return [];
   if (mode === 'balanced' || semesters.length === 1) {
     return semesters.map((item) => ({ ...item, target: requiredAverage }));
   }
-
-  const anchorIndex = mode === 'early' ? 0 : semesters.length - 1;
-  const anchor = semesters[anchorIndex];
-  const totalWeight = semesters.reduce((sum, item) => sum + item.credit, 0);
-  const anchorTarget = clampGrade(requiredAverage - 0.4);
-  const otherWeight = totalWeight - anchor.credit;
-  const otherTarget = otherWeight > 0
-    ? clampGrade((requiredAverage * totalWeight - anchorTarget * anchor.credit) / otherWeight)
-    : requiredAverage;
-
-  return semesters.map((item, index) => ({
-    ...item,
-    target: index === anchorIndex ? anchorTarget : otherTarget,
-  }));
+  return progressiveTargets(semesters, clampGrade(requiredAverage), mode, weighted);
 }
 
 export function calculateScenarioFinalAverage(actualRecords, semesterTargets, weighted) {
   const actualWeight = weighted ? calculateTotalCredits(actualRecords) : actualRecords.length;
   const actualTotal = actualRecords.reduce((sum, item) => sum + Number(item.gradeValue) * (weighted ? Number(item.credit) : 1), 0);
-  const remainingWeight = semesterTargets.reduce((sum, item) => sum + (weighted ? Number(item.credit) : 1), 0);
-  const remainingTotal = semesterTargets.reduce((sum, item) => sum + Number(item.target) * (weighted ? Number(item.credit) : 1), 0);
+  const remainingWeight = semesterTargets.reduce((sum, item) => sum + (weighted ? Number(item.credit) : Number(item.count ?? 1)), 0);
+  const remainingTotal = semesterTargets.reduce((sum, item) => sum + Number(item.target) * (weighted ? Number(item.credit) : Number(item.count ?? 1)), 0);
   return actualWeight + remainingWeight
     ? (actualTotal + remainingTotal) / (actualWeight + remainingWeight)
     : null;
@@ -94,7 +108,7 @@ export function createGoalScenarioSummaries(actualRecords, remainingRecords, req
     ['early', '초반 집중형'],
     ['late', '후반 상승형'],
   ].map(([mode, name]) => {
-    const semesterResults = createScenarioTargets(remainingRecords, requiredAverage, mode);
+    const semesterResults = createScenarioTargets(remainingRecords, requiredAverage, mode, weighted);
     return {
       mode,
       name,

@@ -24,7 +24,7 @@ import {
   resetAdmissionGroupLimits,
 } from './admission-result-view.mjs?v=20260917-major-search1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
-import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-integrated-audit1';
+import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
 import { renderAdmissionCardDetails } from './admission-card-details.mjs?v=20260917-conditional-details2';
 import {
@@ -541,7 +541,7 @@ function goalDetails() {
   const target = Number(state.targetAverage); const actual = effectiveRecords(); const remaining = fallbackRemainingSemesters();
   if (!state.calculated || !state.goalCalculated || !Number.isFinite(target) || target < 1 || target > 5 || !actual.length) return null;
   const simple = usesQuickAverage();
-  const weighted = !simple;
+  const weighted = simple ? false : state.weighted !== false;
   const required = calculateRequiredRemainingAverage(actual, remaining, target, weighted);
   return required == null ? null : { required, actual, remaining, simple, weighted };
 }
