@@ -51,6 +51,7 @@ import {
 } from './student-profile-store.mjs?v=20260916-student-profiles1';
 import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
+import { createStudentRuntimeStorage } from './student-runtime-storage.mjs?v=20260917-test-mode1';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -68,6 +69,11 @@ const defaultState = () => ({
 });
 
 function makeId() { return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
+const studentRuntime = createStudentRuntimeStorage({
+  search: window.location.search,
+  persistentStorage: localStorage,
+});
+const studentStorage = studentRuntime.storage;
 let state = loadState();
 const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
@@ -111,8 +117,8 @@ setupHiddenTeacherEntry();
 
 function loadState() {
   try {
-    migrateLegacyStudentData({ storage: localStorage, transform: normalizeState });
-    const saved = getCurrentStudentProfile(localStorage) ?? getStudentDraft(localStorage);
+    migrateLegacyStudentData({ storage: studentStorage, transform: normalizeState });
+    const saved = getCurrentStudentProfile(studentStorage) ?? getStudentDraft(studentStorage);
     if (!saved || !Array.isArray(saved.actual)) return defaultState();
     return normalizeState(saved);
   } catch {
@@ -187,11 +193,11 @@ function saveState() {
   const studentId = String(state.student?.studentId ?? '').replace(/\D/g, '').slice(0, 5);
   const studentName = String(state.student?.studentName ?? '').trim();
   if (!/^\d{5}$/.test(studentId) || !studentName) {
-    saveStudentDraft(state, localStorage);
+    saveStudentDraft(state, studentStorage);
     return;
   }
-  if (getCurrentStudentId(localStorage)) saveCurrentStudentProfile(state, localStorage);
-  else createStudentProfile(studentId, studentName, state, localStorage);
+  if (getCurrentStudentId(studentStorage)) saveCurrentStudentProfile(state, studentStorage);
+  else createStudentProfile(studentId, studentName, state, studentStorage);
 }
 function records() { return state.actual; }
 function semesterLabel(id) { return SEMESTERS.find((item) => item.id === id)?.label ?? id; }
@@ -599,8 +605,8 @@ function render() {
   const validStudentName = Boolean(state.student.studentName.trim());
   $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해주세요.' : '';
   $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
-  const profiles = getStudentProfiles(localStorage);
-  const currentStudentId = getCurrentStudentId(localStorage);
+  const profiles = getStudentProfiles(studentStorage);
+  const currentStudentId = getCurrentStudentId(studentStorage);
   const profileSelect = $('#student-profile-select');
   profileSelect.innerHTML = `<option value="">새 학생</option>${Object.values(profiles)
     .sort((a, b) => a.studentNumber.localeCompare(b.studentNumber, 'ko'))
@@ -807,12 +813,12 @@ $('#import-input').addEventListener('change', async (event) => {
   const file = event.target.files?.[0]; if (!file) return;
   try {
     const imported = parseStudentBackup(await file.text());
-    if (getCurrentStudentId(localStorage)) saveCurrentStudentProfile(state, localStorage);
+    if (getCurrentStudentId(studentStorage)) saveCurrentStudentProfile(state, studentStorage);
     state = normalizeState(imported);
     const importedId = state.student.studentId;
     const importedName = state.student.studentName.trim();
-    if (/^\d{5}$/.test(importedId) && importedName) restoreStudentProfile(state, localStorage);
-    else saveStudentDraft(state, localStorage);
+    if (/^\d{5}$/.test(importedId) && importedName) restoreStudentProfile(state, studentStorage);
+    else saveStudentDraft(state, studentStorage);
     render(); showToast('데이터를 불러왔습니다.');
   } catch (error) { console.error(error); showToast('백업 파일 형식을 확인해 주세요.', 'error'); }
   event.target.value = '';
@@ -823,19 +829,19 @@ $('#reset-button').addEventListener('click', () => {
   const admissionInterests = [...state.admissionInterests];
   const admissionGradeScaleMode = state.admissionGradeScaleMode;
   state = { ...defaultState(), student, admissionInterests, admissionGradeScaleMode };
-  if (getCurrentStudentId(localStorage)) resetCurrentStudentInput(state, localStorage);
+  if (getCurrentStudentId(studentStorage)) resetCurrentStudentInput(state, studentStorage);
   else saveState();
   render(); showToast('현재 학생의 입력을 초기화했습니다.');
 });
 $('#student-profile-select').addEventListener('change', (event) => {
   const studentId = event.target.value;
   if (!studentId) {
-    state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: localStorage }));
+    state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: studentStorage }));
     render();
     showToast('새 학생 정보를 입력해 주세요.');
     return;
   }
-  const selected = selectStudentProfile(studentId, { currentProfile: state, storage: localStorage });
+  const selected = selectStudentProfile(studentId, { currentProfile: state, storage: studentStorage });
   if (!selected) {
     showToast('저장된 학생 정보를 찾을 수 없습니다.', 'error');
     render();
@@ -846,25 +852,25 @@ $('#student-profile-select').addEventListener('change', (event) => {
   showToast(`${state.student.studentName} 학생의 데이터를 불러왔습니다.`);
 });
 $('#new-student-button').addEventListener('click', () => {
-  state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: localStorage }));
+  state = normalizeState(startNewStudentProfile({ currentProfile: state, initialProfile: defaultState(), storage: studentStorage }));
   render();
   $('#student-id').focus();
   showToast('새 학생 정보를 입력해 주세요.');
 });
 $('#delete-student-button').addEventListener('click', () => {
-  const currentStudentId = getCurrentStudentId(localStorage);
+  const currentStudentId = getCurrentStudentId(studentStorage);
   if (!currentStudentId) return;
-  const currentName = getCurrentStudentProfile(localStorage)?.name ?? '';
+  const currentName = getCurrentStudentProfile(studentStorage)?.name ?? '';
   if (!confirm(`${currentStudentId} ${currentName} 학생의 저장 데이터를 삭제할까요?`)) return;
-  deleteStudentProfile(currentStudentId, localStorage);
-  state = normalizeState(getCurrentStudentProfile(localStorage) ?? defaultState());
+  deleteStudentProfile(currentStudentId, studentStorage);
+  state = normalizeState(getCurrentStudentProfile(studentStorage) ?? defaultState());
   render();
   showToast('현재 학생 프로필을 삭제했습니다.');
 });
 $('#clear-students-button').addEventListener('click', () => {
-  const profileCount = Object.keys(getStudentProfiles(localStorage)).length;
+  const profileCount = Object.keys(getStudentProfiles(studentStorage)).length;
   if (!profileCount || !confirm(`이 기기에 저장된 학생 ${profileCount}명의 데이터를 모두 삭제할까요?`)) return;
-  clearAllStudentProfiles(localStorage);
+  clearAllStudentProfiles(studentStorage);
   state = defaultState();
   render();
   showToast('모든 학생 데이터를 삭제했습니다.');
@@ -874,7 +880,7 @@ document.querySelector('.student-form').addEventListener('input', (event) => {
   if (!['student-id', 'student-name'].includes(event.target.id)) return;
   if (event.target.id === 'student-id') {
     const enteredId = event.target.value.replace(/\D/g, '').slice(0, 5);
-    const currentId = getCurrentStudentId(localStorage);
+    const currentId = getCurrentStudentId(studentStorage);
     if (currentId && enteredId !== currentId) {
       state.student.studentId = currentId;
       event.target.value = currentId;
