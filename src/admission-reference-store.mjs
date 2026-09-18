@@ -12,6 +12,7 @@ export function normalizeAdmissionInterest(item = {}) {
     return Number.isFinite(number) ? Number(number.toFixed(2)) : null;
   };
   const referenceYear = Number(item.referenceYear);
+  const universityId = String(item.universityId ?? '').trim().slice(0, 100) || null;
   const university = String(item.university ?? '').trim().slice(0, 100);
   const department = String(item.department ?? '').trim().slice(0, 120);
   const admissionName = String(item.admissionName ?? '').trim().slice(0, 120);
@@ -24,7 +25,7 @@ export function normalizeAdmissionInterest(item = {}) {
   const comparisonScore = optionalNumber(item.comparisonScore);
   const hasPublishedGrade = [cut70, cut50, cut70Converted, cut50Converted, averageGradeOriginal, averageGradeConverted].some((value) => value !== null);
   if (!Number.isInteger(referenceYear) || !university || !department || !admissionName || !hasPublishedGrade) return null;
-  return { referenceYear, university, department, admissionName,
+  return { referenceYear, universityId, university, universityName: university, department, admissionName,
     admissionType: String(item.admissionType ?? '').trim().slice(0, 50),
     admissionCategory: String(item.admissionCategory ?? item.category ?? '').trim().slice(0, 50),
     category: String(item.category ?? item.admissionCategory ?? '').trim().slice(0, 50), cut70,

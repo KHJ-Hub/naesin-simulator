@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeAdmissionInterests, toggleAdmissionInterest } from '../src/admission-reference-store.mjs';
 
-const interest = { referenceYear: 2026, university: '검증대학교', department: '국어교육과', admissionName: '일반전형', cut70: 1.89, comparisonScore: 1.82 };
+const interest = { referenceYear: 2026, universityId: 'test-university', university: '검증대학교', department: '국어교육과', admissionName: '일반전형', cut70: 1.89, comparisonScore: 1.82 };
 
 test('관심 대학은 인쇄에 필요한 비교 정보까지 보존한다', () => {
   const [saved] = normalizeAdmissionInterests([interest]);
   assert.equal(saved.cut70Original, 1.89);
+  assert.equal(saved.universityId, 'test-university');
+  assert.equal(saved.universityName, '검증대학교');
   assert.equal(saved.cut50Original, null);
   assert.equal(saved.comparisonScore, 1.82);
   assert.equal(saved.comparisonBasis, 'current');
@@ -35,4 +37,8 @@ test('학종 평균등급은 cut으로 바꾸지 않고 관심 대학에 보존�
 test('같은 관심 대학은 다시 저장하면 해제한다', () => {
   assert.equal(toggleAdmissionInterest([], interest).length, 1);
   assert.equal(toggleAdmissionInterest([interest], interest).length, 0);
+});
+
+test('백업 등에서 중복된 같은 대학·모집단위·전형은 한 건만 유지한다', () => {
+  assert.equal(normalizeAdmissionInterests([interest, { ...interest }]).length, 1);
 });

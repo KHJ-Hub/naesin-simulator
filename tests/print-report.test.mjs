@@ -114,3 +114,10 @@ test('기본 결과표는 과목별 상세표를 출력하지 않고 null 값을
   assert.match(html, /- \/ 3\.40/);
   assert.match(html, /현재 내신/);
 });
+
+test('관심 대학이 없으면 결과표에 명확한 빈 상태를 표시한다', () => {
+  const state = baseState();
+  state.admissionInterests = [];
+  const html = renderPrintReport(buildPrintReportModel(state, { remainingRecords }));
+  assert.match(html, /저장된 관심 대학이 없습니다\./);
+});
