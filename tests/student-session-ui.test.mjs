@@ -2,11 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, app, teacherConsultHtml] = await Promise.all([
+const [html, app, teacherConsultHtml, styles] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/app.mjs', import.meta.url), 'utf8'),
   readFile(new URL('../teacher-consult.html', import.meta.url), 'utf8'),
+  readFile(new URL('../styles.css', import.meta.url), 'utf8'),
 ]);
+
+test('백업 버튼 근처에 수동 보존 안내를 표시한다', () => {
+  const actionsIndex = html.indexOf('class="top-actions"');
+  const guidanceIndex = html.indexOf('class="backup-guidance"');
+  const headerEndIndex = html.indexOf('</header>', guidanceIndex);
+
+  assert.ok(actionsIndex >= 0);
+  assert.ok(guidanceIndex > actionsIndex);
+  assert.ok(headerEndIndex > guidanceIndex);
+  assert.match(html, /다음에 이어서 사용하려면[\s\S]*‘내 데이터 백업’[\s\S]*다시 접속한 뒤[\s\S]*‘백업 불러오기’/);
+  assert.match(html, /입력 내용은 브라우저에 자동 저장되지 않습니다\./);
+  assert.match(styles, /\.backup-guidance\s*\{/);
+  assert.match(styles, /\.backup-guidance small\s*\{/);
+});
 
 test('학생 화면은 학번과 이름만 받고 다중 프로필 조작 UI를 만들지 않는다', () => {
   assert.match(html, /id="student-id"/);

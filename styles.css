@@ -2789,6 +2789,34 @@ h3:not(.hero-grid h2),
   grid-column: 1 / -1;
 }
 
+.backup-guidance {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 2px;
+  margin: 0 2px;
+  padding: 2px 4px 0;
+  color: var(--lavender-500);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.backup-guidance p {
+  margin: 0;
+  font-size: clamp(0.74rem, 0.85vw, 0.82rem);
+  line-height: 1.5;
+}
+
+.backup-guidance strong {
+  color: var(--indigo-500);
+  font-weight: 800;
+}
+
+.backup-guidance small {
+  color: var(--muted);
+  font-size: clamp(0.66rem, 0.75vw, 0.74rem);
+  line-height: 1.45;
+}
+
 .teacher-consult-link {
   display: inline-flex;
   grid-column: 2;
@@ -2848,6 +2876,20 @@ h3:not(.hero-grid h2),
 @media (max-width: 767px) {
   .brand > div {
     min-width: 0;
+  }
+
+  .backup-guidance {
+    margin-top: 1px;
+    margin-inline: 0;
+    padding-inline: 2px;
+  }
+
+  .backup-guidance p {
+    font-size: 0.78rem;
+  }
+
+  .backup-guidance small {
+    font-size: 0.7rem;
   }
 
   .brand h1 {
