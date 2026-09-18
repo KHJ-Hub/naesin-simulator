@@ -1143,17 +1143,31 @@ button, input, select {
   border-top: 1px solid #e7eaf2;
 }
 
-.admission-card-details summary {
+.admission-card-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  width: 100%;
   min-height: 36px;
   padding: .5rem 0 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
   color: var(--muted);
   font-size: .76rem;
   font-weight: 800;
+  text-align: left;
 }
 
-.admission-card-details summary::marker {
+.admission-card-details-toggle:hover,
+.admission-card-details-toggle:focus-visible {
   color: var(--lavender-500);
+}
+
+.admission-card-details-icon {
+  min-width: 1em;
+  color: var(--lavender-500);
+  line-height: 1;
 }
 
 .admission-card-details-body {
@@ -1164,6 +1178,10 @@ button, input, select {
   color: var(--muted);
   font-size: .74rem;
   line-height: 1.45;
+}
+
+.admission-card-details-body[hidden] {
+  display: none;
 }
 
 .admission-card-details-body span b {
@@ -1614,7 +1632,7 @@ button {
 }
 
 .admission-save,
-.admission-card-details summary,
+.admission-card-details-toggle,
 .icon-button {
   font-size: 13px;
   font-weight: 600;
@@ -1628,7 +1646,7 @@ button {
   font-size: 15px;
 }
 
-.admission-card-details summary,
+.admission-card-details-toggle,
 .admission-filter-details summary,
 .admission-disclaimer summary {
   color: var(--muted);
@@ -1818,7 +1836,7 @@ button,
 .segmented button,
 .semester-tabs button,
 .file-button,
-.admission-card-details summary,
+.admission-card-details-toggle,
 .admission-filter-details summary,
 .admission-disclaimer summary {
   font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif;

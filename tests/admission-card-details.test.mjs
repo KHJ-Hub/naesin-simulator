@@ -30,16 +30,17 @@ test('기본 카드 정보 외 상세 데이터가 없으면 세부 정보 DOM�
   assert.deepEqual(getAdmissionCardDetailItems(baseRecord), []);
   const html = renderAdmissionCardDetails(baseRecord);
   assert.equal(html, '');
-  assert.doesNotMatch(html, /<details|세부 정보/);
+  assert.doesNotMatch(html, /data-admission-card-details-toggle|세부 정보/);
 });
 
-test('상세 데이터가 하나라도 있으면 닫힌 세부 정보 아코디언을 만든다', () => {
+test('상세 데이터가 하나라도 있으면 접근 가능한 닫힌 세부 정보 버튼을 만든다', () => {
   assert.equal(hasMeaningfulDetails({ ...baseRecord, recruitmentCount: 24 }), true);
   const html = renderAdmissionCardDetails({ ...baseRecord, recruitmentCount: 24 });
-  assert.match(html, /^<details class="admission-card-details">/);
-  assert.match(html, /<summary aria-expanded="false">세부 정보<\/summary>/);
+  assert.match(html, /^<div class="admission-card-details">/);
+  assert.match(html, /<button type="button" class="admission-card-details-toggle" data-admission-card-details-toggle aria-expanded="false">/);
+  assert.match(html, /<span class="admission-card-details-icon" aria-hidden="true">▶<\/span>/);
+  assert.match(html, /<div class="admission-card-details-body" hidden>/);
   assert.match(html, /모집인원 <b>24명<\/b>/);
-  assert.doesNotMatch(html, /<details[^>]*\sopen/);
 });
 
 test('모집인원·경쟁률·50% cut·평균등급은 각각 단독으로도 실제 상세정보다', () => {
@@ -51,7 +52,7 @@ test('모집인원·경쟁률·50% cut·평균등급은 각각 단독으로도 �
   ];
   cases.forEach((detail) => {
     assert.equal(hasMeaningfulDetails({ ...baseRecord, ...detail }), true);
-    assert.match(renderAdmissionCardDetails({ ...baseRecord, ...detail }), /<details class="admission-card-details">/);
+    assert.match(renderAdmissionCardDetails({ ...baseRecord, ...detail }), /data-admission-card-details-toggle/);
   });
 });
 
@@ -124,7 +125,7 @@ test('추가 상세정보가 없고 대학 메타데이터에 공식 어디가 U
   assert.equal(hasMeaningfulDetails(item), false);
   assert.match(getOfficialAdigaUrl(item), /^https:\/\/www\.adiga\.kr\//);
   const html = renderAdmissionCardSupplement(item);
-  assert.doesNotMatch(html, /<details|세부 정보/);
+  assert.doesNotMatch(html, /data-admission-card-details-toggle|세부 정보/);
   assert.match(html, /대학어디가에서 자세히 보기/);
   assert.match(html, /target="_blank"/);
   assert.match(html, /rel="noopener noreferrer"/);
@@ -136,8 +137,8 @@ test('실제 상세정보가 있으면 어디가 링크 대신 작동 가능한 
     recruitmentCount: 24,
     universityInfo: { adigaUrl: 'https://www.adiga.kr/detail' },
   });
-  assert.match(html, /<details class="admission-card-details">/);
-  assert.match(html, /<summary aria-expanded="false">세부 정보<\/summary>/);
+  assert.match(html, /<button type="button" class="admission-card-details-toggle" data-admission-card-details-toggle aria-expanded="false">/);
+  assert.match(html, /<div class="admission-card-details-body" hidden>/);
   assert.doesNotMatch(html, /대학어디가에서 자세히 보기/);
 });
 
@@ -147,7 +148,8 @@ test('세부정보와 확인된 대학어디가 URL이 모두 없으면 카드 �
   assert.equal(renderAdmissionCardSupplement({ ...baseRecord, universityInfo: { adigaUrl: 'https://example.com/university' } }), '');
 });
 
-test('세부정보 클릭은 대학 아코디언과 분리되어 펼침 상태와 aria-expanded를 함께 바꾼다', () => {
+test('세부정보 버튼 클릭은 결과 컨테이너 위임으로 펼침 상태·화살표·aria-expanded를 함께 바꾼다', () => {
   assert.match(app, /event\.target\.matches\?\.\('\[data-admission-university-accordion\]'\)/);
-  assert.match(app, /closest\('\.admission-card-details > summary'\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?details\.open = !details\.open[\s\S]*?aria-expanded/);
+  assert.match(app, /#admission-reference-result'[\s\S]*?closest\('\[data-admission-card-details-toggle\]'\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?aria-expanded[\s\S]*?body\.hidden = !isExpanded[\s\S]*?isExpanded \? '▼' : '▶'/);
+  assert.doesNotMatch(app, /closest\('\.admission-card-details > summary'\)/);
 });

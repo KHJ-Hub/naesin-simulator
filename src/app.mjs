@@ -28,7 +28,7 @@ import {
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
-import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-supplement1';
+import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
@@ -732,6 +732,20 @@ $('#admission-reference-result').addEventListener('toggle', (event) => {
   disclosure.querySelector(':scope > summary')?.setAttribute('aria-expanded', String(disclosure.open));
 }, true);
 $('#admission-reference-result').addEventListener('click', (event) => {
+  const cardDetailsToggle = event.target.closest('[data-admission-card-details-toggle]');
+  if (cardDetailsToggle) {
+    event.preventDefault();
+    event.stopPropagation();
+    const details = cardDetailsToggle.closest('.admission-card-details');
+    const body = details?.querySelector('.admission-card-details-body');
+    const icon = cardDetailsToggle.querySelector('.admission-card-details-icon');
+    if (!details || !body) return;
+    const isExpanded = cardDetailsToggle.getAttribute('aria-expanded') !== 'true';
+    cardDetailsToggle.setAttribute('aria-expanded', String(isExpanded));
+    body.hidden = !isExpanded;
+    if (icon) icon.textContent = isExpanded ? '▼' : '▶';
+    return;
+  }
   const resultGroupSummary = event.target.closest('.admission-result-group > summary');
   if (resultGroupSummary) {
     event.preventDefault();
@@ -763,15 +777,6 @@ $('#admission-reference-result').addEventListener('click', (event) => {
   renderAdmissionReferences();
 });
 document.querySelector('#admission-reference-panel').addEventListener('click', (event) => {
-  const cardDetailsSummary = event.target.closest('.admission-card-details > summary');
-  if (cardDetailsSummary) {
-    event.preventDefault();
-    event.stopPropagation();
-    const details = cardDetailsSummary.parentElement;
-    details.open = !details.open;
-    cardDetailsSummary.setAttribute('aria-expanded', String(details.open));
-    return;
-  }
   const universitySummaryControl = event.target.closest('.admission-university > summary');
   if (universitySummaryControl) {
     event.preventDefault();

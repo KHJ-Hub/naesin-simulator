@@ -129,7 +129,7 @@ export function renderAdmissionCardDetails(item = {}) {
     const tag = detail.metadata ? 'small' : 'span';
     return `<${tag} data-detail-key="${escapeHtml(detail.key)}">${escapeHtml(detail.label)} ${content}</${tag}>`;
   }).join('');
-  return `<details class="admission-card-details"><summary aria-expanded="false">세부 정보</summary><div class="admission-card-details-body">${rows}</div></details>`;
+  return `<div class="admission-card-details"><button type="button" class="admission-card-details-toggle" data-admission-card-details-toggle aria-expanded="false"><span class="admission-card-details-icon" aria-hidden="true">▶</span><span>세부 정보</span></button><div class="admission-card-details-body" hidden>${rows}</div></div>`;
 }
 
 export function renderAdmissionCardSupplement(item = {}) {
