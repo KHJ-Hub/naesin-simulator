@@ -30,6 +30,11 @@ import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260918-print-readable1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
+  canCompareWithBusanAdmissions,
+  findLocalAdmissionComparisons,
+  renderLocalAdmissionComparison,
+} from './admission-local-comparison.mjs?v=20260918-busan-comparison1';
+import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
   createAdmissionAccordionState,
@@ -451,7 +456,13 @@ function admissionResultCardWithinUniversity(entry, comparison, groupKey) {
   const differenceLine = comprehensive ? '<p class="admission-difference">학생부종합 전형은 전년도 등록자 내신 참고로만 제공합니다.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
   const currentLine = !comparable ? '' : `<span class="admission-score-current">${comparison.label} <b>${fmt(comparison.value)}</b></span>`;
   const availabilityLine = item.dataAvailability === 'cut70-only' ? '<small>공식 70% cut만 공개</small>' : item.dataAvailability === 'average-only' ? '<small>공식 평균등급 참고</small>' : '';
-  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores">${scoreLine}${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button type="button" class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div>${renderAdmissionCardSupplement(item)}</article>`;
+  const localComparisonButton = canCompareWithBusanAdmissions(item)
+    ? `<button type="button" class="quiet-button local-admission-compare-button" data-local-admission-compare="${escapeHtml(key)}" aria-expanded="false">부산 대학으로 치면?</button>`
+    : '';
+  const localComparisonPanel = localComparisonButton
+    ? `<div class="local-admission-comparison-panel" data-local-admission-comparison-panel="${escapeHtml(key)}" hidden></div>`
+    : '';
+  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores">${scoreLine}${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button type="button" class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button>${localComparisonButton}</div>${localComparisonPanel}${renderAdmissionCardSupplement(item)}</article>`;
 }
 function renderAdmissionUniversityAccordion(group, comparison, groupKey) {
   const disclosureKey = admissionUniversityDisclosureKey(groupKey, group);
@@ -764,6 +775,21 @@ $('#admission-reference-result').addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
     updateAdmissionInterest(saveButton.dataset.admissionSave);
+    return;
+  }
+  const localComparisonButton = event.target.closest('[data-local-admission-compare]');
+  if (localComparisonButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const key = localComparisonButton.dataset.localAdmissionCompare;
+    const panel = localComparisonButton.closest('.admission-card')?.querySelector('[data-local-admission-comparison-panel]');
+    const item = ADMISSION_REFERENCE_DATA.find((entry) => admissionInterestKey(entry) === key);
+    if (!panel || !item) return;
+    const isExpanded = localComparisonButton.getAttribute('aria-expanded') !== 'true';
+    localComparisonButton.setAttribute('aria-expanded', String(isExpanded));
+    localComparisonButton.textContent = isExpanded ? '부산권 비교 닫기' : '부산 대학으로 치면?';
+    panel.hidden = !isExpanded;
+    if (isExpanded) panel.innerHTML = renderLocalAdmissionComparison(findLocalAdmissionComparisons(item, ADMISSION_REFERENCE_DATA));
     return;
   }
   const cardDetailsToggle = event.target.closest('[data-admission-card-details-toggle]');

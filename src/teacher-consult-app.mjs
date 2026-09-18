@@ -10,6 +10,11 @@ import {
 } from './admission-reference.mjs';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs';
+import {
+  canCompareWithBusanAdmissions,
+  findLocalAdmissionComparisons,
+  renderLocalAdmissionComparison,
+} from './admission-local-comparison.mjs';
 import { ADMISSION_ACADEMIC_FIELD_LABELS } from './admission-filter-options.mjs';
 import {
   ADMISSION_SUBJECT_GROUPS,
@@ -177,7 +182,13 @@ function admissionCard(entry, compare) {
   const differenceLine = comprehensive
     ? '<p class="admission-difference">전년도 등록자 내신 참고용 자료입니다.</p>'
     : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${escapeHtml(differenceDescription)}</span></p>`;
-  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores">${admissionScoreLine(item)}${comprehensive ? '' : `<span class="admission-score-current">${escapeHtml(compare.label)} <b>${fmt(compare.value)}</b></span>`}</div>${differenceLine}<div class="admission-card-actions"><button type="button" class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-consult-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div>${renderAdmissionCardSupplement(item)}</article>`;
+  const localComparisonButton = canCompareWithBusanAdmissions(item)
+    ? `<button type="button" class="quiet-button local-admission-compare-button" data-consult-local-admission-compare="${escapeHtml(key)}" aria-expanded="false">부산 대학으로 치면?</button>`
+    : '';
+  const localComparisonPanel = localComparisonButton
+    ? `<div class="local-admission-comparison-panel" data-local-admission-comparison-panel="${escapeHtml(key)}" hidden></div>`
+    : '';
+  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores">${admissionScoreLine(item)}${comprehensive ? '' : `<span class="admission-score-current">${escapeHtml(compare.label)} <b>${fmt(compare.value)}</b></span>`}</div>${differenceLine}<div class="admission-card-actions"><button type="button" class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-consult-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button>${localComparisonButton}</div>${localComparisonPanel}${renderAdmissionCardSupplement(item)}</article>`;
 }
 
 function universityAccordion(group, compare, groupKey) {
@@ -362,6 +373,21 @@ $('#consult-admission-department').addEventListener('keydown', (event) => {
 document.addEventListener('click', (event) => {
   const save = event.target.closest('[data-consult-admission-save]');
   if (save) { updateInterest(save.dataset.consultAdmissionSave); return; }
+  const localComparisonButton = event.target.closest('[data-consult-local-admission-compare]');
+  if (localComparisonButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const key = localComparisonButton.dataset.consultLocalAdmissionCompare;
+    const panel = localComparisonButton.closest('.admission-card')?.querySelector('[data-local-admission-comparison-panel]');
+    const item = ADMISSION_REFERENCE_DATA.find((entry) => admissionInterestKey(entry) === key);
+    if (!panel || !item) return;
+    const isExpanded = localComparisonButton.getAttribute('aria-expanded') !== 'true';
+    localComparisonButton.setAttribute('aria-expanded', String(isExpanded));
+    localComparisonButton.textContent = isExpanded ? '부산권 비교 닫기' : '부산 대학으로 치면?';
+    panel.hidden = !isExpanded;
+    if (isExpanded) panel.innerHTML = renderLocalAdmissionComparison(findLocalAdmissionComparisons(item, ADMISSION_REFERENCE_DATA));
+    return;
+  }
   const remove = event.target.closest('[data-consult-admission-remove]');
   if (remove) { updateInterest(remove.dataset.consultAdmissionRemove, true); return; }
   const groupMore = event.target.closest('[data-consult-group-more]');

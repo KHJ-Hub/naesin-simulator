@@ -1155,6 +1155,8 @@ button, input, select {
 .admission-card-actions {
   display: flex;
   justify-content: flex-end;
+  gap: .45rem;
+  flex-wrap: wrap;
 }
 
 .admission-save {
@@ -1184,6 +1186,155 @@ button, input, select {
 
 .admission-save {
   white-space: nowrap;
+}
+
+.local-admission-compare-button {
+  min-height: 38px;
+  padding: .45rem .7rem;
+  border-color: #b9d8dc;
+  background: var(--teal-50);
+  color: var(--teal-700);
+  font-size: .76rem;
+  white-space: nowrap;
+}
+
+.local-admission-compare-button:hover,
+.local-admission-compare-button:focus-visible,
+.local-admission-compare-button[aria-expanded="true"] {
+  border-color: #78b9c0;
+  background: #e7f5f5;
+  color: #175b60;
+}
+
+.local-admission-comparison-panel {
+  grid-column: 1 / -1;
+}
+
+.local-admission-comparison-panel[hidden] {
+  display: none;
+}
+
+.local-admission-comparison {
+  display: grid;
+  gap: .65rem;
+  padding: .8rem;
+  border: 1px solid #c9dce8;
+  border-radius: .85rem;
+  background: linear-gradient(145deg, #f7f9ff 0%, #f1fbfa 100%);
+}
+
+.local-admission-comparison header {
+  display: grid;
+  gap: .18rem;
+}
+
+.local-admission-comparison h4,
+.local-admission-comparison h5,
+.local-admission-comparison p {
+  margin: 0;
+}
+
+.local-admission-comparison h4 {
+  color: var(--accent-strong);
+  font-size: .92rem;
+}
+
+.local-admission-comparison h5 {
+  color: var(--ink);
+  font-size: .77rem;
+}
+
+.local-admission-comparison header p,
+.local-admission-fallback,
+.local-admission-notice,
+.local-admission-empty {
+  color: var(--muted);
+  font-size: .71rem;
+  line-height: 1.5;
+}
+
+.local-admission-target {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .65rem;
+  border-radius: .7rem;
+  background: #fff;
+}
+
+.local-admission-target span {
+  color: var(--teal-700);
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+.local-admission-target strong {
+  overflow-wrap: anywhere;
+  font-size: .79rem;
+}
+
+.local-admission-target b {
+  color: var(--indigo-500);
+  font-size: 1rem;
+}
+
+.local-admission-comparison ol {
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.local-admission-comparison li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .5rem;
+  padding: .48rem .55rem;
+  border: 1px solid #e1e7ef;
+  border-radius: .65rem;
+  background: rgba(255, 255, 255, .82);
+}
+
+.local-admission-comparison li span {
+  display: grid;
+  gap: .1rem;
+  min-width: 0;
+}
+
+.local-admission-comparison li strong {
+  overflow-wrap: anywhere;
+  font-size: .74rem;
+}
+
+.local-admission-comparison li small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: .68rem;
+}
+
+.local-admission-comparison li b {
+  color: var(--accent-strong);
+  font-size: .8rem;
+}
+
+.local-admission-comparison li em {
+  color: var(--teal-700);
+  font-size: .69rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.local-admission-fallback {
+  padding-left: .55rem;
+  border-left: 3px solid #7abdc0;
+}
+
+.local-admission-notice {
+  padding-top: .55rem;
+  border-top: 1px dashed #cbd4e2;
 }
 
 .admission-card-details {
@@ -2984,6 +3135,21 @@ h3:not(.hero-grid h2),
 @media (max-width: 767px) {
   .admission-reference-result {
     gap: .85rem;
+  }
+
+  .local-admission-compare-button,
+  .admission-save {
+    flex: 1 1 145px;
+  }
+
+  .local-admission-target,
+  .local-admission-comparison li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .local-admission-target span,
+  .local-admission-comparison li em {
+    grid-column: 1 / -1;
   }
 
   .admission-result-group-heading {
