@@ -40,7 +40,7 @@ import {
   createAdmissionAccordionState,
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
-import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
+import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260918-backup-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
@@ -117,19 +117,28 @@ function normalizeRecord(record = {}) {
   const configured = courseById(record.courseId);
   if (configured) {
     const normalized = recordFromCourse(configured, typeof record.id === 'string' && record.id ? record.id : makeId());
-    return { ...normalized, gradeValue: ['grade', 'both'].includes(normalized.gradingType) ? record.gradeValue ?? '' : '', achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '' };
+    const grade = Number(record.gradeValue);
+    const credit = Number(record.credit);
+    return {
+      ...normalized,
+      credit: Number.isFinite(credit) && credit > 0 && credit <= 30 ? credit : normalized.credit,
+      gradeValue: ['grade', 'both'].includes(normalized.gradingType) && Number.isInteger(grade) && grade >= 1 && grade <= 5 ? String(grade) : '',
+      achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '',
+    };
   }
   const gradingType = ['grade', 'achievement', 'passfail', 'both'].includes(record.gradingType) ? record.gradingType : 'grade';
   const achievementScale = ['none', 'a-c', 'a-e', 'pass'].includes(record.achievementScale)
     ? record.achievementScale
     : gradingType === 'passfail' ? 'pass' : gradingType === 'achievement' || gradingType === 'both' ? 'a-c' : 'none';
+  const grade = Number(record.gradeValue);
+  const credit = Number(record.credit);
   const normalized = {
     id: typeof record.id === 'string' && record.id ? record.id : makeId(),
     semesterId: SEMESTERS.some((semester) => semester.id === record.semesterId) ? record.semesterId : SEMESTERS[0].id,
     subjectName: String(record.subjectName ?? '').slice(0, 80),
     subjectGroup: String(record.subjectGroup ?? '기타').trim().slice(0, 40) || '기타',
-    credit: record.credit ?? '',
-    gradeValue: ['grade', 'both'].includes(gradingType) ? record.gradeValue ?? '' : '',
+    credit: Number.isFinite(credit) && credit > 0 && credit <= 30 ? credit : '',
+    gradeValue: ['grade', 'both'].includes(gradingType) && Number.isInteger(grade) && grade >= 1 && grade <= 5 ? String(grade) : '',
     achievement: '',
     requirement: String(record.requirement ?? 'legacy'),
     gradingType,
@@ -150,13 +159,16 @@ function normalizeState(saved = {}) {
   const savedActual = Array.isArray(saved.actual) ? saved.actual.map(normalizeRecord) : [];
   const includeAchievementCourses = saved.includeAchievementCourses === true;
   const commonActual = commonCourses().filter((course) => !savedActual.some((record) => record.courseId === course.id)).map((course) => recordFromCourse(course, makeId()));
+  const targetAverage = Number(saved.targetAverage);
+  const normalizedTargetAverage = validAverageInput(targetAverage) ? String(Number(targetAverage.toFixed(2))) : '';
+  const calculated = Boolean(saved.calculated);
   return {
     ...base,
     actual: [...savedActual, ...commonActual],
     student: { studentId: String(saved.student?.studentId ?? saved.studentId ?? '').replace(/\D/g, '').slice(0, 5), studentName: String(saved.student?.studentName ?? saved.studentName ?? saved.student?.name ?? '').trim().slice(0, 30) },
-    targetAverage: String(saved.targetAverage ?? ''), weighted: saved.weighted !== false,
+    targetAverage: normalizedTargetAverage, weighted: saved.weighted !== false,
     activeSemester: SEMESTERS.some((semester) => semester.id === saved.activeSemester) ? saved.activeSemester : base.activeSemester,
-    calculated: Boolean(saved.calculated), goalCalculated: Boolean(saved.goalCalculated),
+    calculated, goalCalculated: calculated && Boolean(saved.goalCalculated) && Boolean(normalizedTargetAverage),
     quickAverages: normalizeQuickAverages(saved.quickAverages),
     inputModes: normalizeInputModes(saved.inputModes),
     admissionInterests: normalizeAdmissionInterests(saved.admissionInterests),
@@ -179,6 +191,39 @@ function normalizeInputModes(saved = {}) {
 function saveState() {
   // 현재 페이지의 state가 세션 저장소다. 학생 데이터는 브라우저 영구 저장소에 쓰지 않는다.
   return state;
+}
+
+const STUDENT_ADMISSION_FILTER_KEYS = ['region', 'ownership', 'university', 'field', 'department', 'admissionName'];
+function collectStudentBackupUiState() {
+  return {
+    admissionViewMode,
+    comparisonBasis: $('input[name="admission-basis"]:checked')?.value === 'target' ? 'target' : 'current',
+    admissionFilters: Object.fromEntries(STUDENT_ADMISSION_FILTER_KEYS.map((key) => [key, admissionFilters[key] ?? ''])),
+  };
+}
+function restoreStudentBackupUiState(saved = {}) {
+  admissionViewMode = normalizeAdmissionViewMode(saved?.admissionViewMode);
+  STUDENT_ADMISSION_FILTER_KEYS.forEach((key) => {
+    admissionFilters[key] = String(saved?.admissionFilters?.[key] ?? '').trim().slice(0, 150);
+  });
+  Object.assign(admissionFilters, reconcileAdmissionViewFilters(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters }));
+  const comparisonBasis = saved?.comparisonBasis === 'target' ? 'target' : 'current';
+  document.querySelectorAll('input[name="admission-basis"]').forEach((control) => {
+    control.checked = control.value === comparisonBasis;
+  });
+  closeDepartmentSuggestions();
+  resetAdmissionViewPaging();
+}
+function hasCurrentStudentInput() {
+  const defaultCourseIds = new Set(commonCourses().map((course) => course.id));
+  return Boolean(
+    state.student.studentId
+    || state.student.studentName
+    || state.targetAverage
+    || state.admissionInterests.length
+    || Object.keys(state.quickAverages ?? {}).length
+    || state.actual.some((record) => record.gradeValue || record.achievement || (record.courseId && !defaultCourseIds.has(record.courseId)))
+  );
 }
 function records() { return state.actual; }
 function semesterLabel(id) { return SEMESTERS.find((item) => item.id === id)?.label ?? id; }
@@ -904,7 +949,7 @@ document.querySelector('#admission-reference-panel').addEventListener('click', (
 });
 $('#export-button').addEventListener('click', () => {
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-  const blob = new Blob([JSON.stringify(createStudentBackup(state), null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(createStudentBackup({ ...state, admissionUi: collectStudentBackupUiState() }), null, 2)], { type: 'application/json' });
   const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `naesin-simulator-backup-${stamp}.json`; link.click(); URL.revokeObjectURL(link.href);
   showToast('백업 파일을 내려받았습니다.');
 });
@@ -912,9 +957,14 @@ $('#import-input').addEventListener('change', async (event) => {
   const file = event.target.files?.[0]; if (!file) return;
   try {
     const imported = parseStudentBackup(await file.text());
+    if (hasCurrentStudentInput() && !confirm('현재 입력 내용이 백업 파일의 내용으로 바뀝니다. 불러올까요?')) {
+      event.target.value = '';
+      return;
+    }
     state = normalizeState(imported);
-    render(); showToast('데이터를 불러왔습니다.');
-  } catch (error) { console.error(error); showToast('백업 파일 형식을 확인해 주세요.', 'error'); }
+    restoreStudentBackupUiState(imported.admissionUi);
+    render(); showToast('백업 데이터를 불러왔습니다.');
+  } catch (error) { console.error(error); showToast(error instanceof Error ? error.message : '백업 파일 형식을 확인해 주세요.', 'error'); }
   event.target.value = '';
 });
 $('#reset-button').addEventListener('click', () => {
