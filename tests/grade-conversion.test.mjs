@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  convertGrade5ToGrade9,
   convertGrade9ToGrade5,
   conversionDataset,
   conversionDisplay,
@@ -65,4 +66,28 @@ test('9등급 1.00~9.00 환산값은 단조 증가한다', () => {
     assert.ok(current >= previous, `${original.toFixed(3)}에서 ${previous} → ${current}로 역전되었습니다.`);
     previous = current;
   }
+});
+
+test('현재 5등급 평균은 같은 공식 대응표로 9등급 참고값을 역방향 보간한다', () => {
+  const exact = convertGrade5ToGrade9(2);
+  assert.equal(exact.convertedValue, 3.3);
+  assert.equal(exact.conversionDataset, 'busan-grade5-g2-1sem-15978');
+  assert.equal(exact.interpolation, false);
+
+  const interpolated = convertGrade5ToGrade9(2.08);
+  assert.equal(interpolated.convertedValue, 3.44);
+  assert.equal(interpolated.interpolation, true);
+  assert.deepEqual(interpolated.lowerAnchor, { original: 2, converted: 3.3 });
+  assert.deepEqual(interpolated.upperAnchor, { original: 2.16, converted: 3.58 });
+});
+
+test('5등급→9등급 참고값도 1~5 범위에서 단조 증가하고 범위 밖은 거부한다', () => {
+  let previous = convertGrade5ToGrade9(1).convertedValue;
+  for (let step = 1; step <= 4000; step += 1) {
+    const current = convertGrade5ToGrade9(1 + step / 1000).convertedValue;
+    assert.ok(current >= previous);
+    previous = current;
+  }
+  assert.equal(convertGrade5ToGrade9(0.99), null);
+  assert.equal(convertGrade5ToGrade9(5.01), null);
 });

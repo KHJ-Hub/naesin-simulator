@@ -7,6 +7,10 @@ function findAnchor(anchors, original) {
   return anchors.findIndex(([, legacy]) => legacy === original);
 }
 
+function findConvertedAnchor(anchors, converted) {
+  return anchors.findIndex(([current]) => current === converted);
+}
+
 /** 공식 대응표의 인접한 9등급 기준점 사이에서만 선형 보간한다. */
 export function convertGrade9ToGrade5(originalGrade, datasetId = DEFAULT_BUSAN_CONVERSION_DATASET) {
   const dataset = BUSAN_CONVERSION_DATASETS[datasetId];
@@ -34,6 +38,27 @@ export function convertGrade9ToGrade5(originalGrade, datasetId = DEFAULT_BUSAN_C
   return null;
 }
 
+/** 같은 공식 대응표를 5등급제 평균에서 9등급제 참고값 방향으로 보간한다. */
+export function convertGrade5ToGrade9(currentGrade, datasetId = DEFAULT_BUSAN_CONVERSION_DATASET) {
+  const dataset = BUSAN_CONVERSION_DATASETS[datasetId];
+  const current = Number(currentGrade);
+  if (!dataset || !Number.isFinite(current) || current < 1 || current > 5) return null;
+  const anchors = dataset.anchors;
+  const exactIndex = findConvertedAnchor(anchors, current);
+  if (exactIndex >= 0) return inverseResult(current, anchors[exactIndex][1], dataset, false, null, null);
+
+  for (let index = 1; index < anchors.length; index += 1) {
+    const lower = anchors[index - 1];
+    const upper = anchors[index];
+    if (current <= upper[0]) {
+      const ratio = (current - lower[0]) / (upper[0] - lower[0]);
+      const converted = lower[1] + ratio * (upper[1] - lower[1]);
+      return inverseResult(current, converted, dataset, true, lower, upper);
+    }
+  }
+  return null;
+}
+
 function result(original, converted, dataset, interpolation, lowerAnchor, upperAnchor, boundary = null) {
   return {
     originalScale: 9, originalValue: original, convertedScale: 5,
@@ -42,6 +67,17 @@ function result(original, converted, dataset, interpolation, lowerAnchor, upperA
     lowerAnchor: lowerAnchor ? { converted: lowerAnchor[0], original: lowerAnchor[1] } : null,
     upperAnchor: upperAnchor ? { converted: upperAnchor[0], original: upperAnchor[1] } : null,
     boundary,
+  };
+}
+
+function inverseResult(original, converted, dataset, interpolation, lowerAnchor, upperAnchor) {
+  return {
+    originalScale: 5, originalValue: original, convertedScale: 9,
+    convertedValue: round(converted), conversionDataset: dataset.id,
+    interpolation, isApproximate: true, conversionConfidence: 'reference',
+    lowerAnchor: lowerAnchor ? { original: lowerAnchor[0], converted: lowerAnchor[1] } : null,
+    upperAnchor: upperAnchor ? { original: upperAnchor[0], converted: upperAnchor[1] } : null,
+    boundary: null,
   };
 }
 

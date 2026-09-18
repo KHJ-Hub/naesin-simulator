@@ -37,6 +37,7 @@ import {
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
 import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
+import { buildGradePositionModel } from './grade-position.mjs?v=20260918-grade-position1';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -295,6 +296,20 @@ function renderSemesterSummary() {
     return `<div class="bar-item"><div><span>${semester.label}</span></div><div class="bar-track"><i class="bar-fill" style="width:${width}%"></i></div><strong>${fmt(average)}</strong></div>`;
   }).join('');
 }
+function gradeScaleHtml({ label, value, position, maximum }) {
+  const ticks = Array.from({ length: maximum }, (_, index) => `<span>${index + 1}</span>`).join('');
+  return `<div class="grade-position-scale"><div class="grade-position-scale-heading"><span>${label}</span><strong>${fmt(value)}</strong></div><div class="grade-position-track" style="--grade-position:${position}%"><i class="grade-position-marker" aria-hidden="true"><b>현재</b></i></div><div class="grade-position-ticks" style="--grade-tick-count:${maximum}">${ticks}</div></div>`;
+}
+function renderGradePosition() {
+  const container = $('#grade-position');
+  const current = state.calculated ? calculateOverallAverage(effectiveRecords(), state.weighted) : null;
+  const model = buildGradePositionModel(current);
+  if (!model) {
+    container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 현재 등급 위치를 확인할 수 있어요.</div>';
+    return;
+  }
+  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong></div></div><div class="grade-position-scales">${gradeScaleHtml({ label: '5등급제 구간', value: model.grade5, position: model.grade5Position, maximum: 5 })}${gradeScaleHtml({ label: '9등급제 구간', value: model.grade9, position: model.grade9Position, maximum: 9 })}</div><p class="grade-position-note">현재 내신을 기준으로 5등급제와 9등급제 위치를 참고용으로 보여줍니다.<br />교육청 환산 기준 참고값이며, 실제 대학별 반영 방식과 다를 수 있습니다.</p>`;
+}
 function renderSubjectSummary() {
   if (usesQuickAverage()) {
     $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.</div>';
@@ -538,7 +553,7 @@ function renderPrintReport() {
   $('#print-report').innerHTML = renderPrintReportHtml(model);
 }
 function render() {
-  renderSemesterTabs(); renderInputMode(); renderGradeList(); renderCourseSelection(); renderCurrentGradeResult(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderAdmissionReferences(); renderPrintReport();
+  renderSemesterTabs(); renderInputMode(); renderGradeList(); renderCourseSelection(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderAdmissionReferences(); renderPrintReport();
   $('#target-average').value = state.targetAverage;
   $('#weighted-toggle').checked = Boolean(state.weighted);
   $('#student-id').value = state.student.studentId; $('#student-name').value = state.student.studentName;
@@ -565,7 +580,7 @@ $('#quick-entry').addEventListener('input', (event) => {
   if (event.target.value === '') delete state.quickAverages[state.activeSemester];
   else if (validAverageInput(value)) state.quickAverages[state.activeSemester] = Number(value.toFixed(2));
   state.calculated = false; state.goalCalculated = false; saveState();
-  $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+  $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport();
 });
 $('#course-selection').addEventListener('click', (event) => {
   if (event.target.id !== 'add-grade') return;
@@ -581,7 +596,7 @@ $('#grade-list').addEventListener('input', (event) => {
   if (!record) return;
   record[field] = ['credit', 'gradeValue'].includes(field) ? event.target.value : event.target.value;
   if (field === 'gradeValue' && event.target.value && (Number(event.target.value) < 1 || Number(event.target.value) > 5)) { record[field] = ''; showToast('등급은 1~5등급만 입력할 수 있어요.', 'error'); }
-  state.calculated = false; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+  state.calculated = false; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport();
 });
 $('#grade-list').addEventListener('change', (event) => event.target.dispatchEvent(new Event('input', { bubbles: true })));
 $('#grade-list').addEventListener('click', (event) => {
@@ -590,10 +605,10 @@ $('#grade-list').addEventListener('click', (event) => {
   state.actual = records().filter((item) => item.id !== row.dataset.id); state.calculated = false; state.goalCalculated = false;
   saveState(); render();
 });
-$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개입니다.`); });
+$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개입니다.`); });
 $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculated = true; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
-$('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
+$('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
 document.querySelector('#admission-filters').addEventListener('change', (event) => {
   const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName' };
   const key = map[event.target.id];
