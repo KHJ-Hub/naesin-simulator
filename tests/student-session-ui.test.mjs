@@ -45,10 +45,12 @@ test('공유용 브랜딩은 서비스명과 제작자 보조 문구를 분리�
 });
 
 test('교사용 빠른 상담은 숨김 과목관리 진입과 분리된 경로를 사용한다', () => {
-  assert.match(html, /class="teacher-consult-link" href="\.\/teacher-consult\.html"/);
+  assert.match(html, /class="teacher-consult-link" href="\.\/teacher-consult\.html" hidden data-teacher-quick-mode-link/);
   assert.match(html, /🧑‍🏫 교사용 빠른 상담/);
   assert.match(teacherConsultHtml, /<h1>교사용 빠른 상담<\/h1>/);
   assert.match(teacherConsultHtml, /href="\.\/index\.html"/);
+  assert.match(app, /ENABLE_TEACHER_QUICK_MODE/);
+  assert.match(app, /teacherQuickModeLink\.hidden = !ENABLE_TEACHER_QUICK_MODE/);
   assert.match(app, /setupHiddenTeacherEntry\(\{ triggerSelector = '#teacher-entry-trigger', targetUrl = '\.\/teacher\.html'/);
   assert.match(app, /setupHiddenTeacherEntry\(\);/);
 });

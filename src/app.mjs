@@ -43,6 +43,7 @@ import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=202609
 import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
+import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -78,6 +79,11 @@ const admissionResultGroupExpanded = createAdmissionAccordionState();
 const DEPARTMENT_SEARCH_DEBOUNCE_MS = 180;
 let departmentSearchTimer = null;
 let isDepartmentSuggestionsOpen = false;
+
+function applyPublicFeatureVisibility() {
+  const teacherQuickModeLink = $('[data-teacher-quick-mode-link]');
+  if (teacherQuickModeLink) teacherQuickModeLink.hidden = !ENABLE_TEACHER_QUICK_MODE;
+}
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -938,5 +944,6 @@ document.querySelector('.student-form').addEventListener('input', (event) => {
   render();
 });
 
+applyPublicFeatureVisibility();
 ensureAdmissionViewModeControls();
 render();

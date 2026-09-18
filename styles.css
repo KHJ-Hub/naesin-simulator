@@ -2808,6 +2808,11 @@ h3:not(.hero-grid h2),
   white-space: nowrap;
 }
 
+.teacher-consult-link[hidden],
+.teacher-consult-shell[hidden] {
+  display: none !important;
+}
+
 .teacher-consult-link:hover {
   border-color: var(--lavender-300);
   background: var(--lavender-100);
