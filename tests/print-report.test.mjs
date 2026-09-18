@@ -96,6 +96,23 @@ test('인쇄 결과는 성적·목표 뒤에 관심 대학·안내가 자연스�
   assert.ok(html.indexOf('목표 내신 시뮬레이션') < secondary);
   assert.ok(html.indexOf('관심 대학 전년도 입시결과 참고') > secondary);
   assert.ok(html.indexOf('안내') > secondary);
+  assert.match(html, /print-sheet-secondary--has-interests/);
+});
+
+test('관심 대학이 없으면 인쇄 결과가 불필요한 새 페이지를 강제하지 않는다', () => {
+  const state = baseState();
+  state.admissionInterests = [];
+  const html = renderPrintReport(buildPrintReportModel(state, { remainingRecords }));
+  assert.doesNotMatch(html, /print-sheet-secondary--has-interests/);
+});
+
+test('공식 출처는 긴 URL 대신 대학별 공식 자료 링크로 축약한다', () => {
+  const state = baseState();
+  state.admissionInterests.push({ ...state.admissionInterests[0], department: '경제학과' });
+  const html = renderPrintReport(buildPrintReportModel(state, { remainingRecords }));
+  assert.match(html, /href="https:\/\/example\.edu\/subject">교과대학교 공식 자료<\/a>/);
+  assert.equal((html.match(/교과대학교 공식 자료/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /교과대학교 \(https:\/\/example\.edu\/subject\)/);
 });
 
 test('학생이 먼저 보는 핵심 내신 수치는 인쇄용 강조 클래스를 가진다', () => {
