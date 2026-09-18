@@ -28,7 +28,7 @@ import {
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260915-admission-interests1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260917-counsel-report1';
-import { renderAdmissionCardDetails } from './admission-card-details.mjs?v=20260917-conditional-details2';
+import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-supplement1';
 import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
@@ -451,7 +451,7 @@ function admissionResultCardWithinUniversity(entry, comparison, groupKey) {
   const differenceLine = comprehensive ? '<p class="admission-difference">학생부종합 전형은 전년도 등록자 내신 참고로만 제공합니다.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
   const currentLine = !comparable ? '' : `<span class="admission-score-current">${comparison.label} <b>${fmt(comparison.value)}</b></span>`;
   const availabilityLine = item.dataAvailability === 'cut70-only' ? '<small>공식 70% cut만 공개</small>' : item.dataAvailability === 'average-only' ? '<small>공식 평균등급 참고</small>' : '';
-  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores">${scoreLine}${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div>${renderAdmissionCardDetails(item)}</article>`;
+  return `<article class="admission-card admission-department-card"><div class="admission-card-heading"><div><strong>${escapeHtml(item.department)}</strong></div></div><p class="admission-type">${escapeHtml(item.admissionCategory)} · ${escapeHtml(item.admissionName)}</p><div class="admission-scores">${scoreLine}${currentLine}${availabilityLine}</div>${differenceLine}<div class="admission-card-actions"><button class="quiet-button admission-save${saved ? ' is-saved' : ''}" data-admission-save="${escapeHtml(key)}" aria-pressed="${saved}">${saved ? '관심 저장 해제' : '관심 대학 저장'}</button></div>${renderAdmissionCardSupplement(item)}</article>`;
 }
 function renderAdmissionUniversityAccordion(group, comparison, groupKey) {
   const disclosureKey = admissionUniversityDisclosureKey(groupKey, group);
@@ -722,7 +722,7 @@ document.querySelector('#admission-reference-panel').addEventListener('change', 
   renderAdmissionReferences();
 });
 $('#admission-reference-result').addEventListener('toggle', (event) => {
-  const disclosure = event.target.closest('[data-admission-university-accordion]');
+  const disclosure = event.target.matches?.('[data-admission-university-accordion]') ? event.target : null;
   if (!disclosure) return;
   const key = disclosure.dataset.admissionUniversityKey;
   if (!key) return;
@@ -762,6 +762,15 @@ $('#admission-reference-result').addEventListener('click', (event) => {
   renderAdmissionReferences();
 });
 document.querySelector('#admission-reference-panel').addEventListener('click', (event) => {
+  const cardDetailsSummary = event.target.closest('.admission-card-details > summary');
+  if (cardDetailsSummary) {
+    event.preventDefault();
+    event.stopPropagation();
+    const details = cardDetailsSummary.parentElement;
+    details.open = !details.open;
+    cardDetailsSummary.setAttribute('aria-expanded', String(details.open));
+    return;
+  }
   const universitySummaryControl = event.target.closest('.admission-university > summary');
   if (universitySummaryControl) {
     event.preventDefault();

@@ -99,6 +99,17 @@ export function hasMeaningfulDetails(item = {}) {
   return getAdmissionCardDetailItems(item).some((detail) => detail.metadata !== true);
 }
 
+export function getOfficialAdigaUrl(item = {}) {
+  const candidate = textOrNull(item.universityInfo?.adigaUrl ?? item.universityAdigaUrl ?? item.adigaUrl);
+  if (!candidate) return null;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === 'https:' && (url.hostname === 'adiga.kr' || url.hostname.endsWith('.adiga.kr')) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
 }
@@ -118,5 +129,13 @@ export function renderAdmissionCardDetails(item = {}) {
     const tag = detail.metadata ? 'small' : 'span';
     return `<${tag} data-detail-key="${escapeHtml(detail.key)}">${escapeHtml(detail.label)} ${content}</${tag}>`;
   }).join('');
-  return `<details class="admission-card-details"><summary>세부 정보</summary><div class="admission-card-details-body">${rows}</div></details>`;
+  return `<details class="admission-card-details"><summary aria-expanded="false">세부 정보</summary><div class="admission-card-details-body">${rows}</div></details>`;
+}
+
+export function renderAdmissionCardSupplement(item = {}) {
+  const details = renderAdmissionCardDetails(item);
+  if (details) return details;
+  const adigaUrl = getOfficialAdigaUrl(item);
+  if (!adigaUrl) return '';
+  return `<a class="admission-card-adiga-link" href="${escapeHtml(adigaUrl)}" target="_blank" rel="noopener noreferrer">대학어디가에서 자세히 보기 <span aria-hidden="true">↗</span></a>`;
 }

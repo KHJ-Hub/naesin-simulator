@@ -1,11 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   getAdmissionCardDetailItems,
+  getOfficialAdigaUrl,
   hasMeaningfulDetails,
   hasMeaningfulValue,
   renderAdmissionCardDetails,
+  renderAdmissionCardSupplement,
 } from '../src/admission-card-details.mjs';
+
+const app = fs.readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
 
 const baseRecord = {
   referenceYear: 2026,
@@ -32,7 +37,7 @@ test('상세 데이터가 하나라도 있으면 닫힌 세부 정보 아코디�
   assert.equal(hasMeaningfulDetails({ ...baseRecord, recruitmentCount: 24 }), true);
   const html = renderAdmissionCardDetails({ ...baseRecord, recruitmentCount: 24 });
   assert.match(html, /^<details class="admission-card-details">/);
-  assert.match(html, /<summary>세부 정보<\/summary>/);
+  assert.match(html, /<summary aria-expanded="false">세부 정보<\/summary>/);
   assert.match(html, /모집인원 <b>24명<\/b>/);
   assert.doesNotMatch(html, /<details[^>]*\sopen/);
 });
@@ -107,4 +112,42 @@ test('지원자격과 지역인재 설명이 있으면 세부 정보에 포함�
   assert.match(html, /지원자격 유형/);
   assert.match(html, /지역인재 지원자격/);
   assert.match(html, /부산·울산·경남/);
+});
+
+test('추가 상세정보가 없고 대학 메타데이터에 공식 어디가 URL이 있으면 링크만 표시한다', () => {
+  const item = {
+    ...baseRecord,
+    universityInfo: {
+      adigaUrl: 'https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?unvCd=0000014',
+    },
+  };
+  assert.equal(hasMeaningfulDetails(item), false);
+  assert.match(getOfficialAdigaUrl(item), /^https:\/\/www\.adiga\.kr\//);
+  const html = renderAdmissionCardSupplement(item);
+  assert.doesNotMatch(html, /<details|세부 정보/);
+  assert.match(html, /대학어디가에서 자세히 보기/);
+  assert.match(html, /target="_blank"/);
+  assert.match(html, /rel="noopener noreferrer"/);
+});
+
+test('실제 상세정보가 있으면 어디가 링크 대신 작동 가능한 세부정보 아코디언을 표시한다', () => {
+  const html = renderAdmissionCardSupplement({
+    ...baseRecord,
+    recruitmentCount: 24,
+    universityInfo: { adigaUrl: 'https://www.adiga.kr/detail' },
+  });
+  assert.match(html, /<details class="admission-card-details">/);
+  assert.match(html, /<summary aria-expanded="false">세부 정보<\/summary>/);
+  assert.doesNotMatch(html, /대학어디가에서 자세히 보기/);
+});
+
+test('세부정보와 확인된 대학어디가 URL이 모두 없으면 카드 하단 컨트롤을 만들지 않는다', () => {
+  assert.equal(renderAdmissionCardSupplement(baseRecord), '');
+  assert.equal(renderAdmissionCardSupplement({ ...baseRecord, universityInfo: { adigaUrl: '' } }), '');
+  assert.equal(renderAdmissionCardSupplement({ ...baseRecord, universityInfo: { adigaUrl: 'https://example.com/university' } }), '');
+});
+
+test('세부정보 클릭은 대학 아코디언과 분리되어 펼침 상태와 aria-expanded를 함께 바꾼다', () => {
+  assert.match(app, /event\.target\.matches\?\.\('\[data-admission-university-accordion\]'\)/);
+  assert.match(app, /closest\('\.admission-card-details > summary'\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?details\.open = !details\.open[\s\S]*?aria-expanded/);
 });

@@ -1174,6 +1174,28 @@ button, input, select {
   color: var(--muted);
 }
 
+.admission-card-adiga-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  min-height: 36px;
+  margin-top: 0;
+  padding-top: .5rem;
+  border-top: 1px solid #e7eaf2;
+  color: var(--accent-strong);
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.admission-card-adiga-link:hover,
+.admission-card-adiga-link:focus-visible {
+  color: var(--teal-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Keep a single consolidated guidance accordion in the student flow. */
 .admission-help {
   display: none;
