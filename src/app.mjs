@@ -72,6 +72,7 @@ const admissionUniversityGroupLimits = new Map();
 const admissionResultGroupExpanded = createAdmissionAccordionState();
 const DEPARTMENT_SEARCH_DEBOUNCE_MS = 180;
 let departmentSearchTimer = null;
+let isDepartmentSuggestionsOpen = false;
 
 function setupHiddenTeacherEntry({ triggerSelector = '#teacher-entry-trigger', targetUrl = './teacher.html', requiredClicks = 5, intervalMs = 2500 } = {}) {
   const trigger = $(triggerSelector);
@@ -345,6 +346,7 @@ function resetAdmissionViewPaging() {
 function setAdmissionViewMode(mode) {
   const normalized = normalizeAdmissionViewMode(mode);
   if (normalized === admissionViewMode) return;
+  closeDepartmentSuggestions();
   admissionViewMode = normalized;
   Object.assign(admissionFilters, { region: '', university: '', field: '', department: '', admissionName: '' });
   resetAdmissionViewPaging();
@@ -362,6 +364,28 @@ function ensureAdmissionViewModeControls() {
     overview.before(selector);
   }
 }
+function renderDepartmentSuggestions(suggestions = []) {
+  const input = $('#admission-department');
+  const list = $('#admission-department-suggestions');
+  if (!input || !list) return;
+  list.innerHTML = suggestions.map(({ department }) => `<button type="button" role="option" data-department-suggestion="${escapeHtml(department)}">${escapeHtml(department)}</button>`).join('');
+  if (!suggestions.length) isDepartmentSuggestionsOpen = false;
+  const visible = Boolean(admissionViewMode && isDepartmentSuggestionsOpen && admissionFilters.department && suggestions.length);
+  list.hidden = !visible;
+  input.setAttribute('aria-expanded', String(visible));
+}
+function closeDepartmentSuggestions() {
+  isDepartmentSuggestionsOpen = false;
+  const input = $('#admission-department');
+  const list = $('#admission-department-suggestions');
+  input?.setAttribute('aria-expanded', 'false');
+  if (list) list.hidden = true;
+}
+function openDepartmentSuggestions() {
+  const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
+  isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
+  renderDepartmentSuggestions(options.departmentSuggestions);
+}
 function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
   const configurations = [
@@ -378,10 +402,9 @@ function renderAdmissionFilterOptions() {
     element.disabled = !admissionViewMode || (key === 'admissionName' && values.length === 0);
   });
   const departmentInput = $('#admission-department');
-  const departmentSuggestions = $('#admission-department-suggestions');
   departmentInput.value = admissionFilters.department;
   departmentInput.disabled = !admissionViewMode;
-  departmentSuggestions.innerHTML = options.departmentSuggestions.map(({ department }) => `<option value="${escapeHtml(department)}"></option>`).join('');
+  renderDepartmentSuggestions(options.departmentSuggestions);
   document.querySelectorAll('[data-admission-view-mode]').forEach((control) => {
     const active = normalizeAdmissionViewMode(control.dataset.admissionViewMode ?? control.value) === admissionViewMode;
     control.setAttribute('aria-pressed', String(active));
@@ -623,10 +646,12 @@ document.querySelector('#admission-filters').addEventListener('change', (event) 
   if (key === 'department') {
     clearTimeout(departmentSearchTimer);
     admissionFilters.department = event.target.value.trim();
+    closeDepartmentSuggestions();
     resetAdmissionViewPaging();
     renderAdmissionReferences();
     return;
   }
+  closeDepartmentSuggestions();
   admissionFilters[key] = event.target.value;
   Object.assign(admissionFilters, reconcileAdmissionViewFilters(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters }));
   resetAdmissionViewPaging();
@@ -636,7 +661,8 @@ $('#admission-department').addEventListener('input', (event) => {
   admissionFilters.department = event.target.value.trim();
   resetAdmissionViewPaging();
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
-  $('#admission-department-suggestions').innerHTML = options.departmentSuggestions.map(({ department }) => `<option value="${escapeHtml(department)}"></option>`).join('');
+  isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
+  renderDepartmentSuggestions(options.departmentSuggestions);
   clearTimeout(departmentSearchTimer);
   if (event.isComposing) return;
   departmentSearchTimer = window.setTimeout(() => {
@@ -645,15 +671,42 @@ $('#admission-department').addEventListener('input', (event) => {
   }, DEPARTMENT_SEARCH_DEBOUNCE_MS);
 });
 $('#admission-department').addEventListener('keydown', (event) => {
-  if (event.key !== 'Enter') return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeDepartmentSuggestions();
+    return;
+  }
+  if (event.key !== 'Enter' || event.isComposing) return;
   event.preventDefault();
   clearTimeout(departmentSearchTimer);
   departmentSearchTimer = null;
   admissionFilters.department = event.target.value.trim();
+  closeDepartmentSuggestions();
   resetAdmissionViewPaging();
   renderAdmissionReferences();
 });
+$('#admission-department').addEventListener('focus', openDepartmentSuggestions);
+$('#admission-department').addEventListener('click', openDepartmentSuggestions);
+$('#admission-department-suggestions').addEventListener('pointerdown', (event) => {
+  if (event.target.closest('[data-department-suggestion]')) event.preventDefault();
+});
+$('#admission-department-suggestions').addEventListener('click', (event) => {
+  const option = event.target.closest('[data-department-suggestion]');
+  if (!option) return;
+  admissionFilters.department = option.dataset.departmentSuggestion.trim();
+  $('#admission-department').value = admissionFilters.department;
+  clearTimeout(departmentSearchTimer);
+  departmentSearchTimer = null;
+  closeDepartmentSuggestions();
+  resetAdmissionViewPaging();
+  renderAdmissionReferences();
+});
+document.addEventListener('pointerdown', (event) => {
+  if (event.target.closest('.admission-department-field')) return;
+  closeDepartmentSuggestions();
+});
 $('#admission-view-button').addEventListener('click', () => {
+  closeDepartmentSuggestions();
   const result = $('#admission-reference-result');
   renderAdmissionReferences();
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -794,6 +847,7 @@ $('#reset-button').addEventListener('click', () => {
   admissionFilters.field = '';
   admissionFilters.department = '';
   admissionFilters.admissionName = '';
+  closeDepartmentSuggestions();
   resetAdmissionViewPaging();
   render();
   showToast('입력한 학생 데이터와 성적을 초기화했습니다.');

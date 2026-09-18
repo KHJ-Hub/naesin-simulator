@@ -2852,12 +2852,57 @@ h3:not(.hero-grid h2),
 
 .admission-filter-grid label {
   display: grid;
+  align-content: start;
   gap: .35rem;
   min-width: 0;
   color: var(--muted);
   font-size: 13px;
   font-weight: 650;
   line-height: 1.4;
+}
+
+.admission-filter-field {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.admission-department-field {
+  align-content: start;
+}
+
+.admission-department-suggestions {
+  max-height: min(240px, 36vh);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--lavender-200);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(49, 46, 129, .16);
+}
+
+.admission-department-suggestions[hidden] {
+  display: none;
+}
+
+.admission-department-suggestions button {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.admission-department-suggestions button:hover,
+.admission-department-suggestions button:focus-visible {
+  outline: none;
+  background: var(--lavender-50);
+  color: var(--accent-strong);
 }
 
 .admission-filter-grid .input {
