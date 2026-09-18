@@ -250,7 +250,7 @@ export function buildPrintReportModel(state = {}, { remainingRecords = [], now =
   }));
 
   return {
-    title: '학생 내신 · 학업 설계 상담 결과표',
+    title: '내신 설계 노트',
     student: {
       studentId: String(state.student?.studentId ?? ''),
       studentName: String(state.student?.studentName ?? ''),

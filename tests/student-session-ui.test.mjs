@@ -35,3 +35,10 @@ test('학생용 주요 버튼과 백업 문구만 유지한다', () => {
   assert.doesNotMatch(html, />JSON 내보내기</);
   assert.doesNotMatch(html, />JSON 불러오기</);
 });
+
+test('공유용 브랜딩은 서비스명과 제작자 보조 문구를 분리한다', () => {
+  assert.match(html, /<title>내신 설계 노트<\/title>/);
+  assert.match(html, /<h1>내신 설계 노트<\/h1>/);
+  assert.match(html, /현정T 제작 · 학생용 내신 시뮬레이터/);
+  assert.doesNotMatch(html, /현정T의 내신 설계 노트/);
+});
