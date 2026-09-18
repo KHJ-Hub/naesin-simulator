@@ -643,39 +643,52 @@ button,
   .scenario-semester strong { font-size:1rem; }
   .goal-guidance { font-size:.74rem; }
 }
-@page { size:A4; margin:10mm 11mm; }
+@page { size:A4; margin:8mm 10mm; }
 @media print {
   html,body { background:#fff!important; background-image:none!important; }
   body { color:#111; font-family:"Malgun Gothic",sans-serif; }
   .app-shell,.toast { display:none!important; }
   .print-report { display:block; background:#fff; }
-  .print-page { width:100%; font-size:8.6pt; line-height:1.32; }
+  .print-page { width:100%; font-size:8.4pt; line-height:1.27; }
   .print-sheet { width:100%; }
-  .print-sheet-secondary { break-before:page; page-break-before:always; }
-  .print-page h1 { margin:0 0 2.5mm; color:#222; font-size:15pt; line-height:1.2; }
-  .print-page h2 { margin:3.4mm 0 1.4mm; padding-bottom:.8mm; border-bottom:1px solid #777; color:#222; font-size:10.5pt; line-height:1.25; break-after:avoid; page-break-after:avoid; }
-  .print-page h3 { margin:2.4mm 0 1mm; font-size:9.2pt; line-height:1.25; break-after:avoid; page-break-after:avoid; }
+  .print-sheet-secondary { break-inside:avoid; page-break-inside:avoid; }
+  .print-page h1 { margin:0 0 1.8mm; color:#222; font-size:14.5pt; line-height:1.2; }
+  .print-page h2 { margin:2.1mm 0 1mm; padding-bottom:.6mm; border-bottom:1px solid #777; color:#222; font-size:10.5pt; line-height:1.25; break-after:avoid; page-break-after:avoid; }
+  .print-page h3 { margin:1.8mm 0 .8mm; font-size:9.2pt; line-height:1.25; break-after:avoid; page-break-after:avoid; }
   .print-page p { margin:1mm 0; }
   .print-note { margin:.8mm 0; color:#555; font-size:7.6pt; line-height:1.35; }
-  .print-student,.print-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2mm; margin:2mm 0; }
-  .print-student div,.print-summary div { padding:1.5mm 1.8mm; border:1px solid #bbb; }
+  .print-student,.print-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1mm; margin:1.2mm 0; }
+  .print-student div,.print-summary div { padding:1mm 1.6mm; border:1px solid #bbb; }
   .print-student dt,.print-summary span { color:#555; font-size:7.5pt; }
   .print-student dd,.print-summary strong { display:block; margin:.4mm 0 0; font-size:9pt; }
+  .print-summary .print-key-metric { border-color:#666; background:#f3f1fa; }
+  .print-summary .print-key-metric strong { color:#33256f; font-size:11.2pt; line-height:1.15; }
+  .print-goal-summary { grid-template-columns:repeat(2,minmax(0,1fr)); max-width:68%; }
+  .print-meta-row { display:flex; flex-wrap:wrap; gap:.5mm 4mm; color:#444; font-size:7.8pt; }
   .print-page table { width:100%; border-collapse:collapse; }
   .print-page thead { display:table-header-group; }
   .print-page tr { break-inside:avoid; page-break-inside:avoid; }
-  .print-page th,.print-page td { padding:1mm 1.3mm; border:1px solid #aaa; text-align:left; vertical-align:top; }
+  .print-page th,.print-page td { padding:.55mm 1.1mm; border:1px solid #aaa; text-align:left; vertical-align:top; }
   .print-page th { background:#eee; font-weight:700; }
   .print-semester-table th:nth-child(2),.print-semester-table td:nth-child(2),
   .print-subject-table th:nth-child(2),.print-subject-table td:nth-child(2),
   .print-scenario-table th:not(:first-child),.print-scenario-table td { text-align:center; }
   .print-subject-table { table-layout:fixed; }
   .print-scenario-table { margin-top:1.5mm; table-layout:fixed; }
-  .print-scenario-final th,.print-scenario-final td { border-top:1.5px solid #555; font-weight:700; }
-  .print-admission-section table { font-size:7.2pt; }
-  .print-admission-section th,.print-admission-section td { padding:.85mm 1mm; overflow-wrap:anywhere; }
+  .print-scenario-final th,.print-scenario-final td { border-top:1.5px solid #555; background:#f3f1fa; color:#33256f; font-size:9.2pt; font-weight:700; }
+  .print-admission-section { break-before:auto; page-break-before:auto; }
+  .print-admission-section table { table-layout:fixed; font-size:7.2pt; }
+  .print-admission-section th,.print-admission-section td { padding:.55mm .8mm; overflow-wrap:anywhere; }
+  .print-admission-section th:first-child { width:14%; }
+  .print-admission-section th:nth-child(2) { width:27%; }
+  .print-admission-section th:nth-child(3) { width:9%; }
+  .print-subline { display:block; margin-top:.3mm; color:#555; font-size:6.8pt; line-height:1.25; }
+  .print-interest-group { break-inside:auto; page-break-inside:auto; }
   .print-admission-section,.print-notice-section { break-inside:auto; page-break-inside:auto; }
-  .print-notice-section { margin-top:2.5mm; }
+  .print-notice-section { margin-top:1.2mm; break-inside:avoid; page-break-inside:avoid; }
+  .print-notice-section h2 { margin-top:1.4mm; }
+  .print-notice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:2mm; }
+  .print-notice-grid .print-note { margin:0; padding:1mm 1.2mm; border:1px solid #ccc; font-size:7.1pt; line-height:1.3; }
 }
 
 

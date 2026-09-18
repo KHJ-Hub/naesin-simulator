@@ -88,7 +88,7 @@ test('인쇄용 목표 시나리오는 학기별 하나의 통합 표로 출력�
   assert.equal((html.match(/예상 최종 내신/g) ?? []).length, 1);
 });
 
-test('인쇄 결과는 성적·목표 1면과 관심 대학·안내 2면 구조를 가진다', () => {
+test('인쇄 결과는 성적·목표 뒤에 관심 대학·안내가 자연스럽게 이어진다', () => {
   const html = renderPrintReport(buildPrintReportModel(baseState(), { remainingRecords }));
   const primary = html.indexOf('print-sheet-primary');
   const secondary = html.indexOf('print-sheet-secondary');
@@ -96,6 +96,18 @@ test('인쇄 결과는 성적·목표 1면과 관심 대학·안내 2면 구조�
   assert.ok(html.indexOf('목표 내신 시뮬레이션') < secondary);
   assert.ok(html.indexOf('관심 대학 전년도 입시결과 참고') > secondary);
   assert.ok(html.indexOf('안내') > secondary);
+});
+
+test('학생이 먼저 보는 핵심 내신 수치는 인쇄용 강조 클래스를 가진다', () => {
+  const html = renderPrintReport(buildPrintReportModel(baseState(), { remainingRecords }));
+  assert.equal((html.match(/class="print-key-metric"/g) ?? []).length, 3);
+  assert.match(html, /print-scenario-final/);
+});
+
+test('인쇄 안내문은 세로 공간을 줄이는 단일 요약 그리드로 묶는다', () => {
+  const html = renderPrintReport(buildPrintReportModel(baseState(), { remainingRecords }));
+  assert.equal((html.match(/class="print-notice-grid"/g) ?? []).length, 1);
+  assert.equal((html.match(/class="print-note"/g) ?? []).length >= 3, true);
 });
 
 test('관심 대학만 교과와 학종으로 분리하고 최신 내신으로 비교값을 다시 계산한다', () => {
@@ -127,9 +139,18 @@ test('기본 결과표는 과목별 상세표를 출력하지 않고 null 값을
   assert.doesNotMatch(html, /부록 · 과목별 상세 성적/);
   assert.match(html, /교과대학교/);
   assert.match(html, /종합대학교/);
-  assert.match(html, /9등급 원본 50\/70/);
-  assert.match(html, /- \/ 3\.40/);
+  assert.match(html, /공개 입결/);
+  assert.match(html, /원본 3\.40 · 70% cut/);
   assert.match(html, /현재 내신/);
+});
+
+test('관심 대학 표는 학생 상담에 필요한 핵심 열만 출력하고 빈 전형 표는 만들지 않는다', () => {
+  const state = baseState();
+  state.admissionInterests = [state.admissionInterests[0]];
+  const html = renderPrintReport(buildPrintReportModel(state, { remainingRecords }));
+  assert.match(html, /모집단위 · 전형/);
+  assert.doesNotMatch(html, /자료 상태/);
+  assert.doesNotMatch(html, /<h3>학생부종합<\/h3>/);
 });
 
 test('관심 대학이 없으면 결과표에 명확한 빈 상태를 표시한다', () => {

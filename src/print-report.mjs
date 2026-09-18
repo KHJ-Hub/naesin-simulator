@@ -327,13 +327,18 @@ function scenarioHtml(goal) {
 }
 
 function subjectInterestRows(items = []) {
-  if (!items.length) return '<tr><td colspan="9">저장된 학생부교과 관심 대학이 없습니다.</td></tr>';
-  return items.map((item) => `<tr><td>${escapeHtml(item.university)}</td><td>${escapeHtml(item.department)}</td><td>${escapeHtml(item.admissionName)}</td><td>${item.referenceYear ?? '-'}</td><td>${fmt(item.cut50Original)} / ${fmt(item.cut70Original)}</td><td>${fmt(item.cut50Converted)} / ${fmt(item.cut70Converted)}</td><td>${escapeHtml(item.comparisonBasisLabel)} ${fmt(item.comparisonValue)}</td><td>${item.difference === null ? '-' : `${item.difference >= 0 ? '+' : ''}${fmt(item.difference)}`}</td><td>${escapeHtml(item.dataAvailability ?? '-')}</td></tr>`).join('');
+  return items.map((item) => {
+    const useCut70 = numberOrNull(item.cut70Original) !== null || numberOrNull(item.cut70Converted) !== null;
+    const cutLabel = useCut70 ? '70% cut' : '50% cut';
+    const original = useCut70 ? item.cut70Original : item.cut50Original;
+    const converted = useCut70 ? item.cut70Converted : item.cut50Converted;
+    const difference = item.difference === null ? '-' : `${item.difference >= 0 ? '+' : ''}${fmt(item.difference)}`;
+    return `<tr><td>${escapeHtml(item.university)}</td><td><strong>${escapeHtml(item.department)}</strong><span class="print-subline">${escapeHtml(item.admissionName)}</span></td><td>${item.referenceYear ?? '-'}</td><td><strong>${fmt(converted)}</strong><span class="print-subline">원본 ${fmt(original)} · ${cutLabel}</span></td><td>${escapeHtml(item.comparisonBasisLabel)} ${fmt(item.comparisonValue)}</td><td>${difference}</td></tr>`;
+  }).join('');
 }
 
 function comprehensiveInterestRows(items = []) {
-  if (!items.length) return '<tr><td colspan="7">저장된 학생부종합 관심 대학이 없습니다.</td></tr>';
-  return items.map((item) => `<tr><td>${escapeHtml(item.university)}</td><td>${escapeHtml(item.department)}</td><td>${escapeHtml(item.admissionName)}</td><td>${item.referenceYear ?? '-'}</td><td>${escapeHtml(item.referenceLabel)}</td><td>${fmt(item.referenceOriginal)}</td><td>${fmt(item.referenceConverted)}</td></tr>`).join('');
+  return items.map((item) => `<tr><td>${escapeHtml(item.university)}</td><td><strong>${escapeHtml(item.department)}</strong><span class="print-subline">${escapeHtml(item.admissionName)}</span></td><td>${item.referenceYear ?? '-'}</td><td><strong>${fmt(item.referenceConverted)}</strong><span class="print-subline">원본 ${fmt(item.referenceOriginal)} · ${escapeHtml(item.referenceLabel)}</span></td></tr>`).join('');
 }
 
 function sourceNotes(model) {
@@ -348,16 +353,22 @@ export function renderPrintReport(model) {
     ? model.subjects.items.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td></tr>`).join('')
     : `<tr><td colspan="2">${escapeHtml(model.subjects.message)}</td></tr>`;
   const goalHtml = goal
-    ? `<div class="print-summary"><div><span>목표 내신</span><strong>${fmt(goal.targetAverage)}</strong></div><div><span>필요한 남은 학기 평균</span><strong>${goal.achievable ? fmt(goal.requiredAverage) : '-'}</strong></div></div><p>완료 학기: ${listText(goal.completedSemesters)}</p><p>남은 학기: ${listText(goal.remainingSemesters)}</p><p class="print-note">계산 기준: ${escapeHtml(goal.calculationBasis)}</p>${goal.achievable ? scenarioHtml(goal) : `<p>현재 설정한 목표에는 도달하기 어렵습니다. 남은 모든 성적을 1등급으로 가정한 최고 도달 가능 내신은 <strong>${fmt(goal.highestReachableAverage)}</strong>입니다.</p>`}`
+    ? `<div class="print-summary print-goal-summary"><div class="print-key-metric"><span>목표 내신</span><strong>${fmt(goal.targetAverage)}</strong></div><div class="print-key-metric"><span>필요한 남은 학기 평균</span><strong>${goal.achievable ? fmt(goal.requiredAverage) : '-'}</strong></div></div><p class="print-meta-row"><span>완료 학기: ${listText(goal.completedSemesters)}</span><span>남은 학기: ${listText(goal.remainingSemesters)}</span><span>계산 기준: ${escapeHtml(goal.calculationBasis)}</span></p>${goal.achievable ? scenarioHtml(goal) : `<p>현재 설정한 목표에는 도달하기 어렵습니다. 남은 모든 성적을 1등급으로 가정한 최고 도달 가능 내신은 <strong>${fmt(goal.highestReachableAverage)}</strong>입니다.</p>`}`
     : '<p>계산된 목표 내신 시뮬레이션이 없습니다.</p>';
 
   const appendix = model.courseAppendix.included
     ? `<section><h2>부록 · 과목별 상세 성적</h2><table><thead><tr><th>학기</th><th>과목</th><th>학점</th><th>등급/성취도</th><th>내신 반영</th></tr></thead><tbody>${model.courseAppendix.rows.map((row) => `<tr><td>${escapeHtml(row.semesterLabel)}</td><td>${escapeHtml(row.subjectName)}</td><td>${row.credit ?? '-'}</td><td>${row.gradeValue === null ? escapeHtml(row.achievement ?? '-') : fmt(row.gradeValue)}</td><td>${row.includedInGradeAverage ? '반영' : '미반영'}</td></tr>`).join('')}</tbody></table></section>`
     : '';
 
-  const interestReport = model.interests.subject.length || model.interests.comprehensive.length
-    ? `<h3>학생부교과</h3><table><thead><tr><th>대학</th><th>모집단위</th><th>전형명</th><th>학년도</th><th>9등급 원본 50/70</th><th>5등급 환산 50/70</th><th>비교 기준</th><th>차이</th><th>자료 상태</th></tr></thead><tbody>${subjectInterestRows(model.interests.subject)}</tbody></table><h3>학생부종합</h3><table><thead><tr><th>대학</th><th>모집단위</th><th>전형명</th><th>학년도</th><th>자료 유형</th><th>원본값</th><th>5등급 환산 참고</th></tr></thead><tbody>${comprehensiveInterestRows(model.interests.comprehensive)}</tbody></table>${sourceNotes(model)}`
+  const subjectInterestReport = model.interests.subject.length
+    ? `<div class="print-interest-group"><h3>학생부교과</h3><table><thead><tr><th>대학</th><th>모집단위 · 전형</th><th>학년도</th><th>공개 입결<br>(5등급 참고 / 원본)</th><th>비교 기준</th><th>차이</th></tr></thead><tbody>${subjectInterestRows(model.interests.subject)}</tbody></table></div>`
+    : '';
+  const comprehensiveInterestReport = model.interests.comprehensive.length
+    ? `<div class="print-interest-group"><h3>학생부종합</h3><table><thead><tr><th>대학</th><th>모집단위 · 전형</th><th>학년도</th><th>전년도 등록자 내신 참고<br>(5등급 참고 / 원본)</th></tr></thead><tbody>${comprehensiveInterestRows(model.interests.comprehensive)}</tbody></table></div>`
+    : '';
+  const interestReport = subjectInterestReport || comprehensiveInterestReport
+    ? `${subjectInterestReport}${comprehensiveInterestReport}${sourceNotes(model)}`
     : '<p>저장된 관심 대학이 없습니다.</p>';
 
-  return `<div class="print-page"><div class="print-sheet print-sheet-primary"><h1>${escapeHtml(model.title)}</h1><dl class="print-student"><div><dt>학번</dt><dd>${escapeHtml(model.student.studentId || '-')}</dd></div><div><dt>이름</dt><dd>${escapeHtml(model.student.studentName || '-')}</dd></div><div><dt>작성일</dt><dd>${escapeHtml(model.student.generatedAt)}</dd></div></dl><section><h2>현재 성적 요약</h2><div class="print-summary"><div><span>현재 전체 내신</span><strong>${fmt(model.current.average)}</strong></div><div><span>입력 완료 학기</span><strong>${model.current.completedSemesterCount} / ${SEMESTERS.length}</strong></div><div><span>성적 입력</span><strong>${escapeHtml(model.current.inputStatus)}</strong></div></div><p>계산 기준: ${escapeHtml(model.current.calculationBasis)}</p><p>학점 정보: ${escapeHtml(model.current.creditSummary)}</p></section><section><h2>학기별 성적 분석</h2><table class="print-semester-table"><thead><tr><th>학기</th><th>평균 등급</th><th>입력 상태</th></tr></thead><tbody>${semesterRows(model)}</tbody></table></section><section><h2>교과별 요약</h2><table class="print-subject-table"><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects}</tbody></table></section><section><h2>목표 내신 시뮬레이션</h2>${goalHtml}</section></div><div class="print-sheet print-sheet-secondary"><section class="print-admission-section"><h2>관심 대학 전년도 입시결과 참고</h2>${interestReport}</section>${appendix}<section class="print-notice-section"><h2>안내</h2><p class="print-note">${escapeHtml(model.notices.conversion)}</p><p class="print-note">${escapeHtml(model.notices.comprehensive)}</p><p class="print-note">본 결과표는 성적 수치와 전년도 공개 자료를 확인하기 위한 상담 참고자료이며 대학 합격 가능성을 의미하지 않습니다.</p></section></div></div>`;
+  return `<div class="print-page"><div class="print-sheet print-sheet-primary"><h1>${escapeHtml(model.title)}</h1><dl class="print-student"><div><dt>학번</dt><dd>${escapeHtml(model.student.studentId || '-')}</dd></div><div><dt>이름</dt><dd>${escapeHtml(model.student.studentName || '-')}</dd></div><div><dt>작성일</dt><dd>${escapeHtml(model.student.generatedAt)}</dd></div></dl><section><h2>현재 성적 요약</h2><div class="print-summary"><div class="print-key-metric"><span>현재 전체 내신</span><strong>${fmt(model.current.average)}</strong></div><div><span>입력 완료 학기</span><strong>${model.current.completedSemesterCount} / ${SEMESTERS.length}</strong></div><div><span>성적 입력</span><strong>${escapeHtml(model.current.inputStatus)}</strong></div></div><p class="print-meta-row"><span>계산 기준: ${escapeHtml(model.current.calculationBasis)}</span><span>학점 정보: ${escapeHtml(model.current.creditSummary)}</span></p></section><section><h2>학기별 성적 분석</h2><table class="print-semester-table"><thead><tr><th>학기</th><th>평균 등급</th><th>입력 상태</th></tr></thead><tbody>${semesterRows(model)}</tbody></table></section><section><h2>교과별 요약</h2><table class="print-subject-table"><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects}</tbody></table></section><section><h2>목표 내신 시뮬레이션</h2>${goalHtml}</section></div><div class="print-sheet print-sheet-secondary"><section class="print-admission-section"><h2>관심 대학 전년도 입시결과 참고</h2>${interestReport}</section>${appendix}<section class="print-notice-section"><h2>안내</h2><div class="print-notice-grid"><p class="print-note">${escapeHtml(model.notices.conversion)}</p><p class="print-note">${escapeHtml(model.notices.comprehensive)}</p><p class="print-note">본 결과표는 성적 수치와 전년도 공개 자료를 확인하기 위한 상담 참고자료이며 대학 합격 가능성을 의미하지 않습니다.</p></div></section></div></div>`;
 }
