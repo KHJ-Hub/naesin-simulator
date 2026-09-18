@@ -6,6 +6,7 @@ import {
 } from './admission-record-normalizer.mjs';
 import { ADMISSION_ELIGIBILITY_TYPES, isStudentVisibleAdmissionForSchool } from './admission-eligibility.mjs';
 import { UNIVERSITIES, UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
+import { normalizeUniversityOwnership } from './data/university-ownership-2026.mjs';
 
 /** 대학 감사에서 사용하는 지역 순서를 학생 검색에도 그대로 적용한다. */
 export const ADMISSION_REGION_ORDER = Object.freeze([
@@ -43,6 +44,13 @@ export const ADMISSION_ACADEMIC_FIELD_FILTERS = Object.freeze([
   ADMISSION_ACADEMIC_FIELDS.ARTS,
   'other-unknown',
 ]);
+
+export const ADMISSION_OWNERSHIP_TYPES = Object.freeze(['national', 'public', 'private']);
+export const ADMISSION_OWNERSHIP_LABELS = Object.freeze({
+  national: '국립',
+  public: '공립',
+  private: '사립',
+});
 
 const koSort = (left, right) => String(left).localeCompare(String(right), 'ko');
 const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort(koSort);
@@ -82,6 +90,14 @@ function universityInfo(item = {}) {
     ?? UNIVERSITY_BY_NAME[item.university]
     ?? null;
 }
+function itemOwnership(item = {}) {
+  return normalizeUniversityOwnership(
+    item.ownership
+    ?? item.universityInfo?.ownership
+    ?? universityInfo(item)?.ownership
+    ?? item.establishmentType,
+  );
+}
 function genderConditionMatches(item = {}, schoolGender = '') {
   if (!schoolGender || schoolGender === 'coeducational' || schoolGender === 'female') return true;
   return universityInfo(item)?.undergraduateGender !== 'women-only';
@@ -120,6 +136,7 @@ function matches(item, filters = {}, ignored = []) {
   const academicField = selectedAcademicField(filters);
   return (
     (skip.has('region') || !filters.region || normalizeAdmissionRegion(item.region) === normalizeAdmissionRegion(filters.region))
+    && (skip.has('ownership') || !filters.ownership || itemOwnership(item) === normalizeUniversityOwnership(filters.ownership))
     && (skip.has('university') || !filters.university || item.university === filters.university)
     && (skip.has('academicField') || !academicField || academicFieldMatches(item, academicField))
     && (skip.has('department') || !filters.department || departmentMatchesSearch(item, filters.department))
@@ -177,6 +194,7 @@ export function traceAdmissionFilterPipeline(data, filters = {}) {
     records = snapshot(stage, applied ? records.filter(predicate) : records, applied);
   };
   filterStep('region', (item) => normalizeAdmissionRegion(item.region) === normalizeAdmissionRegion(filters.region), Boolean(filters.region));
+  filterStep('ownership', (item) => itemOwnership(item) === normalizeUniversityOwnership(filters.ownership), Boolean(filters.ownership));
   filterStep('university', (item) => item.university === filters.university, Boolean(filters.university));
   const academicField = selectedAcademicField(filters);
   filterStep('academic-field', (item) => academicFieldMatches(item, academicField), Boolean(academicField));
@@ -197,10 +215,19 @@ export function getAvailableUniversities(data, filters = {}, universities = UNIV
   // 대학 자체와 입시결과 공개 여부는 별개다. 대학 목록은 마스터의 지역만으로 만들고,
   // 계열·전형·자격 및 입시결과 레코드 존재 여부는 대학 선택 후 결과 조회에만 적용한다.
   const selectedRegion = normalizeAdmissionRegion(filters.region);
+  const selectedOwnership = normalizeUniversityOwnership(filters.ownership);
   const entries = masterUniversities(universities)
     .filter((item) => !selectedRegion || item.region === selectedRegion)
+    .filter((item) => !selectedOwnership || normalizeUniversityOwnership(item.ownership ?? item.establishmentType) === selectedOwnership)
     .filter((item) => genderConditionMatches(item, filters.schoolGender));
   return uniqueSorted(entries.map((item) => item.name));
+}
+
+export function getAvailableOwnershipTypes(universities = UNIVERSITIES) {
+  const present = new Set(masterUniversities(universities)
+    .map((item) => normalizeUniversityOwnership(item.ownership ?? item.establishmentType))
+    .filter(Boolean));
+  return ADMISSION_OWNERSHIP_TYPES.filter((ownership) => present.has(ownership));
 }
 
 export function getAvailableAcademicFields(data, filters = {}) {
@@ -284,6 +311,7 @@ export function summarizeAdmissionAcademicFields(data) {
 export function reconcileAdmissionFilters(data, filters = {}, universities = UNIVERSITIES) {
   const next = {
     region: normalizeAdmissionRegion(filters.region),
+    ownership: normalizeUniversityOwnership(filters.ownership) ?? '',
     university: String(filters.university ?? ''),
     field: String(selectedAcademicField(filters)),
     department: String(filters.department ?? ''),
@@ -295,6 +323,7 @@ export function reconcileAdmissionFilters(data, filters = {}, universities = UNI
   };
 
   if (next.region && !getAvailableRegions(data, next, universities).includes(next.region)) next.region = '';
+  if (next.ownership && !getAvailableOwnershipTypes(universities).includes(next.ownership)) next.ownership = '';
   if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', admissionName: '' }, universities).includes(next.university)) next.university = '';
   if (next.field && !getAvailableAcademicFields(data, { ...next, department: '', admissionName: '' }).includes(next.field)) next.field = '';
   if (next.department && !searchAvailableDepartments(data, { ...next, department: '', admissionName: '' }, next.department, { limit: 1 }).length) next.department = '';

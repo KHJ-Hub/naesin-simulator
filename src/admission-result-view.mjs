@@ -4,6 +4,7 @@ import {
   getAvailableAdmissionNames,
   getAvailableDepartments,
   getAvailableRegions,
+  getAvailableOwnershipTypes,
   getAvailableUniversities,
   normalizeAdmissionRegion,
   searchAvailableDepartments,
@@ -201,13 +202,14 @@ function groupView(entries, limit, options = {}) {
 /** 선택된 최상위 모드 안에서만 종속 필터 선택지를 계산한다. */
 export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, filters = {} } = {}) {
   const admissionCategory = admissionCategoryForViewMode(admissionViewMode);
-  if (!admissionCategory) return Object.freeze({ regions: [], universities: [], academicFields: [], departments: [], departmentSuggestions: [], admissionNames: [] });
+  if (!admissionCategory) return Object.freeze({ regions: [], ownershipTypes: [], universities: [], academicFields: [], departments: [], departmentSuggestions: [], admissionNames: [] });
   const scopedFilters = { ...filters, admissionCategory };
   const visibility = {
     admissionCategory,
     includeSpecialEligibility: filters.includeSpecialEligibility === true,
     schoolRegion: filters.schoolRegion,
     schoolGender: filters.schoolGender,
+    ownership: filters.ownership,
   };
   const regions = getAvailableRegions(data, visibility);
   const departmentSuggestions = filters.department
@@ -215,6 +217,7 @@ export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, 
     : [];
   return Object.freeze({
     regions: Object.freeze(regions),
+    ownershipTypes: Object.freeze(getAvailableOwnershipTypes()),
     universities: Object.freeze(getAvailableUniversities(data, { ...visibility, region: filters.region })),
     academicFields: Object.freeze(getAvailableAcademicFields(data, scopedFilters)),
     departments: Object.freeze(filters.university ? getAvailableDepartments(data, scopedFilters) : []),
@@ -226,6 +229,7 @@ export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, 
 export function reconcileAdmissionViewFilters(data, { admissionViewMode = null, filters = {} } = {}) {
   const next = {
     region: normalizeAdmissionRegion(filters.region),
+    ownership: String(filters.ownership ?? ''),
     university: String(filters.university ?? ''),
     field: String(filters.field ?? filters.academicField ?? ''),
     department: String(filters.department ?? ''),
@@ -234,9 +238,11 @@ export function reconcileAdmissionViewFilters(data, { admissionViewMode = null, 
     schoolRegion: String(filters.schoolRegion ?? ''),
     schoolGender: String(filters.schoolGender ?? ''),
   };
-  if (!normalizeAdmissionViewMode(admissionViewMode)) return { ...next, region: '', university: '', field: '', department: '', admissionName: '' };
+  if (!normalizeAdmissionViewMode(admissionViewMode)) return { ...next, region: '', ownership: '', university: '', field: '', department: '', admissionName: '' };
   let options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
   if (next.region && !options.regions.includes(next.region)) next.region = '';
+  options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
+  if (next.ownership && !options.ownershipTypes.includes(next.ownership)) next.ownership = '';
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
   if (next.university && !options.universities.includes(next.university)) next.university = '';
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });

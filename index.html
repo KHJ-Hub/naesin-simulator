@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
     <title>배정고 내신 설계 노트</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-print-readable1" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-ownership1" />
   </head>
   <body>
     <main class="app-shell">
@@ -55,6 +55,7 @@
           <div class="admission-filters" id="admission-filters">
             <div class="admission-filter-grid">
               <label>지역<select id="admission-region" class="input"><option value="">전체 지역</option></select></label>
+              <label>설립유형<select id="admission-ownership" class="input"><option value="">전체</option><option value="national">국립</option><option value="public">공립</option><option value="private">사립</option></select></label>
               <label>대학<select id="admission-university" class="input"><option value="">전체 대학</option></select></label>
               <label>계열<select id="admission-field" class="input"><option value="">전체 계열</option></select></label>
               <div class="admission-filter-field admission-department-field"><label for="admission-department">학과/모집단위 검색</label><input id="admission-department" class="input" type="search" autocomplete="off" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-controls="admission-department-suggestions" aria-expanded="false" placeholder="학과/모집단위 검색 (예: 경제, 간호, 공학)" /><div id="admission-department-suggestions" class="admission-department-suggestions" role="listbox" hidden></div></div>
@@ -74,6 +75,6 @@
     </main>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260918-baejeong-branding1"></script>
+    <script type="module" src="./src/app.mjs?v=20260918-ownership1"></script>
   </body>
 </html>

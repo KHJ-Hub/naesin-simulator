@@ -15,7 +15,7 @@ import {
   findLocalAdmissionComparisons,
   renderLocalAdmissionComparison,
 } from './admission-local-comparison.mjs';
-import { ADMISSION_ACADEMIC_FIELD_LABELS } from './admission-filter-options.mjs';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS } from './admission-filter-options.mjs';
 import {
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
@@ -51,7 +51,7 @@ const universityResultLimits = new Map();
 
 function defaultAdmissionFilters() {
   return {
-    region: '', university: '', field: '', department: '', admissionName: '',
+    region: '', ownership: '', university: '', field: '', department: '', admissionName: '',
     schoolRegion: schoolSettings.schoolRegion,
     schoolGender: schoolSettings.schoolGender,
   };
@@ -138,6 +138,7 @@ function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
   const configurations = [
     ['region', '#consult-admission-region', options.regions, '전체 지역'],
+    ['ownership', '#consult-admission-ownership', options.ownershipTypes, '전체', ADMISSION_OWNERSHIP_LABELS],
     ['university', '#consult-admission-university', options.universities, '전체 대학'],
     ['field', '#consult-admission-field', options.academicFields, '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
     ['admissionName', '#consult-admission-name', options.admissionNames, '전체 전형명'],
@@ -348,6 +349,7 @@ document.querySelectorAll('input[name="consult-comparison-basis"]').forEach((inp
 
 const filterMap = {
   'consult-admission-region': 'region',
+  'consult-admission-ownership': 'ownership',
   'consult-admission-university': 'university',
   'consult-admission-field': 'field',
   'consult-admission-name': 'admissionName',

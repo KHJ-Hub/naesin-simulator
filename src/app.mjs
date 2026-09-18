@@ -12,7 +12,7 @@ import { commonCourses, catalogCourseById as courseById, coursesForSemester, sel
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
 import { ADMISSION_REFERENCE_DATA, ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields3';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
-import { ADMISSION_ACADEMIC_FIELD_LABELS } from './admission-filter-options.mjs?v=20260917-major-search1';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS } from './admission-filter-options.mjs?v=20260918-ownership1';
 import {
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
@@ -24,7 +24,7 @@ import {
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
-} from './admission-result-view.mjs?v=20260917-accordion-sort1';
+} from './admission-result-view.mjs?v=20260918-ownership1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260918-interest-session1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260918-print-readable1';
@@ -64,7 +64,7 @@ const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
 const schoolSettings = getSchoolSettings(localStorage);
 const admissionFilters = {
-  region: '', university: '', field: '', department: '', admissionName: '',
+  region: '', ownership: '', university: '', field: '', department: '', admissionName: '',
   schoolRegion: schoolSettings.schoolRegion,
   schoolGender: schoolSettings.schoolGender,
 };
@@ -353,7 +353,7 @@ function setAdmissionViewMode(mode) {
   if (normalized === admissionViewMode) return;
   closeDepartmentSuggestions();
   admissionViewMode = normalized;
-  Object.assign(admissionFilters, { region: '', university: '', field: '', department: '', admissionName: '' });
+  Object.assign(admissionFilters, { region: '', ownership: '', university: '', field: '', department: '', admissionName: '' });
   resetAdmissionViewPaging();
 }
 function ensureAdmissionViewModeControls() {
@@ -395,6 +395,7 @@ function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(ADMISSION_REFERENCE_DATA, { admissionViewMode, filters: admissionFilters });
   const configurations = [
     ['region', 'admission-region', options.regions, '전체 지역'],
+    ['ownership', 'admission-ownership', options.ownershipTypes, '전체', ADMISSION_OWNERSHIP_LABELS],
     ['university', 'admission-university', options.universities, '전체 대학'],
     ['field', 'admission-field', options.academicFields, '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
     ['admissionName', 'admission-name', options.admissionNames, '전체 전형명'],
@@ -679,7 +680,7 @@ $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculat
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
 document.querySelector('#admission-filters').addEventListener('change', (event) => {
-  const map = { 'admission-region': 'region', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName' };
+  const map = { 'admission-region': 'region', 'admission-ownership': 'ownership', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName' };
   const key = map[event.target.id];
   if (!key) return;
   if (key === 'department') {
@@ -915,6 +916,7 @@ $('#reset-button').addEventListener('click', () => {
   state = defaultState();
   admissionViewMode = null;
   admissionFilters.region = '';
+  admissionFilters.ownership = '';
   admissionFilters.university = '';
   admissionFilters.field = '';
   admissionFilters.department = '';

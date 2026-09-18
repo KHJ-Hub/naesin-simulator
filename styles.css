@@ -3625,7 +3625,7 @@ h3:not(.hero-grid h2),
 .consult-choice-group { display:flex; align-items:center; gap:15px; min-width:0; margin:0; padding:12px 14px; border:1px solid var(--lavender-200); border-radius:13px; background:var(--lavender-50); }
 .consult-choice-group legend { float:left; margin-right:auto; color:var(--accent-strong); font-size:.82rem; font-weight:800; }
 .consult-choice-group label { display:flex; align-items:center; gap:6px; color:var(--ink); font-size:.84rem; font-weight:700; }
-.consult-filter-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+.consult-filter-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
 .consult-filter-grid .input { min-width:0; }
 .consult-admission-view-button { margin:12px 0 0; }
 .consult-admission-panel .admission-conversion-notice { margin:12px 0; }

@@ -15,6 +15,11 @@ import { universities2026Jeonnam } from './university-regions/2026/jeonnam.mjs';
 import { universities2026Jeonbuk } from './university-regions/2026/jeonbuk.mjs';
 import { universities2026Gangwon } from './university-regions/2026/gangwon.mjs';
 import { universities2026Jeju } from './university-regions/2026/jeju.mjs';
+import {
+  UNIVERSITY_OWNERSHIP_2026_BY_ID,
+  UNIVERSITY_OWNERSHIP_SOURCE_2026,
+  normalizeUniversityOwnership,
+} from './university-ownership-2026.mjs';
 
 /**
  * 대학 기본정보. 입시결과 행에는 대학명과 URL을 반복 저장하지 않는다.
@@ -166,6 +171,15 @@ export const UNIVERSITIES = Object.freeze(mergeCatalogs(
   ADIGA_UNIVERSITIES_2026,
 ).map((university) => Object.freeze({
   ...university,
+  // 대학명으로 추정하지 않고 한국대학교육협의회 공식 설립형태를 canonical 값으로 연결한다.
+  ownership: UNIVERSITY_OWNERSHIP_2026_BY_ID[university.universityId]?.ownership
+    ?? normalizeUniversityOwnership(university.ownership ?? university.establishmentType),
+  officialEstablishmentType: UNIVERSITY_OWNERSHIP_2026_BY_ID[university.universityId]?.officialEstablishmentType
+    ?? university.establishmentType
+    ?? null,
+  ownershipSourceUrl: UNIVERSITY_OWNERSHIP_2026_BY_ID[university.universityId]
+    ? UNIVERSITY_OWNERSHIP_SOURCE_2026.url
+    : null,
   // 학교 성별 조건은 입결 유무와 별개의 대학 마스터 속성이다.
   undergraduateGender: university.name.includes('여자대학교') ? 'women-only' : 'coeducational-or-unspecified',
 })));
