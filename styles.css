@@ -2935,67 +2935,143 @@ h3:not(.hero-grid h2),
   line-height: 1.2;
 }
 
-.grade-position-scales { display: grid; gap: 14px; }
+.grade-position-values small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+.grade-position-scales { display: grid; gap: 12px; }
+
+.grade-position-scale {
+  min-width: 0;
+  padding: 11px 12px 9px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffafd;
+}
 
 .grade-position-scale-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 23px;
+  margin-bottom: 0;
   color: var(--muted);
   font-size: .82rem;
 }
 
 .grade-position-scale-heading strong { color: var(--ink); }
 
-.grade-position-track {
+.grade-position-chart {
   position: relative;
-  height: 13px;
-  border: 1px solid rgba(106, 90, 205, .13);
-  border-radius: 999px;
-  background: linear-gradient(90deg, #8f7de1 0%, #b6a9ed 27%, #e8b7d2 62%, #f4d9e5 100%);
+  margin-top: 28px;
+}
+
+.grade-position-bands {
+  display: grid;
+  grid-template-columns: var(--grade-band-columns);
+  height: 42px;
+  overflow: hidden;
+  border: 1px solid rgba(88, 70, 145, .2);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+.grade-position-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  border-right: 2px solid rgba(255,255,255,.85);
+  color: #fff;
+  line-height: 1;
+  text-align: center;
+}
+
+.grade-position-band:last-child { border-right: 0; }
+.grade-position-band b { font-size: clamp(.75rem, 1.15vw, .9rem); }
+.grade-position-band small { font-size: .58rem; font-weight: 800; }
+
+.grade-position-scale[data-scale="5"] .grade-position-band:nth-child(1) { background: #6858c5; }
+.grade-position-scale[data-scale="5"] .grade-position-band:nth-child(2) { background: #8d7cd5; }
+.grade-position-scale[data-scale="5"] .grade-position-band:nth-child(3) { background: #b3a5e2; color: #3f365d; }
+.grade-position-scale[data-scale="5"] .grade-position-band:nth-child(4) { background: #ddb0ce; color: #583b50; }
+.grade-position-scale[data-scale="5"] .grade-position-band:nth-child(5) { background: #f2cfdd; color: #583b50; }
+
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(1) { background: #6554c2; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(2) { background: #7565ca; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(3) { background: #8979d2; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(4) { background: #a092db; color: #3f365d; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(5) { background: #b9a9e2; color: #3f365d; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(6) { background: #d0b2dc; color: #503b54; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(7) { background: #e1b9d1; color: #583b50; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(8) { background: #ecc5d5; color: #583b50; }
+.grade-position-scale[data-scale="9"] .grade-position-band:nth-child(9) { background: #f5d8e2; color: #583b50; }
+.grade-position-scale[data-scale="9"] .grade-position-band {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.05;
+}
+
+.grade-position-percent-axis {
+  position: relative;
+  height: 12px;
+  margin-top: 7px;
+  color: #756c78;
+  font-size: .62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.grade-position-percent-axis span {
+  position: absolute;
+  left: var(--grade-boundary);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.grade-position-percent-axis span:last-child { transform: translateX(-100%); }
+.grade-position-scale[data-scale="5"] .grade-position-percent-axis span:nth-last-child(2),
+.grade-position-scale[data-scale="9"] .grade-position-percent-axis span:nth-last-child(3) { transform: translateX(-100%); }
+.grade-position-scale[data-scale="9"] .grade-position-percent-axis span:nth-child(8) { display: none; }
+
+.grade-position-axis-caption {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .64rem;
+  text-align: right;
 }
 
 .grade-position-marker {
   position: absolute;
-  top: -5px;
-  left: clamp(1px, var(--grade-position), calc(100% - 1px));
-  width: 3px;
-  height: 23px;
+  top: -4px;
+  left: clamp(8px, var(--grade-position), calc(100% - 8px));
+  width: 4px;
+  height: 50px;
   border-radius: 99px;
-  background: #8c2f68;
-  box-shadow: 0 0 0 3px rgba(255,255,255,.88), 0 2px 7px rgba(92,40,76,.28);
+  background: #9d2d6d;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.92), 0 2px 8px rgba(92,40,76,.38);
   transform: translateX(-50%);
 }
 
 .grade-position-marker b {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 5px);
-  padding: 2px 6px;
+  bottom: calc(100% + 4px);
+  padding: 3px 7px;
   border-radius: 999px;
-  background: #8c2f68;
+  background: #9d2d6d;
   color: #fff;
-  font-size: .65rem;
+  font-size: .66rem;
   font-style: normal;
   line-height: 1.3;
   white-space: nowrap;
   transform: translateX(-50%);
 }
-
-.grade-position-ticks {
-  display: grid;
-  grid-template-columns: repeat(var(--grade-tick-count), 1fr);
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: .67rem;
-  line-height: 1;
-}
-
-.grade-position-ticks span { text-align: center; }
-.grade-position-ticks span:first-child { text-align: left; }
-.grade-position-ticks span:last-child { text-align: right; }
 
 .grade-position-note {
   margin: 15px 0 0;
@@ -3012,7 +3088,12 @@ h3:not(.hero-grid h2),
   .flow-column { margin-top: 0; gap: 16px; }
   .grade-position-values { margin-bottom: 16px; }
   .grade-position-values > div { padding: 9px 10px; }
-  .grade-position-scales { gap: 16px; }
+  .grade-position-scales { gap: 12px; }
+  .grade-position-scale { padding-inline: 9px; }
+  .grade-position-bands { height: 40px; }
+  .grade-position-scale[data-scale="9"] .grade-position-band { gap: 0; }
+  .grade-position-scale[data-scale="9"] .grade-position-band small { display: none; }
+  .grade-position-scale[data-scale="9"] .grade-position-percent-axis span:nth-child(even) { visibility: hidden; }
   .grade-position-note br { display: none; }
 }
 

@@ -37,7 +37,7 @@ import {
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
 import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260917-integrated-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
-import { buildGradePositionModel } from './grade-position.mjs?v=20260918-grade-position1';
+import { buildGradePositionModel } from './grade-position.mjs?v=20260918-grade-position2';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -296,9 +296,12 @@ function renderSemesterSummary() {
     return `<div class="bar-item"><div><span>${semester.label}</span></div><div class="bar-track"><i class="bar-fill" style="width:${width}%"></i></div><strong>${fmt(average)}</strong></div>`;
   }).join('');
 }
-function gradeScaleHtml({ label, value, position, maximum }) {
-  const ticks = Array.from({ length: maximum }, (_, index) => `<span>${index + 1}</span>`).join('');
-  return `<div class="grade-position-scale"><div class="grade-position-scale-heading"><span>${label}</span><strong>${fmt(value)}</strong></div><div class="grade-position-track" style="--grade-position:${position}%"><i class="grade-position-marker" aria-hidden="true"><b>현재</b></i></div><div class="grade-position-ticks" style="--grade-tick-count:${maximum}">${ticks}</div></div>`;
+function gradeScaleHtml({ label, value, position, scale }) {
+  const segments = Array.from({ length: scale.scale }, (_, index) => `<span class="grade-position-band" aria-label="${index + 1}등급"><b>${index + 1}</b><small>등급</small></span>`).join('');
+  const percentages = scale.cumulativePercentages.map((percentage) => `<span style="--grade-boundary:${percentage}%">${percentage}%</span>`).join('');
+  const description = scale.cumulativePercentages.map((percentage, index) => `${index + 1}등급 ${percentage}%`).join(', ');
+  const columns = scale.bandPercentages.map((percentage) => `${percentage}fr`).join(' ');
+  return `<div class="grade-position-scale" data-scale="${scale.scale}" role="img" aria-label="${label}, 현재 ${fmt(value)}등급. 누적 비율 경계 ${description}"><div class="grade-position-scale-heading"><span>${label}</span><strong>${fmt(value)}</strong></div><div class="grade-position-chart" style="--grade-position:${position}%;--grade-band-columns:${columns}"><div class="grade-position-bands">${segments}</div><i class="grade-position-marker" aria-hidden="true"><b>현재</b></i></div><div class="grade-position-percent-axis" aria-hidden="true">${percentages}</div><small class="grade-position-axis-caption">누적 비율 경계</small></div>`;
 }
 function renderGradePosition() {
   const container = $('#grade-position');
@@ -308,7 +311,7 @@ function renderGradePosition() {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 현재 등급 위치를 확인할 수 있어요.</div>';
     return;
   }
-  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong></div></div><div class="grade-position-scales">${gradeScaleHtml({ label: '5등급제 구간', value: model.grade5, position: model.grade5Position, maximum: 5 })}${gradeScaleHtml({ label: '9등급제 구간', value: model.grade9, position: model.grade9Position, maximum: 9 })}</div><p class="grade-position-note">현재 내신을 기준으로 5등급제와 9등급제 위치를 참고용으로 보여줍니다.<br />교육청 환산 기준 참고값이며, 실제 대학별 반영 방식과 다를 수 있습니다.</p>`;
+  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div><div class="grade-position-scales">${gradeScaleHtml({ label: '5등급제 구간', value: model.grade5, position: model.grade5Position, scale: model.grade5Scale })}${gradeScaleHtml({ label: '9등급제 구간', value: model.grade9, position: model.grade9Position, scale: model.grade9Scale })}</div><p class="grade-position-note">현재 내신을 기준으로 5등급제와 9등급제 위치를 참고용으로 보여줍니다.<br />교육청 환산 기준 참고값이며, 실제 대학별 반영 방식과 다를 수 있습니다.</p>`;
 }
 function renderSubjectSummary() {
   if (usesQuickAverage()) {
