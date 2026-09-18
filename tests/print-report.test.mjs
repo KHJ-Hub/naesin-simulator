@@ -81,6 +81,23 @@ test('세 목표 시나리오는 학기별 한 줄만 포함하고 중복되지 
   });
 });
 
+test('인쇄용 목표 시나리오는 학기별 하나의 통합 표로 출력한다', () => {
+  const html = renderPrintReport(buildPrintReportModel(baseState(), { remainingRecords }));
+  assert.equal((html.match(/class="print-scenario-table"/g) ?? []).length, 1);
+  assert.match(html, /<th>학기<\/th><th>균형형<\/th><th>초반 집중형<\/th><th>후반 상승형<\/th>/);
+  assert.equal((html.match(/예상 최종 내신/g) ?? []).length, 1);
+});
+
+test('인쇄 결과는 성적·목표 1면과 관심 대학·안내 2면 구조를 가진다', () => {
+  const html = renderPrintReport(buildPrintReportModel(baseState(), { remainingRecords }));
+  const primary = html.indexOf('print-sheet-primary');
+  const secondary = html.indexOf('print-sheet-secondary');
+  assert.ok(primary >= 0 && secondary > primary);
+  assert.ok(html.indexOf('목표 내신 시뮬레이션') < secondary);
+  assert.ok(html.indexOf('관심 대학 전년도 입시결과 참고') > secondary);
+  assert.ok(html.indexOf('안내') > secondary);
+});
+
 test('관심 대학만 교과와 학종으로 분리하고 최신 내신으로 비교값을 다시 계산한다', () => {
   const model = buildPrintReportModel(baseState(), { remainingRecords });
   assert.equal(model.interests.subject.length, 1);
