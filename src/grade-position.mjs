@@ -13,6 +13,8 @@ export const GRADE_POSITION_SCALES = Object.freeze({
   }),
 });
 
+export const GRADE_POSITION_COMMON_AXIS = Object.freeze([4, 10, 23, 34, 60, 77, 90, 100]);
+
 function positionInGradeDistribution(value, scale) {
   const number = Number(value);
   if (!Number.isFinite(number) || number < 1 || number > scale.scale) return null;
@@ -32,11 +34,12 @@ export function buildGradePositionModel(currentGrade) {
   if (!Number.isFinite(grade5) || grade5 < 1 || grade5 > 5) return null;
   const conversion = convertGrade5ToGrade9(grade5);
   if (!conversion) return null;
+  const commonPosition = positionInGradeDistribution(grade5, GRADE_POSITION_SCALES.grade5);
   return {
     grade5,
     grade9: conversion.convertedValue,
-    grade5Position: positionInGradeDistribution(grade5, GRADE_POSITION_SCALES.grade5),
-    grade9Position: positionInGradeDistribution(conversion.convertedValue, GRADE_POSITION_SCALES.grade9),
+    commonPosition,
+    commonAxisPercentages: GRADE_POSITION_COMMON_AXIS,
     grade5Scale: GRADE_POSITION_SCALES.grade5,
     grade9Scale: GRADE_POSITION_SCALES.grade9,
     conversionDataset: conversion.conversionDataset,
