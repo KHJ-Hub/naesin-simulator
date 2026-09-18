@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
     <title>배정고 내신 설계 노트</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-print-auto-pages1" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-teacher-consult1" />
   </head>
   <body>
     <main class="app-shell">
       <header class="topbar">
         <div class="brand"><span class="brand-icon" id="teacher-entry-trigger" role="button" tabindex="0" aria-label="배정고 내신 설계 노트">✨</span><div><h1>배정고 내신 설계 노트</h1><p class="eyebrow">현정T 제작 · 학생용 내신 시뮬레이터</p></div></div>
-        <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="reset-button" class="quiet-button">내 데이터 초기화</button><button id="export-button" class="secondary-button">내 데이터 백업</button><label class="secondary-button file-button">백업 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label></div>
+        <div class="header-controls">
+          <a class="teacher-consult-link" href="./teacher-consult.html" aria-label="교사용 빠른 상담 모드로 이동">🧑‍🏫 교사용 빠른 상담</a>
+          <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="reset-button" class="quiet-button">내 데이터 초기화</button><button id="export-button" class="secondary-button">내 데이터 백업</button><label class="secondary-button file-button">백업 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label></div>
+        </div>
       </header>
 
       <section class="notice-card"><strong>현재 화면에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송하거나 브라우저에 자동 저장하지 않습니다. 필요하면 백업 파일을 내려받아 보관해 주세요.</p></section>

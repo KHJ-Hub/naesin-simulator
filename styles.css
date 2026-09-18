@@ -2626,6 +2626,95 @@ h3:not(.hero-grid h2),
 }
 
 
+/* Teacher quick-consult entry: separate from the hidden course-management shortcut. */
+.header-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  min-width: 0;
+}
+
+.header-controls .top-actions {
+  grid-column: 1 / -1;
+}
+
+.teacher-consult-link {
+  display: inline-flex;
+  grid-column: 2;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1px solid var(--lavender-200);
+  border-radius: 12px;
+  background: #fafaff;
+  color: var(--lavender-500);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.teacher-consult-link:hover {
+  border-color: var(--lavender-300);
+  background: var(--lavender-100);
+}
+
+.teacher-consult-link:focus-visible {
+  outline: 3px solid rgba(106, 90, 205, .25);
+  outline-offset: 2px;
+}
+
+.teacher-consult-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.teacher-consult-placeholder > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--lavender-100);
+  font-size: 1.65rem;
+}
+
+.teacher-consult-placeholder h2,
+.teacher-consult-placeholder p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .brand > div {
+    min-width: 0;
+  }
+
+  .brand h1 {
+    font-size: clamp(20px, 5.4vw, 22px);
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .header-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-consult-link {
+    grid-column: 1;
+    justify-self: stretch;
+  }
+
+  .teacher-consult-placeholder {
+    align-items: flex-start;
+  }
+}
+
+
 /* Admission results: concise university-by-university accordions */
 .admission-reference-result {
   display: grid;
