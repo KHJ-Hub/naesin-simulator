@@ -9,18 +9,13 @@ const [html, app, teacherConsultHtml, styles] = await Promise.all([
   readFile(new URL('../styles.css', import.meta.url), 'utf8'),
 ]);
 
-test('백업 버튼 근처에 수동 보존 안내를 표시한다', () => {
-  const actionsIndex = html.indexOf('class="top-actions"');
-  const guidanceIndex = html.indexOf('class="backup-guidance"');
-  const headerEndIndex = html.indexOf('</header>', guidanceIndex);
-
-  assert.ok(actionsIndex >= 0);
-  assert.ok(guidanceIndex > actionsIndex);
-  assert.ok(headerEndIndex > guidanceIndex);
-  assert.match(html, /다음에 이어서 사용하려면[\s\S]*‘내 데이터 백업’[\s\S]*다시 접속한 뒤[\s\S]*‘백업 불러오기’/);
-  assert.match(html, /입력 내용은 브라우저에 자동 저장되지 않습니다\./);
-  assert.match(styles, /\.backup-guidance\s*\{/);
-  assert.match(styles, /\.backup-guidance small\s*\{/);
+test('자동저장과 수동 백업 안내를 안전 안내 카드 한 곳에 통합한다', () => {
+  assert.doesNotMatch(html, /class="backup-guidance"/);
+  assert.match(html, /현재 화면에서만 안전하게 계산해요/);
+  assert.match(html, /입력한 성적은 서버로 전송되거나 브라우저에 자동 저장되지 않습니다\./);
+  assert.match(html, /다음에 이어서 사용하려면[\s\S]*‘내 데이터 백업’[\s\S]*다시 접속한 뒤[\s\S]*‘백업 불러오기’[\s\S]*복원하세요\./);
+  assert.equal((html.match(/class="backup-action-label"/g) ?? []).length, 2);
+  assert.match(styles, /\.notice-card \.backup-action-label\s*\{/);
 });
 
 test('학생 화면은 학번과 이름만 받고 다중 프로필 조작 UI를 만들지 않는다', () => {
