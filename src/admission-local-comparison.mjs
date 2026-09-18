@@ -7,12 +7,15 @@ import {
   normalizeAdmissionCategory,
 } from './admission-record-normalizer.mjs';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
+import { admissionMajorSimilarityTier, resolveAdmissionMajorTaxonomy } from './admission-major-taxonomy.mjs';
 import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 
 export const LOCAL_ADMISSION_SCOPES = Object.freeze({
   BUSAN: 'busan',
   BUSAN_ULSAN_GYEONGNAM: 'busan-ulsan-gyeongnam',
 });
+
+export const LOCAL_ADMISSION_RESULT_LIMIT = 3;
 
 export const LOCAL_ADMISSION_SCOPE_CONFIG = Object.freeze({
   [LOCAL_ADMISSION_SCOPES.BUSAN]: Object.freeze({
@@ -74,14 +77,14 @@ export function canCompareWithBusanAdmissions(item = {}) {
  */
 export function findLocalAdmissionComparisons(target = {}, data = [], {
   scope = LOCAL_ADMISSION_SCOPES.BUSAN,
-  limit = 5,
+  limit = LOCAL_ADMISSION_RESULT_LIMIT,
 } = {}) {
   const config = LOCAL_ADMISSION_SCOPE_CONFIG[scope] ?? LOCAL_ADMISSION_SCOPE_CONFIG[LOCAL_ADMISSION_SCOPES.BUSAN];
   const targetReference = getLocalComparisonReference(target);
   const targetCategory = normalizeAdmissionCategory(target.admissionCategory ?? target.category);
   const targetYear = Number(target.referenceYear ?? target.year);
   const targetField = normalizeAcademicField(target.academicField ?? target.field);
-  const validLimit = Math.max(1, Math.min(10, Number(limit) || 5));
+  const validLimit = Math.max(1, Math.min(LOCAL_ADMISSION_RESULT_LIMIT, Number(limit) || LOCAL_ADMISSION_RESULT_LIMIT));
   const comprehensive = isStudentRecordComprehensive(target);
 
   const empty = (reason) => Object.freeze({
@@ -94,6 +97,8 @@ export function findLocalAdmissionComparisons(target = {}, data = [], {
     admissionCategory: targetCategory,
     isComprehensive: comprehensive,
     usedAcademicFieldFallback: false,
+    comparisonTier: null,
+    targetMajorTaxonomy: resolveAdmissionMajorTaxonomy(target),
     results: Object.freeze([]),
   });
 
@@ -113,6 +118,7 @@ export function findLocalAdmissionComparisons(target = {}, data = [], {
     if (!reference || reference.kind !== targetReference.kind) return [];
     const field = normalizeAcademicField(candidate.academicField ?? candidate.field);
     const sameAcademicField = targetField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN && field === targetField;
+    const similarityTier = admissionMajorSimilarityTier(target, candidate);
     const difference = Number((reference.converted - targetReference.converted).toFixed(2));
     return [{
       item: candidate,
@@ -120,6 +126,7 @@ export function findLocalAdmissionComparisons(target = {}, data = [], {
       difference,
       absoluteDifference: Math.abs(difference),
       sameAcademicField,
+      similarityTier,
     }];
   });
 
@@ -127,9 +134,13 @@ export function findLocalAdmissionComparisons(target = {}, data = [], {
     || koSort(left.item.university, right.item.university)
     || koSort(left.item.department, right.item.department)
     || koSort(left.item.admissionName, right.item.admissionName);
-  const sameField = candidates.filter((entry) => entry.sameAcademicField).sort(sortClosest);
-  const otherFields = candidates.filter((entry) => !entry.sameAcademicField).sort(sortClosest);
-  const results = [...sameField, ...otherFields].slice(0, validLimit);
+  const tierOrder = ['major-group', 'detailed-field', 'academic-field', 'all-local'];
+  const comparisonTier = tierOrder.find((tier) => candidates.some((entry) => entry.similarityTier === tier)) ?? null;
+  // 더 낮은 우선순위 후보로 개수를 억지로 채우지 않는다.
+  const results = candidates
+    .filter((entry) => entry.similarityTier === comparisonTier)
+    .sort(sortClosest)
+    .slice(0, validLimit);
   if (!results.length) return empty('no-comparable-local-data');
 
   return Object.freeze({
@@ -141,7 +152,9 @@ export function findLocalAdmissionComparisons(target = {}, data = [], {
     targetReference,
     admissionCategory: targetCategory,
     isComprehensive: comprehensive,
-    usedAcademicFieldFallback: results.some((entry) => !entry.sameAcademicField),
+    usedAcademicFieldFallback: comparisonTier === 'all-local',
+    comparisonTier,
+    targetMajorTaxonomy: resolveAdmissionMajorTaxonomy(target),
     results: Object.freeze(results.map(Object.freeze)),
   });
 }
@@ -169,23 +182,28 @@ export function renderLocalAdmissionComparison(result = {}) {
     return `<section class="local-admission-comparison" aria-live="polite"><h4>${scopeLabel}에서 비슷한 입결</h4><p class="local-admission-empty">비교 가능한 ${scopeLabel} 입결 자료가 없습니다.</p></section>`;
   }
 
-  const target = result.target;
   const reference = result.targetReference;
   const comprehensive = result.isComprehensive;
   const title = comprehensive ? `${scopeLabel} 전년도 등록자 내신 참고` : `${scopeLabel}에서 비슷한 입결`;
-  const criteria = `${escapeHtml(result.admissionCategory)} · ${escapeHtml(reference.label)} · 5등급제 환산 기준`;
-  const rows = result.results.map(({ item, reference: candidateReference, difference }) => `
+  const criteria = `${escapeHtml(result.admissionCategory)} · ${escapeHtml(reference.label)} 기준`;
+  const rows = result.results.slice(0, LOCAL_ADMISSION_RESULT_LIMIT).map(({ item, reference: candidateReference, difference }, index) => `
     <li>
-      <span><strong>${escapeHtml(item.university)}</strong><small>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</small></span>
+      <span class="local-admission-rank" aria-label="${index + 1}순위">${index + 1}</span>
+      <span class="local-admission-result-copy"><strong>${escapeHtml(item.university)}</strong><small>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</small></span>
       <b>${formatGrade(candidateReference.converted)}</b>
-      <em>차이 ${signedDifference(difference)}</em>
+      <em title="입결 차이">${signedDifference(difference)}</em>
     </li>`).join('');
-  const fallback = result.usedAcademicFieldFallback
-    ? `<p class="local-admission-fallback">같은 계열의 비교 가능한 자료가 부족해 ${scopeLabel} 전체에서 함께 찾았습니다.</p>`
+  const fallbackMessages = {
+    'detailed-field': '유사 전공 자료가 없어 같은 세부 계열에서 찾았습니다.',
+    'academic-field': '유사 전공 자료가 없어 같은 큰 계열에서 찾았습니다.',
+    'all-local': `관련 전공 자료가 부족해 ${scopeLabel} 전체에서 찾았습니다.`,
+  };
+  const fallback = fallbackMessages[result.comparisonTier]
+    ? `<p class="local-admission-fallback">${fallbackMessages[result.comparisonTier]}</p>`
     : '';
   const notice = comprehensive
-    ? '학생부종합전형은 서류·활동·면접 등 다양한 요소를 함께 평가하므로 내신만으로 대학 수준이나 합격 가능성을 비교할 수 없습니다.'
-    : '대학의 전체적인 수준이나 선호도를 비교한 결과가 아니라, 공개된 전년도 입시결과 중 비슷한 등급대의 모집단위를 보여주는 참고자료입니다.';
+    ? '학생부종합은 내신 외 요소를 함께 평가하므로 등록자 내신 참고로만 확인하세요.'
+    : '대학의 서열이 아닌 전년도 입결 기준 참고입니다.';
 
-  return `<section class="local-admission-comparison" aria-live="polite"><header><h4>${title}</h4><p>${criteria}</p></header><div class="local-admission-target"><span>대상</span><strong>${escapeHtml(target.university)} · ${escapeHtml(target.department)}</strong><b>${formatGrade(reference.converted)}</b></div><h5>비슷한 ${scopeLabel} 모집단위</h5><ol>${rows}</ol>${fallback}<p class="local-admission-notice">${notice}</p></section>`;
+  return `<section class="local-admission-comparison" aria-live="polite"><header><h4>${title}</h4><p>${criteria}</p></header><ol>${rows}</ol>${fallback}<p class="local-admission-notice">${notice}</p></section>`;
 }

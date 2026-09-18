@@ -385,7 +385,7 @@ document.addEventListener('click', (event) => {
     if (!panel || !item) return;
     const isExpanded = localComparisonButton.getAttribute('aria-expanded') !== 'true';
     localComparisonButton.setAttribute('aria-expanded', String(isExpanded));
-    localComparisonButton.textContent = isExpanded ? '부산권 비교 닫기' : '부산 대학으로 치면?';
+    localComparisonButton.textContent = isExpanded ? '접기' : '부산 대학으로 치면?';
     panel.hidden = !isExpanded;
     if (isExpanded) panel.innerHTML = renderLocalAdmissionComparison(findLocalAdmissionComparisons(item, ADMISSION_REFERENCE_DATA));
     return;

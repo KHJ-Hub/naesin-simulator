@@ -33,7 +33,7 @@ import {
   canCompareWithBusanAdmissions,
   findLocalAdmissionComparisons,
   renderLocalAdmissionComparison,
-} from './admission-local-comparison.mjs?v=20260918-busan-comparison1';
+} from './admission-local-comparison.mjs?v=20260918-busan-compact1';
 import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
@@ -788,7 +788,7 @@ $('#admission-reference-result').addEventListener('click', (event) => {
     if (!panel || !item) return;
     const isExpanded = localComparisonButton.getAttribute('aria-expanded') !== 'true';
     localComparisonButton.setAttribute('aria-expanded', String(isExpanded));
-    localComparisonButton.textContent = isExpanded ? '부산권 비교 닫기' : '부산 대학으로 치면?';
+    localComparisonButton.textContent = isExpanded ? '접기' : '부산 대학으로 치면?';
     panel.hidden = !isExpanded;
     if (isExpanded) panel.innerHTML = renderLocalAdmissionComparison(findLocalAdmissionComparisons(item, ADMISSION_REFERENCE_DATA));
     return;
