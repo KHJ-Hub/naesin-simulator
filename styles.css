@@ -647,7 +647,7 @@ button,
 @media print {
   html,body { background:#fff!important; background-image:none!important; }
   body { color:#20232a; font-family:"Malgun Gothic",sans-serif; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
-  .app-shell,.toast { display:none!important; }
+  .app-shell,.teacher-shell,.toast { display:none!important; }
   .print-report { display:block; background:#fff; }
   .print-page { width:100%; font-size:9.4pt; line-height:1.42; }
   .print-sheet { width:100%; }
@@ -656,6 +656,7 @@ button,
   .print-sheet-secondary--has-interests { break-before:page; page-break-before:always; }
   .print-report-header { margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid #554da8; }
   .print-report-header p { margin:0 0 1mm; color:#17686d; font-size:8.3pt; font-weight:700; letter-spacing:.04em; }
+  .print-report-header .print-report-description { margin:1.6mm 0 0; color:#4f5663; font-size:8.5pt; font-weight:400; letter-spacing:0; }
   .print-page h1 { margin:0; color:#3e4387; font-size:19pt; line-height:1.2; letter-spacing:-.02em; }
   .print-page section { margin:0; }
   .print-sheet-secondary section + section { margin-top:5mm; }
@@ -3416,4 +3417,69 @@ h3:not(.hero-grid h2),
   .grade-position-comparison { grid-template-columns: 43px minmax(0, 1fr); gap: 6px; }
   .grade-position-row-labels strong { font-size: .68rem; }
   .grade-position-shared-marker b { font-size: .62rem; }
+}
+
+/* Teacher quick consultation: compact session-only workflow using the shared design system. */
+.teacher-consult-shell { width:min(1320px,100%); }
+.teacher-consult-header { align-items:center; }
+.teacher-consult-header .muted { margin:5px 0 0; }
+.teacher-consult-header-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+.teacher-consult-header-actions a { display:inline-flex; align-items:center; justify-content:center; }
+.consult-form { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:13px; align-items:end; }
+.consult-form > label,
+.consult-semester-average-grid label,
+.consult-filter-grid label { display:grid; gap:5px; min-width:0; color:var(--muted); font-size:.84rem; font-weight:800; }
+.consult-form label small { color:#7d8491; font-size:.72rem; font-weight:650; }
+.consult-semester-averages { grid-column:1 / -1; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface-soft); }
+.consult-semester-averages > summary { color:var(--accent-strong); font-weight:800; cursor:pointer; }
+.consult-semester-averages > summary small { color:var(--muted); font-size:.75rem; }
+.consult-semester-averages > p { margin:8px 0; font-size:.8rem; }
+.consult-semester-average-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+.consult-form-error { grid-column:1 / -1; margin:0; padding:10px 12px; border-radius:11px; background:var(--danger-soft); color:var(--danger); font-weight:800; }
+.consult-start-button { grid-column:1 / -1; justify-self:start; min-width:180px; }
+.consult-status-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.consult-status-grid article { padding:14px 15px; border:1px solid var(--lavender-200); border-radius:14px; background:var(--lavender-50); }
+.consult-status-grid span { display:block; color:var(--muted); font-size:.8rem; }
+.consult-status-grid strong { display:block; margin-top:5px; color:var(--accent-strong); font-size:clamp(1.05rem,1.5vw,1.35rem); }
+.consult-goal-summary { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:15px 17px; border:1px solid #b8d9d6; border-radius:15px; background:var(--teal-50); }
+.consult-goal-summary span { color:var(--teal-700); font-weight:800; }
+.consult-goal-summary strong { color:#175b60; font-size:clamp(1.05rem,1.6vw,1.35rem); }
+.consult-goal-summary.is-warning { border-color:#ead8b7; background:var(--warning-soft); }
+.consult-goal-summary.is-warning span,.consult-goal-summary.is-warning strong { color:var(--warning); }
+.consult-scenario-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.consult-scenario-card { padding:14px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.consult-scenario-card h3 { margin:0 0 8px; }
+.consult-scenario-card ul { display:grid; gap:4px; margin:0; padding:0; list-style:none; }
+.consult-scenario-card li { display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px solid var(--line); color:var(--muted); font-size:.82rem; }
+.consult-scenario-card li strong { color:var(--accent-strong); }
+.consult-scenario-card p { display:flex; justify-content:space-between; gap:8px; margin:10px 0 0; font-size:.84rem; }
+.consult-scenario-card p strong { color:var(--teal-700); }
+.consult-calculation-notice { margin:12px 0 0; padding:11px 13px; border-radius:12px; background:var(--neutral-100); color:var(--muted); font-size:.8rem; line-height:1.55; }
+.consult-admission-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
+.consult-choice-group { display:flex; align-items:center; gap:15px; min-width:0; margin:0; padding:12px 14px; border:1px solid var(--lavender-200); border-radius:13px; background:var(--lavender-50); }
+.consult-choice-group legend { float:left; margin-right:auto; color:var(--accent-strong); font-size:.82rem; font-weight:800; }
+.consult-choice-group label { display:flex; align-items:center; gap:6px; color:var(--ink); font-size:.84rem; font-weight:700; }
+.consult-filter-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+.consult-filter-grid .input { min-width:0; }
+.consult-admission-view-button { margin:12px 0 0; }
+.consult-admission-panel .admission-conversion-notice { margin:12px 0; }
+.consult-result-count { margin:0; color:var(--muted); font-size:.8rem; }
+.teacher-consult-shell .admission-card-details-body[hidden] { display:none; }
+
+@media (min-width:768px) and (max-width:1100px) {
+  .consult-form { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .consult-semester-average-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .consult-filter-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .consult-status-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+
+@media (max-width:767px) {
+  .teacher-consult-header { align-items:stretch; }
+  .teacher-consult-header-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .teacher-consult-header-actions .teacher-back { grid-column:1 / -1; }
+  .consult-form,.consult-semester-average-grid,.consult-status-grid,.consult-scenario-grid,.consult-admission-controls,.consult-filter-grid { grid-template-columns:1fr; }
+  .consult-start-button,.consult-admission-view-button { width:100%; }
+  .consult-choice-group { flex-wrap:wrap; }
+  .consult-choice-group legend { width:100%; margin:0 0 4px; }
+  .consult-goal-summary { align-items:flex-start; flex-direction:column; gap:5px; }
 }

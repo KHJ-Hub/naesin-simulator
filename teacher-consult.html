@@ -5,25 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="배정고 내신 설계 노트 교사용 빠른 상담 모드" />
     <title>교사용 빠른 상담 · 배정고 내신 설계 노트</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-teacher-consult1" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-teacher-consult2" />
   </head>
   <body>
     <main class="teacher-shell teacher-consult-shell">
-      <header class="teacher-header">
+      <header class="teacher-header teacher-consult-header">
         <div>
           <p class="eyebrow">배정고 내신 설계 노트</p>
           <h1>교사용 빠른 상담</h1>
-          <p class="muted">학생과 함께 성적 흐름을 빠르게 확인할 수 있는 상담 화면을 준비하고 있습니다.</p>
+          <p class="muted">학생의 현재 내신과 목표를 빠르게 입력해 상담에 활용하세요.</p>
         </div>
-        <a class="secondary-button teacher-back" href="./index.html">학생 화면으로 돌아가기</a>
+        <nav class="teacher-consult-header-actions" aria-label="빠른 상담 작업">
+          <button type="button" class="quiet-button" id="consult-print-button" disabled>상담 결과표 인쇄</button>
+          <button type="button" class="secondary-button" id="new-consult-button">새 상담 시작</button>
+          <a class="secondary-button teacher-back" href="./index.html">학생용 내신 설계로 돌아가기</a>
+        </nav>
       </header>
-      <section class="teacher-panel teacher-consult-placeholder" aria-labelledby="consult-ready-title">
-        <span aria-hidden="true">🧑‍🏫</span>
-        <div>
-          <h2 id="consult-ready-title">빠른 상담 모드 준비 중</h2>
-          <p class="muted">진입 경로를 먼저 마련했습니다. 기존 학생용 내신 계산과 과목관리 기능은 그대로 이용할 수 있습니다.</p>
+
+      <section class="teacher-panel consult-entry-panel" aria-labelledby="consult-entry-title">
+        <div class="teacher-list-heading">
+          <div><p class="eyebrow">빠른 입력</p><h2 id="consult-entry-title">상담 정보</h2><p class="muted">과목별 성적 없이 현재 누적 내신과 완료 학기만으로 계산합니다.</p></div>
         </div>
+        <form id="consult-form" class="consult-form" novalidate>
+          <label>학생 이름 <small>선택</small><input class="input" id="consult-student-name" autocomplete="off" maxlength="20" /></label>
+          <label>학번 <small>선택 · 숫자 5자리</small><input class="input" id="consult-student-id" inputmode="numeric" maxlength="5" autocomplete="off" /></label>
+          <label>현재 내신 <small>필수 · 1.00~5.00</small><input class="input" id="consult-current-grade" inputmode="decimal" placeholder="예: 2.30" required /></label>
+          <label>현재까지 완료한 학기 <small>필수</small><select class="input" id="consult-completed-semester" required><option value="">학기를 선택하세요</option><option value="1-1">1학년 1학기</option><option value="1-2">1학년 2학기</option><option value="2-1">2학년 1학기</option><option value="2-2">2학년 2학기</option><option value="3-1">3학년 1학기</option></select></label>
+          <label>목표 내신 <small>필수 · 1.00~5.00</small><input class="input" id="consult-target-grade" inputmode="decimal" placeholder="예: 2.00" required /></label>
+          <details class="consult-semester-averages">
+            <summary>학기별 평균 입력 <small>선택</small></summary>
+            <p class="muted">알고 있는 학기 평균만 입력하세요. 목표 계산은 위의 현재 누적 내신을 기준으로 합니다.</p>
+            <div class="consult-semester-average-grid">
+              <label>1학년 1학기<input class="input" inputmode="decimal" data-consult-semester-average="1-1" placeholder="1.00~5.00" disabled /></label>
+              <label>1학년 2학기<input class="input" inputmode="decimal" data-consult-semester-average="1-2" placeholder="1.00~5.00" disabled /></label>
+              <label>2학년 1학기<input class="input" inputmode="decimal" data-consult-semester-average="2-1" placeholder="1.00~5.00" disabled /></label>
+              <label>2학년 2학기<input class="input" inputmode="decimal" data-consult-semester-average="2-2" placeholder="1.00~5.00" disabled /></label>
+              <label>3학년 1학기<input class="input" inputmode="decimal" data-consult-semester-average="3-1" placeholder="1.00~5.00" disabled /></label>
+            </div>
+          </details>
+          <p id="consult-form-error" class="consult-form-error" role="alert" hidden></p>
+          <button type="submit" class="primary-button consult-start-button">상담 시작</button>
+        </form>
       </section>
+
+      <div id="consult-results" hidden>
+        <section class="teacher-panel" aria-labelledby="consult-status-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">상담 결과</p><h2 id="consult-status-title">현재 상태</h2></div></div>
+          <div class="consult-status-grid" id="consult-status-grid"></div>
+        </section>
+
+        <section class="teacher-panel" aria-labelledby="consult-goal-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">목표 설계</p><h2 id="consult-goal-title">빠른 목표 시뮬레이션</h2></div></div>
+          <div id="consult-goal-result"></div>
+          <p class="consult-calculation-notice">빠른 상담 모드는 입력한 현재 내신을 기준으로 계산한 참고값입니다. 정확한 학점 가중 계산은 학생용 상세 입력을 이용하세요.</p>
+        </section>
+
+        <section class="teacher-panel consult-admission-panel" aria-labelledby="consult-admission-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">전년도 공개 자료</p><h2 id="consult-admission-title">입시결과와 내신 비교</h2><p class="muted">학생부종합 자료는 합격 가능성 판단이 아닌 전년도 등록자 내신 참고용입니다.</p></div></div>
+          <div class="consult-admission-controls">
+            <fieldset class="consult-choice-group"><legend>전형 방식</legend><label><input type="radio" name="consult-admission-mode" value="student-record-subject" checked /> 학생부교과</label><label><input type="radio" name="consult-admission-mode" value="student-record-comprehensive" /> 학생부종합</label></fieldset>
+            <fieldset class="consult-choice-group"><legend>비교 기준</legend><label><input type="radio" name="consult-comparison-basis" value="current" checked /> 현재 내신</label><label><input type="radio" name="consult-comparison-basis" value="target" /> 목표 내신</label></fieldset>
+          </div>
+          <div class="consult-filter-grid">
+            <label>지역<select class="input" id="consult-admission-region"></select></label>
+            <label>대학<select class="input" id="consult-admission-university"></select></label>
+            <label>계열<select class="input" id="consult-admission-field"></select></label>
+            <label>학과/모집단위 검색<input class="input" id="consult-admission-department" list="consult-department-suggestions" placeholder="예: 경제, 간호, 공학" /><datalist id="consult-department-suggestions"></datalist></label>
+            <label>전형명<select class="input" id="consult-admission-name"></select></label>
+          </div>
+          <button type="button" class="primary-button consult-admission-view-button" id="consult-admission-view-button">전년도 입시결과 보기</button>
+          <p class="admission-conversion-notice" id="consult-conversion-notice"></p>
+          <div class="admission-reference-result" id="consult-admission-results" aria-live="polite"></div>
+        </section>
+
+        <section class="teacher-panel admission-interests" aria-labelledby="consult-interests-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">상담 메모</p><h2 id="consult-interests-title">관심 대학</h2><p class="muted">현재 상담 세션과 결과표에만 반영되며 새 상담을 시작하면 초기화됩니다.</p></div></div>
+          <div id="consult-admission-interests"><p class="muted">저장한 관심 대학·학과가 없습니다.</p></div>
+        </section>
+      </div>
     </main>
+
+    <section id="print-report" class="print-report" aria-hidden="true"></section>
+    <div class="toast" id="consult-toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./src/teacher-consult-app.mjs?v=20260918-teacher-consult2"></script>
   </body>
 </html>
