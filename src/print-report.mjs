@@ -250,7 +250,7 @@ export function buildPrintReportModel(state = {}, { remainingRecords = [], now =
   }));
 
   return {
-    title: '내신 설계 노트',
+    title: '배정고 내신 설계 노트',
     student: {
       studentId: String(state.student?.studentId ?? ''),
       studentName: String(state.student?.studentName ?? ''),
