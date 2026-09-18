@@ -3637,3 +3637,248 @@ h3:not(.hero-grid h2),
   .consult-choice-group legend { width:100%; margin:0 0 4px; }
   .consult-goal-summary { align-items:flex-start; flex-direction:column; gap:5px; }
 }
+
+/* Student semester cards: keep quick and detailed input in the same semester context. */
+.semester-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.semester-card {
+  overflow: hidden;
+  border: 1px solid var(--lavender-200);
+  border-radius: 17px;
+  background: #fff;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.semester-card.is-open {
+  border-color: var(--lavender-300);
+  box-shadow: 0 8px 22px rgba(63, 79, 149, .1);
+}
+
+.semester-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 24px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  padding: 12px 15px;
+  border: 0;
+  background: linear-gradient(135deg, #fff 0%, var(--lavender-50) 100%);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.semester-card-header:hover,
+.semester-card-header:focus-visible {
+  background: var(--lavender-100);
+  outline: none;
+}
+
+.semester-card-header:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(63, 99, 173, .28);
+}
+
+.semester-card-title {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.semester-card-title strong {
+  color: var(--accent-strong);
+  font-size: clamp(.98rem, 1.3vw, 1.08rem);
+}
+
+.semester-card-title small {
+  color: var(--muted);
+  font-size: clamp(.76rem, .9vw, .82rem);
+  line-height: 1.4;
+}
+
+.semester-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.semester-status-badge.is-empty {
+  background: var(--neutral-100);
+  color: var(--muted);
+}
+
+.semester-status-badge.is-progress {
+  background: var(--lavender-100);
+  color: var(--indigo-500);
+}
+
+.semester-status-badge.is-complete {
+  background: var(--teal-50);
+  color: var(--teal-700);
+}
+
+.semester-card-chevron {
+  color: var(--indigo-500);
+  font-size: 1.05rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.semester-card-body {
+  display: grid;
+  gap: 14px;
+  padding: 15px;
+  border-top: 1px solid var(--line);
+}
+
+.semester-card-body[hidden] {
+  display: none;
+}
+
+.semester-mode-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.semester-mode-option {
+  display: grid;
+  gap: 3px;
+  min-height: 60px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.semester-mode-option strong {
+  color: var(--accent-strong);
+  font-size: .88rem;
+}
+
+.semester-mode-option small {
+  color: var(--muted);
+  font-size: .74rem;
+  line-height: 1.4;
+}
+
+.semester-mode-option.is-selected {
+  border-color: var(--indigo-500);
+  background: var(--lavender-100);
+  box-shadow: inset 0 0 0 1px var(--indigo-500);
+}
+
+.semester-mode-option:focus-visible {
+  outline: 3px solid rgba(63, 99, 173, .22);
+  outline-offset: 2px;
+}
+
+.semester-mode-prompt {
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 13px;
+  color: var(--muted);
+  font-size: .84rem;
+  text-align: center;
+}
+
+.semester-quick-entry {
+  margin: 0;
+}
+
+.semester-detailed-entry {
+  display: grid;
+  gap: 11px;
+}
+
+.semester-detail-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.semester-detail-heading strong {
+  color: var(--ink);
+  font-size: .92rem;
+}
+
+.semester-detail-heading span {
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.semester-priority-note {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 11px;
+  background: var(--teal-50);
+  color: var(--teal-700);
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.semester-card-help {
+  margin-top: 12px;
+}
+
+.grade-calculation-actions {
+  display: grid;
+  grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 14px;
+}
+
+.grade-calculation-actions #calculate-button,
+.grade-calculation-actions .current-grade-result {
+  margin-top: 0;
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .semester-card-header { min-height: 70px; padding: 14px 16px; }
+  .semester-card-body { padding: 17px; }
+  .semester-mode-option { min-height: 66px; padding: 11px 13px; }
+}
+
+@media (max-width: 767px) {
+  .semester-card-list { gap: 9px; }
+  .semester-card { border-radius: 15px; }
+  .semester-card-header {
+    grid-template-columns: minmax(0, 1fr) 22px;
+    gap: 7px 9px;
+    min-height: 64px;
+    padding: 11px 12px;
+  }
+  .semester-card-title small { font-size: .76rem; }
+  .semester-status-badge {
+    grid-column: 1;
+    justify-self: start;
+    min-height: 26px;
+    padding: 3px 8px;
+    font-size: .7rem;
+  }
+  .semester-card-chevron { grid-column: 2; grid-row: 1 / span 2; }
+  .semester-card-body { gap: 12px; padding: 12px; }
+  .semester-mode-options { grid-template-columns: 1fr; gap: 7px; }
+  .semester-mode-option { min-height: 56px; padding: 9px 10px; }
+  .semester-quick-entry { padding: 12px; }
+  .semester-detail-heading { align-items: baseline; }
+  .semester-priority-note { font-size: .76rem; }
+  .semester-card-help { margin-top: 10px; }
+  .grade-calculation-actions { grid-template-columns: 1fr; margin-top: 12px; }
+  .grade-calculation-actions #calculate-button { width: 100%; }
+}

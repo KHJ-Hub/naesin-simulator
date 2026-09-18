@@ -185,7 +185,10 @@ function normalizeQuickAverages(saved = {}) {
 }
 function normalizeInputModes(saved = {}) {
   const result = {};
-  SEMESTERS.forEach(({ id }) => { result[id] = saved?.actual?.[id] === 'quick' || saved?.[id] === 'quick' ? 'quick' : 'detailed'; });
+  SEMESTERS.forEach(({ id }) => {
+    const mode = saved?.actual?.[id] ?? saved?.[id];
+    if (mode === 'quick' || mode === 'detailed') result[id] = mode;
+  });
   return result;
 }
 function saveState() {
@@ -259,10 +262,14 @@ function fallbackRemainingSemesters() {
 }
 function modeLabel(semesterId) {
   const status = detailedStatus(semesterId);
-  const quick = Number.isFinite(quickAverage(semesterId));
-  if (status.complete && quick) return '상세 사용 · 간편값은 보관됨';
-  if (status.complete) return '상세 입력 사용 중';
-  if (quick) return status.gradedRows.length ? '간편 입력 사용 중 · 상세 미완료' : '간편 입력 사용 중';
+  const quick = validAverageInput(quickAverage(semesterId));
+  const selectedMode = semesterSelectedMode(semesterId);
+  if (status.complete && quick) return '과목별 입력값을 기준으로 계산합니다. 간편 평균도 보관되어 있습니다.';
+  if (status.complete) return '이 학기는 과목별 입력값을 기준으로 계산합니다.';
+  if (quick && status.valid.length) return '상세 입력을 완료하기 전까지 간편 평균을 계산에 사용합니다.';
+  if (quick) return '입력한 학기 평균을 계산에 사용합니다.';
+  if (selectedMode === 'quick') return '학기 평균을 입력하면 계산에 반영됩니다.';
+  if (selectedMode === 'detailed') return '과목별 등급을 모두 입력하면 상세 입력값을 계산에 사용합니다.';
   return '입력 방식 선택';
 }
 function showToast(message, tone = 'success') {
@@ -274,41 +281,33 @@ function showToast(message, tone = 'success') {
   showToast.timer = setTimeout(() => { toast.hidden = true; }, 2800);
 }
 
-function renderSemesterTabs() {
-  const completed = new Set(completedSemesterIds());
-  $('#semester-tabs').innerHTML = SEMESTERS.map((semester) => {
-    const isComplete = completed.has(semester.id);
-    return `<button class="tab-button ${state.activeSemester === semester.id ? 'active' : ''} ${isComplete ? 'complete' : ''}" data-semester="${semester.id}" aria-label="${semester.label}${isComplete ? ', 입력 완료' : ''}"><span>${semester.label}</span>${isComplete ? '<small aria-hidden="true">✓</small>' : ''}</button>`;
-  }).join('');
+let expandedSemesterId = state.activeSemester;
+
+function semesterSelectedMode(semesterId) {
+  const explicit = state.inputModes?.[semesterId];
+  if (explicit === 'quick' || explicit === 'detailed') return explicit;
+  const rows = detailedRows(semesterId);
+  if (rows.some((record) => record.gradeValue || record.achievement)) return 'detailed';
+  if (validAverageInput(quickAverage(semesterId))) return 'quick';
+  return null;
 }
-function renderTypeTabs() {
-  return;
+
+function semesterCardView(semesterId) {
+  const status = detailedStatus(semesterId);
+  const quick = quickAverage(semesterId);
+  const hasQuick = validAverageInput(quick);
+  const hasDetailedInput = status.rows.some((record) => record.gradeValue || record.achievement);
+  const detailedAverage = status.complete ? calculateOverallAverage(status.valid, state.weighted) : NaN;
+  if (status.complete) return { badge: '상세 입력 완료', tone: 'complete', summary: `상세 입력 완료 · 평균 ${fmt(detailedAverage)}` };
+  if (hasDetailedInput) return { badge: '입력 중', tone: 'progress', summary: hasQuick ? `상세 입력 중 · 평균 ${fmt(quick)} 적용` : '과목별 성적 입력 중' };
+  if (hasQuick) return { badge: '간편 입력 완료', tone: 'complete', summary: `평균 ${fmt(quick)}` };
+  return { badge: '입력 전', tone: 'empty', summary: '입력 전' };
 }
-function renderInputMode() {
-  const semesterId = state.activeSemester;
-  const mode = state.inputModes?.[semesterId] ?? 'detailed';
-  $('#input-mode-status').textContent = modeLabel(semesterId);
-  $('#semester-input-mode').innerHTML = `<button class="${mode === 'quick' ? 'active' : ''}" data-input-mode="quick">간편 입력</button><button class="${mode === 'detailed' ? 'active' : ''}" data-input-mode="detailed">과목별 상세 입력</button>`;
-  const value = Number.isFinite(quickAverage(semesterId)) ? quickAverage(semesterId).toFixed(2) : '';
-  $('#quick-entry').hidden = mode !== 'quick';
-  $('#quick-entry').innerHTML = mode === 'quick' ? `<label>이 학기 평균 내신 <input id="quick-average" class="input" type="number" min="1" max="5" step="0.01" value="${value}" placeholder="예: 2.14" /></label><p class="muted">1.00~5.00 범위로 입력하면 과목별 입력 없이도 전체 계산과 목표 시뮬레이션에 반영됩니다.</p>` : '';
-}
-function renderGradeList() {
-  const list = records().filter((record) => record.semesterId === state.activeSemester);
-  $('#active-semester-title').textContent = semesterLabel(state.activeSemester);
-  const mode = state.inputModes?.[state.activeSemester] ?? 'detailed';
-  if (mode === 'quick') {
-    $('#entry-count').textContent = Number.isFinite(quickAverage(state.activeSemester)) ? '평균 입력 완료' : '평균 미입력';
-    $('#grade-list').innerHTML = '<div class="empty-state">간편 입력 중에는 과목별 등급을 입력하지 않습니다. 필요하면 과목별 상세 입력으로 전환하세요.</div>';
-    return;
-  }
-  $('#entry-count').textContent = `${list.length}개 과목`;
-  const container = $('#grade-list');
-  if (!list.length) {
-    container.innerHTML = `<div class="empty-state">${semesterLabel(state.activeSemester)}에 등록된 성적이 없습니다. 과목을 추가해 보세요.</div>`;
-    return;
-  }
-  container.innerHTML = list.map((record) => `
+
+function gradeRowsHtml(semesterId) {
+  const list = detailedRows(semesterId);
+  if (!list.length) return `<div class="empty-state">${semesterLabel(semesterId)}에 등록된 성적이 없습니다. 과목을 추가해 보세요.</div>`;
+  return list.map((record) => `
     <div class="grade-row" data-id="${record.id}">
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
@@ -319,15 +318,58 @@ function renderGradeList() {
       ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger grade-delete" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
     </div>`).join('');
 }
-function renderCourseSelection() {
-  const container = $('#course-selection');
-  if ((state.inputModes?.[state.activeSemester] ?? 'detailed') === 'quick') { container.innerHTML = ''; return; }
-  const used = new Set(records().filter((record) => record.semesterId === state.activeSemester).map((record) => record.courseId));
+
+function courseSelectionHtml(semesterId) {
+  const used = new Set(records().filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
   const studentId = String(state.student?.studentId ?? '');
   const classNumber = /^\d{5}$/.test(studentId) ? Number(studentId.slice(1, 3)) : null;
-  const available = selectableCoursesForSemester(state.activeSemester, undefined, { classNumber }).filter((course) => !used.has(course.id));
-  const firstGradeNote = state.activeSemester.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택하세요.</p>' : '';
-  container.innerHTML = available.length ? `${firstGradeNote}<label>학교 개설 과목 <select id="course-picker" class="input"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button id="add-grade" class="add-button">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
+  const available = selectableCoursesForSemester(semesterId, undefined, { classNumber }).filter((course) => !used.has(course.id));
+  const firstGradeNote = semesterId.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택하세요.</p>' : '';
+  return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
+}
+
+function renderSemesterCards() {
+  $('#semester-cards').innerHTML = SEMESTERS.map((semester) => {
+    const semesterId = semester.id;
+    const isExpanded = expandedSemesterId === semesterId;
+    const mode = semesterSelectedMode(semesterId);
+    const view = semesterCardView(semesterId);
+    const quick = quickAverage(semesterId);
+    const quickValue = validAverageInput(quick) ? quick.toFixed(2) : '';
+    const modeNote = mode ? `<p class="semester-priority-note">${escapeHtml(modeLabel(semesterId))}</p>` : '';
+    const inputBody = mode === 'quick'
+      ? `<div class="quick-entry semester-quick-entry"><label>이 학기 평균 내신 <input class="input" data-quick-average="${semesterId}" type="number" min="1" max="5" step="0.01" value="${quickValue}" placeholder="예: 2.14" /></label><p class="muted">성적표의 학기 종합 평균을 1.00~5.00 범위로 입력하세요.</p>${modeNote}</div>`
+      : mode === 'detailed'
+        ? `<div class="semester-detailed-entry"><div class="semester-detail-heading"><strong>과목별 성적</strong><span>${detailedRows(semesterId).length}개 과목</span></div><div class="grade-list">${gradeRowsHtml(semesterId)}</div><div class="course-selection">${courseSelectionHtml(semesterId)}</div>${modeNote}</div>`
+        : '<div class="semester-mode-prompt">입력 방식을 선택하면 해당 학기의 입력란이 나타납니다.</div>';
+    return `<article class="semester-card ${isExpanded ? 'is-open' : ''}" data-semester-card="${semesterId}">
+      <button type="button" class="semester-card-header" data-semester-toggle="${semesterId}" aria-expanded="${isExpanded}" aria-controls="semester-card-body-${semesterId}">
+        <span class="semester-card-title"><strong>${escapeHtml(semester.label)}</strong><small class="semester-card-status-text">${escapeHtml(view.summary)}</small></span>
+        <span class="semester-status-badge is-${view.tone}">${escapeHtml(view.badge)}</span>
+        <span class="semester-card-chevron" aria-hidden="true">${isExpanded ? '⌃' : '⌄'}</span>
+      </button>
+      <div class="semester-card-body" id="semester-card-body-${semesterId}" ${isExpanded ? '' : 'hidden'}>
+        <div class="semester-mode-options" role="group" aria-label="${escapeHtml(semester.label)} 입력 방식">
+          <button type="button" class="semester-mode-option ${mode === 'quick' ? 'is-selected' : ''}" data-input-mode="quick" data-semester-id="${semesterId}" aria-pressed="${mode === 'quick'}"><strong>학기 평균으로 간단히 입력</strong><small>성적표의 학기 종합 평균만 입력</small></button>
+          <button type="button" class="semester-mode-option ${mode === 'detailed' ? 'is-selected' : ''}" data-input-mode="detailed" data-semester-id="${semesterId}" aria-pressed="${mode === 'detailed'}"><strong>과목별로 자세히 입력</strong><small>과목별 등급과 학점을 반영해 계산</small></button>
+        </div>
+        ${inputBody}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function refreshSemesterCardHeader(semesterId) {
+  const card = document.querySelector(`[data-semester-card="${semesterId}"]`);
+  if (!card) return;
+  const view = semesterCardView(semesterId);
+  const summary = card.querySelector('.semester-card-status-text');
+  const badge = card.querySelector('.semester-status-badge');
+  if (summary) summary.textContent = view.summary;
+  if (badge) {
+    badge.textContent = view.badge;
+    badge.className = `semester-status-badge is-${view.tone}`;
+  }
 }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
 function gradeInputRows() { return records().filter((record) => ['grade', 'both'].includes(record.gradingType) && record.fiveLevelEligible !== false); }
@@ -673,8 +715,11 @@ function renderPrintReport() {
   const model = buildPrintReportModel(state, { remainingRecords: fallbackRemainingSemesters() });
   $('#print-report').innerHTML = renderPrintReportHtml(model);
 }
+function renderGradeDerivedViews() {
+  renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+}
 function render() {
-  renderSemesterTabs(); renderInputMode(); renderGradeList(); renderCourseSelection(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderAdmissionReferences(); renderPrintReport();
+  renderSemesterCards(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderAdmissionReferences(); renderPrintReport();
   $('#target-average').value = state.targetAverage;
   $('#weighted-toggle').checked = Boolean(state.weighted);
   $('#student-id').value = state.student.studentId; $('#student-name').value = state.student.studentName;
@@ -684,49 +729,72 @@ function render() {
   $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
 }
 
-$('#semester-tabs').addEventListener('click', (event) => {
-  const button = event.target.closest('[data-semester]');
-  if (!button) return;
-  state.activeSemester = button.dataset.semester; saveState(); render();
-});
-$('#semester-input-mode').addEventListener('click', (event) => {
-  const button = event.target.closest('[data-input-mode]');
-  if (!button) return;
-  state.inputModes[state.activeSemester] = button.dataset.inputMode;
+const semesterCards = $('#semester-cards');
+semesterCards.addEventListener('click', (event) => {
+  const toggle = event.target.closest('[data-semester-toggle]');
+  if (toggle) {
+    const semesterId = toggle.dataset.semesterToggle;
+    expandedSemesterId = expandedSemesterId === semesterId ? null : semesterId;
+    if (expandedSemesterId) state.activeSemester = expandedSemesterId;
+    saveState(); renderSemesterCards();
+    return;
+  }
+  const modeButton = event.target.closest('[data-input-mode][data-semester-id]');
+  if (modeButton) {
+    const semesterId = modeButton.dataset.semesterId;
+    state.activeSemester = semesterId;
+    expandedSemesterId = semesterId;
+    state.inputModes[semesterId] = modeButton.dataset.inputMode;
+    saveState(); renderSemesterCards();
+    return;
+  }
+  const addButton = event.target.closest('[data-add-course]');
+  if (addButton) {
+    const semesterId = addButton.dataset.addCourse;
+    const picker = semesterCards.querySelector(`[data-course-picker="${semesterId}"]`);
+    const course = courseById(picker?.value);
+    if (!course) { showToast('학교 개설 과목에서 선택해 주세요.', 'error'); return; }
+    records().push(recordFromCourse(course, makeId())); state.calculated = false; state.goalCalculated = false; saveState(); render();
+    return;
+  }
+  const deleteButton = event.target.closest('[data-action="delete"]');
+  if (!deleteButton) return;
+  const row = deleteButton.closest('[data-id]');
+  if (!row) return;
+  state.actual = records().filter((item) => item.id !== row.dataset.id); state.calculated = false; state.goalCalculated = false;
   saveState(); render();
 });
-$('#quick-entry').addEventListener('input', (event) => {
-  if (event.target.id !== 'quick-average') return;
+semesterCards.addEventListener('input', (event) => {
+  const semesterId = event.target.dataset.quickAverage;
+  if (!semesterId) return;
   const value = Number(event.target.value);
-  if (event.target.value === '') delete state.quickAverages[state.activeSemester];
-  else if (validAverageInput(value)) state.quickAverages[state.activeSemester] = Number(value.toFixed(2));
+  if (event.target.value === '' || !validAverageInput(value)) delete state.quickAverages[semesterId];
+  else state.quickAverages[semesterId] = Number(value.toFixed(2));
+  state.activeSemester = semesterId;
   state.calculated = false; state.goalCalculated = false; saveState();
-  $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+  refreshSemesterCardHeader(semesterId); renderGradeDerivedViews();
 });
-$('#course-selection').addEventListener('click', (event) => {
-  if (event.target.id !== 'add-grade') return;
-  const course = courseById($('#course-picker')?.value);
-  if (!course) { showToast('학교 개설 과목에서 선택해 주세요.', 'error'); return; }
-  records().push(recordFromCourse(course, makeId())); state.calculated = false; state.goalCalculated = false; saveState(); render();
-});
-$('#grade-list').addEventListener('input', (event) => {
+semesterCards.addEventListener('change', (event) => {
+  const quickSemesterId = event.target.dataset.quickAverage;
+  if (quickSemesterId) {
+    if (event.target.value && !validAverageInput(Number(event.target.value))) {
+      event.target.value = '';
+      delete state.quickAverages[quickSemesterId];
+      showToast('학기 평균은 1.00~5.00 범위로 입력해 주세요.', 'error');
+    }
+    refreshSemesterCardHeader(quickSemesterId); renderGradeDerivedViews();
+    return;
+  }
   const row = event.target.closest('[data-id]');
   const field = event.target.dataset.field;
   if (!row || !field) return;
   const record = records().find((item) => item.id === row.dataset.id);
   if (!record) return;
-  record[field] = ['credit', 'gradeValue'].includes(field) ? event.target.value : event.target.value;
+  record[field] = event.target.value;
   if (field === 'gradeValue' && event.target.value && (Number(event.target.value) < 1 || Number(event.target.value) > 5)) { record[field] = ''; showToast('등급은 1~5등급만 입력할 수 있어요.', 'error'); }
-  state.calculated = false; state.goalCalculated = false; saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport();
+  state.calculated = false; state.goalCalculated = false; saveState(); renderSemesterCards(); renderGradeDerivedViews();
 });
-$('#grade-list').addEventListener('change', (event) => event.target.dispatchEvent(new Event('input', { bubbles: true })));
-$('#grade-list').addEventListener('click', (event) => {
-  if (event.target.dataset.action !== 'delete') return;
-  const row = event.target.closest('[data-id]');
-  state.actual = records().filter((item) => item.id !== row.dataset.id); state.calculated = false; state.goalCalculated = false;
-  saveState(); render();
-});
-$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); $('#input-mode-status').textContent = modeLabel(state.activeSemester); renderSemesterTabs(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개입니다.`); });
+$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderSemesterCards(); renderGradeDerivedViews(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개입니다.`); });
 $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculated = true; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
@@ -962,6 +1030,7 @@ $('#import-input').addEventListener('change', async (event) => {
       return;
     }
     state = normalizeState(imported);
+    expandedSemesterId = state.activeSemester;
     restoreStudentBackupUiState(imported.admissionUi);
     render(); showToast('백업 데이터를 불러왔습니다.');
   } catch (error) { console.error(error); showToast(error instanceof Error ? error.message : '백업 파일 형식을 확인해 주세요.', 'error'); }
@@ -970,6 +1039,7 @@ $('#import-input').addEventListener('change', async (event) => {
 $('#reset-button').addEventListener('click', () => {
   if (!confirm('입력한 학생 데이터와 성적을 초기화할까요?')) return;
   state = defaultState();
+  expandedSemesterId = state.activeSemester;
   admissionViewMode = null;
   admissionFilters.region = '';
   admissionFilters.ownership = '';

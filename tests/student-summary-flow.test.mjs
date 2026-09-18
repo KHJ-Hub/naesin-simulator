@@ -27,8 +27,12 @@ test('계산 전에는 숫자 기본값 대신 안내하고 계산 후 유효한
   assert.match(app, /계산된 현재 내신/);
 });
 
-test('학기 탭은 기존 학기 완료 판정으로 입력 완료 표시를 제공한다', () => {
-  assert.match(app, /const completed = new Set\(completedSemesterIds\(\)\)/);
-  assert.match(app, /입력 완료/);
-  assert.match(app, /aria-label=/);
+test('학기별 카드는 기존 상세·간편 완료 판정으로 상태를 표시한다', () => {
+  assert.match(html, /id="semester-cards"/);
+  assert.match(app, /function semesterCardView\(semesterId\)/);
+  assert.match(app, /상세 입력 완료/);
+  assert.match(app, /간편 입력 완료/);
+  assert.match(app, /입력 중/);
+  assert.match(app, /입력 전/);
+  assert.match(app, /aria-expanded=/);
 });
