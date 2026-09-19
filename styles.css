@@ -1463,6 +1463,7 @@ button, input, select {
 .interest-compare-entry {
   display: flex;
   justify-content: flex-end;
+  margin: 18px 0 10px;
 }
 
 .interest-compare-toggle {

@@ -95,5 +95,6 @@ test('학생 UI는 관심 대학 2개부터 비교 버튼을 만들고 선택·�
   assert.match(app, /renderAdmissionInterestComparisonTable\(comparison\.subject, 'subject'\)[\s\S]*?renderAdmissionInterestComparisonTable\(comparison\.comprehensive, 'comprehensive'\)/);
   assert.match(app, /updateAdmissionInterest\(removeButton\.dataset\.admissionRemove, 'remove'\)/);
   assert.match(styles, /\.interest-compare-table-scroll[\s\S]*?overflow-x:\s*auto/);
+  assert.match(styles, /\.interest-compare-entry\s*\{[\s\S]*?margin:\s*18px 0 10px/);
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.interest-compare-table/);
 });
