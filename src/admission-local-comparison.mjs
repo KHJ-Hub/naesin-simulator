@@ -179,7 +179,7 @@ function signedDifference(value) {
 export function renderLocalAdmissionComparison(result = {}) {
   const scopeLabel = escapeHtml(result.scopeLabel || '부산권');
   if (!result.available) {
-    return `<section class="local-admission-comparison" aria-live="polite"><h4>${scopeLabel}에서 비슷한 입결</h4><p class="local-admission-empty">비교 가능한 ${scopeLabel} 입결 자료가 없습니다.</p></section>`;
+    return `<section class="local-admission-comparison" aria-live="polite"><h4>${scopeLabel}에서 비슷한 입결</h4><p class="local-admission-empty">비교 가능한 ${scopeLabel} 입결 자료가 없어요.</p></section>`;
   }
 
   const reference = result.targetReference;
@@ -194,16 +194,16 @@ export function renderLocalAdmissionComparison(result = {}) {
       <em title="입결 차이">${signedDifference(difference)}</em>
     </li>`).join('');
   const fallbackMessages = {
-    'detailed-field': '유사 전공 자료가 없어 같은 세부 계열에서 찾았습니다.',
-    'academic-field': '유사 전공 자료가 없어 같은 큰 계열에서 찾았습니다.',
-    'all-local': `관련 전공 자료가 부족해 ${scopeLabel} 전체에서 찾았습니다.`,
+    'detailed-field': '유사 전공 자료가 없어 같은 세부 계열에서 찾았어요.',
+    'academic-field': '유사 전공 자료가 없어 같은 큰 계열에서 찾았어요.',
+    'all-local': `관련 전공 자료가 부족해 ${scopeLabel} 전체에서 찾았어요.`,
   };
   const fallback = fallbackMessages[result.comparisonTier]
     ? `<p class="local-admission-fallback">${fallbackMessages[result.comparisonTier]}</p>`
     : '';
   const notice = comprehensive
-    ? '학생부종합은 내신 외 요소를 함께 평가하므로 등록자 내신 참고로만 확인하세요.'
-    : '대학의 서열이 아닌 전년도 입결 기준 참고입니다.';
+    ? '학생부종합은 내신 외 요소를 함께 평가하므로 등록자 내신 참고로만 확인해 주세요.'
+    : '대학의 서열이 아닌 전년도 입결 기준 참고예요.';
 
   return `<section class="local-admission-comparison" aria-live="polite"><header><h4>${title}</h4><p>${criteria}</p></header><ol>${rows}</ol>${fallback}<p class="local-admission-notice">${notice}</p></section>`;
 }

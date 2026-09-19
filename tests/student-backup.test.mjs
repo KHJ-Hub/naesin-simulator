@@ -113,10 +113,10 @@ test('잘못된 JSON·타 앱 JSON·필수 구조 누락·미지원 신버전을
 });
 
 test('학생 앱은 덮어쓰기 확인 후 상태·입결 UI를 복원하고 전체 화면과 인쇄를 다시 렌더링한다', () => {
-  assert.match(app, /현재 입력 내용이 백업 파일의 내용으로 바뀝니다\. 불러올까요\?/);
+  assert.match(app, /현재 입력 내용이 백업 파일의 내용으로 바뀌어요\. 불러올까요\?/);
   assert.match(app, /state = normalizeState\(imported\);/);
   assert.match(app, /restoreStudentBackupUiState\(imported\.admissionUi\);/);
-  assert.match(app, /render\(\); showToast\('백업 데이터를 불러왔습니다\.'\)/);
+  assert.match(app, /render\(\); showToast\('백업 데이터를 불러왔어요\.'\)/);
   assert.match(app, /function render\(\)[\s\S]*?renderPrintReport\(\)/);
   assert.match(app, /gradeValue:[\s\S]*?Number\.isInteger\(grade\)[\s\S]*?grade >= 1 && grade <= 5/);
 });

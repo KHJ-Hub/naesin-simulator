@@ -36,7 +36,7 @@ test('간편 평균은 1~5 범위로 기존 quickAverages에 저장한다', () =
 test('입력 방식 전환은 기존 간편·상세 데이터를 삭제하지 않고 inputModes만 바꾼다', () => {
   assert.match(app, /state\.inputModes\[semesterId\] = modeButton\.dataset\.inputMode/);
   assert.doesNotMatch(app, /delete state\.quickAverages\[semesterId\][\s\S]{0,120}modeButton/);
-  assert.match(app, /과목별 입력값을 기준으로 계산합니다\. 간편 평균도 보관되어 있습니다/);
+  assert.match(app, /과목별 입력값을 기준으로 계산해요\. 간편 평균도 보관돼요/);
 });
 
 test('상세 입력 완료값이 간편 평균보다 우선하는 기존 계산 규칙을 유지한다', () => {

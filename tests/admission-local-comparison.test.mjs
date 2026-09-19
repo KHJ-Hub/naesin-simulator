@@ -119,7 +119,7 @@ test('동일 대학·동일 모집단위 자기 비교와 다른 자료 유형�
   const result = findLocalAdmissionComparisons(target, data);
   assert.equal(result.available, false);
   assert.equal(result.reason, 'no-comparable-local-data');
-  assert.match(renderLocalAdmissionComparison(result), /비교 가능한 부산권 입결 자료가 없습니다/);
+  assert.match(renderLocalAdmissionComparison(result), /비교 가능한 부산권 입결 자료가 없어요/);
 });
 
 test('학종은 동일한 등록자 내신 자료 유형만 참고 비교하고 별도 안내를 표시한다', () => {
@@ -186,7 +186,7 @@ test('비교 패널은 대상 반복 없이 3개 이하 compact 행과 짧은 �
   assert.doesNotMatch(html, /local-admission-target|>대상</);
   assert.match(html, /학생부교과 · 전년도 70% cut 기준/);
   assert.match(html, /local-admission-rank/);
-  assert.match(html, /대학의 서열이 아닌 전년도 입결 기준 참고입니다/);
+  assert.match(html, /대학의 서열이 아닌 전년도 입결 기준 참고예요/);
   assert.equal((html.match(/<li>/g) ?? []).length, 1);
 });
 

@@ -64,9 +64,9 @@ export function calculateRequiredRemainingAverage(actualRecords = [], expectedRe
 }
 
 export function describeGoalDifficulty(requiredAverage) {
-  if (requiredAverage === null || requiredAverage === undefined) return '현재 성적과 목표 내신을 입력해주세요.';
-  if (requiredAverage < MIN_GRADE || requiredAverage > MAX_GRADE) return '현재 입력된 조건에서는 해당 목표 내신에 도달하기 어렵습니다.';
-  if (requiredAverage <= 1.5) return '대부분 높은 등급이 필요한 목표입니다.';
-  if (requiredAverage <= 2.5) return '상당한 성적 향상이 필요한 목표입니다.';
-  return '현재 설정에서 목표 범위에 가까운 편입니다.';
+  if (requiredAverage === null || requiredAverage === undefined) return '현재 성적과 목표 내신을 입력해 주세요.';
+  if (requiredAverage < MIN_GRADE || requiredAverage > MAX_GRADE) return '현재 입력된 조건에서는 해당 목표 내신에 도달하기 어려워요.';
+  if (requiredAverage <= 1.5) return '대부분 높은 등급이 필요한 목표예요.';
+  if (requiredAverage <= 2.5) return '상당한 성적 향상이 필요한 목표예요.';
+  return '현재 설정에서 목표 범위에 가까운 편이에요.';
 }

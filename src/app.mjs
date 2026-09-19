@@ -7,10 +7,10 @@ import {
   calculateRequiredRemainingAverage,
   describeGoalDifficulty,
   validAverageInput,
-} from './grade-calculator.mjs?v=20260914-quickinput3';
+} from './grade-calculator.mjs?v=20260919-student-tone1';
 import { commonCourses, catalogCourseById as courseById, coursesForSemester, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260917-achievement-select1';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
-import { ADMISSION_REFERENCE_DATA, ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260916-academic-fields3';
+import { ADMISSION_REFERENCE_DATA, ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive } from './admission-reference.mjs?v=20260919-student-tone1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
 import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS } from './admission-filter-options.mjs?v=20260918-ownership1';
 import {
@@ -33,14 +33,14 @@ import {
   canCompareWithBusanAdmissions,
   findLocalAdmissionComparisons,
   renderLocalAdmissionComparison,
-} from './admission-local-comparison.mjs?v=20260918-busan-compact1';
+} from './admission-local-comparison.mjs?v=20260919-student-tone1';
 import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
   createAdmissionAccordionState,
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260916-university-master1';
-import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260918-backup-audit1';
+import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260919-student-tone1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
@@ -264,12 +264,12 @@ function modeLabel(semesterId) {
   const status = detailedStatus(semesterId);
   const quick = validAverageInput(quickAverage(semesterId));
   const selectedMode = semesterSelectedMode(semesterId);
-  if (status.complete && quick) return '과목별 입력값을 기준으로 계산합니다. 간편 평균도 보관되어 있습니다.';
-  if (status.complete) return '이 학기는 과목별 입력값을 기준으로 계산합니다.';
-  if (quick && status.valid.length) return '상세 입력을 완료하기 전까지 간편 평균을 계산에 사용합니다.';
-  if (quick) return '입력한 학기 평균을 계산에 사용합니다.';
-  if (selectedMode === 'quick') return '학기 평균을 입력하면 계산에 반영됩니다.';
-  if (selectedMode === 'detailed') return '과목별 등급을 모두 입력하면 상세 입력값을 계산에 사용합니다.';
+  if (status.complete && quick) return '과목별 입력값을 기준으로 계산해요. 간편 평균도 보관돼요.';
+  if (status.complete) return '이 학기는 과목별 입력값을 기준으로 계산해요.';
+  if (quick && status.valid.length) return '상세 입력을 완료하기 전까지 간편 평균을 계산에 사용해요.';
+  if (quick) return '입력한 학기 평균을 계산에 사용해요.';
+  if (selectedMode === 'quick') return '학기 평균을 입력하면 계산에 반영돼요.';
+  if (selectedMode === 'detailed') return '과목별 등급을 모두 입력하면 상세 입력값을 계산에 사용해요.';
   return '입력 방식 선택';
 }
 function showToast(message, tone = 'success') {
@@ -306,7 +306,7 @@ function semesterCardView(semesterId) {
 
 function gradeRowsHtml(semesterId) {
   const list = detailedRows(semesterId);
-  if (!list.length) return `<div class="empty-state">${semesterLabel(semesterId)}에 등록된 성적이 없습니다. 과목을 추가해 보세요.</div>`;
+  if (!list.length) return `<div class="empty-state">${semesterLabel(semesterId)}에 등록된 성적이 없어요. 과목을 추가해 보세요.</div>`;
   return list.map((record) => `
     <div class="grade-row" data-id="${record.id}">
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
@@ -324,8 +324,8 @@ function courseSelectionHtml(semesterId) {
   const studentId = String(state.student?.studentId ?? '');
   const classNumber = /^\d{5}$/.test(studentId) ? Number(studentId.slice(1, 3)) : null;
   const available = selectableCoursesForSemester(semesterId, undefined, { classNumber }).filter((course) => !used.has(course.id));
-  const firstGradeNote = semesterId.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택하세요.</p>' : '';
-  return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없습니다.</p>';
+  const firstGradeNote = semesterId.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택해 주세요.</p>' : '';
+  return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
 }
 
 function renderSemesterCards() {
@@ -338,10 +338,10 @@ function renderSemesterCards() {
     const quickValue = validAverageInput(quick) ? quick.toFixed(2) : '';
     const modeNote = mode ? `<p class="semester-priority-note">${escapeHtml(modeLabel(semesterId))}</p>` : '';
     const inputBody = mode === 'quick'
-      ? `<div class="quick-entry semester-quick-entry"><label>이 학기 평균 내신 <input class="input" data-quick-average="${semesterId}" type="number" min="1" max="5" step="0.01" value="${quickValue}" placeholder="예: 2.14" /></label><p class="muted">성적표의 학기 종합 평균을 1.00~5.00 범위로 입력하세요.</p>${modeNote}</div>`
+      ? `<div class="quick-entry semester-quick-entry"><label>이 학기 평균 내신 <input class="input" data-quick-average="${semesterId}" type="number" min="1" max="5" step="0.01" value="${quickValue}" placeholder="예: 2.14" /></label><p class="muted">성적표의 학기 종합 평균을 1.00~5.00 범위로 입력해 주세요.</p>${modeNote}</div>`
       : mode === 'detailed'
         ? `<div class="semester-detailed-entry"><div class="semester-detail-heading"><strong>과목별 성적</strong><span>${detailedRows(semesterId).length}개 과목</span></div><div class="grade-list">${gradeRowsHtml(semesterId)}</div><div class="course-selection">${courseSelectionHtml(semesterId)}</div>${modeNote}</div>`
-        : '<div class="semester-mode-prompt">입력 방식을 선택하면 해당 학기의 입력란이 나타납니다.</div>';
+        : '<div class="semester-mode-prompt">입력 방식을 선택하면 해당 학기의 입력란이 나타나요.</div>';
     return `<article class="semester-card ${isExpanded ? 'is-open' : ''}" data-semester-card="${semesterId}">
       <button type="button" class="semester-card-header" data-semester-toggle="${semesterId}" aria-expanded="${isExpanded}" aria-controls="semester-card-body-${semesterId}">
         <span class="semester-card-title"><strong>${escapeHtml(semester.label)}</strong><small class="semester-card-status-text">${escapeHtml(view.summary)}</small></span>
@@ -414,11 +414,11 @@ function renderGradePosition() {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 현재 등급 위치를 확인할 수 있어요.</div>';
     return;
   }
-  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradePositionComparisonHtml(model)}<p class="grade-position-note">현재 내신을 기준으로 5등급제와 9등급제 위치를 참고용으로 보여줍니다.<br />교육청 환산 기준 참고값이며, 실제 대학별 반영 방식과 다를 수 있습니다.</p>`;
+  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradePositionComparisonHtml(model)}<p class="grade-position-note">현재 내신을 기준으로 5등급제와 9등급제 위치를 참고용으로 보여줘요.<br />교육청 환산 기준 참고값이고, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
 }
 function renderSubjectSummary() {
   if (usesQuickAverage()) {
-    $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있습니다.</div>';
+    $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있어요.</div>';
     return;
   }
   const summary = calculateSubjectGroupAverages(state.calculated ? effectiveRecords() : [], state.weighted);
@@ -428,7 +428,7 @@ function renderSubjectSummary() {
     const gap = average - overall;
     if (gap <= -0.45) return '강점'; if (gap <= 0.2) return '유지 권장'; if (gap <= 0.6) return '조금 더 올리면 좋아요'; if (gap <= 1) return '향상 필요'; return '우선 관리 권장';
   };
-  $('#subject-summary').innerHTML = summary.length ? summary.map(({ subjectGroup, average }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong><small>${advice(average)}</small></div>`).join('') : '<div class="empty-state">내신 계산 후 교과별 분석이 표시됩니다.</div>';
+  $('#subject-summary').innerHTML = summary.length ? summary.map(({ subjectGroup, average }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong><small>${advice(average)}</small></div>`).join('') : '<div class="empty-state">내신 계산 후 교과별 분석이 표시돼요.</div>';
 }
 function admissionOptions(values, placeholder, labels = {}) {
   return `<option value="">${placeholder}</option>${values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(labels[value] ?? value)}</option>`).join('')}`;
@@ -547,7 +547,7 @@ function admissionResultCardWithinUniversity(entry, comparison, groupKey) {
   const key = admissionInterestKey(item);
   const saved = state.admissionInterests.some((interest) => admissionInterestKey(interest) === key);
   const scoreLine = admissionReferenceScoreLine(item);
-  const differenceLine = comprehensive ? '<p class="admission-difference">학생부종합 전형은 전년도 등록자 내신 참고로만 제공합니다.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
+  const differenceLine = comprehensive ? '<p class="admission-difference">학생부종합 전형은 전년도 등록자 내신 참고로만 제공해요.</p>' : `<p class="admission-difference">차이 <b>${difference >= 0 ? '+' : ''}${fmt(difference)}</b><span>${describeAdmissionDifference(difference)}</span></p>`;
   const currentLine = !comparable ? '' : `<span class="admission-score-current">${comparison.label} <b>${fmt(comparison.value)}</b></span>`;
   const availabilityLine = item.dataAvailability === 'cut70-only' ? '<small>공식 70% cut만 공개</small>' : item.dataAvailability === 'average-only' ? '<small>공식 평균등급 참고</small>' : '';
   const localComparisonButton = canCompareWithBusanAdmissions(item)
@@ -586,7 +586,7 @@ function renderAdmissionUniversityGroup({ key, title, description = '', groupVie
 }
 function renderAdmissionInterests() {
   const container = $('#admission-interests');
-  if (!state.admissionInterests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없습니다.</p>'; return; }
+  if (!state.admissionInterests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없어요.</p>'; return; }
   container.innerHTML = state.admissionInterests.map((item) => `<article class="interest-item"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><small>${escapeHtml(item.referenceYear)}학년도 · 70% cut ${fmt(item.cut70)} · ${item.comparisonBasis === 'reference' ? '전년도 등록자 내신 참고' : item.comparisonBasis === 'target' ? '목표 내신' : '현재 내신'}${item.comparisonScore == null ? '' : ` ${fmt(item.comparisonScore)}`}</small></div><button type="button" class="icon-button" data-admission-remove="${escapeHtml(admissionInterestKey(item))}">삭제</button></article>`).join('');
 }
 
@@ -599,7 +599,7 @@ function updateAdmissionInterest(key, action = 'toggle') {
 
   if (action === 'remove') {
     state.admissionInterests = state.admissionInterests.filter((interest) => admissionInterestKey(interest) !== key);
-    showToast('관심 대학에서 삭제했습니다.');
+    showToast('관심 대학에서 삭제했어요.');
   } else {
     const comparison = isComparableAdmissionRecord(item) ? admissionComparison() : { value: null, basis: 'reference' };
     state.admissionInterests = toggleAdmissionInterest(state.admissionInterests, {
@@ -608,7 +608,7 @@ function updateAdmissionInterest(key, action = 'toggle') {
       comparisonBasis: comparison.basis,
     });
     const saved = state.admissionInterests.some((interest) => admissionInterestKey(interest) === key);
-    showToast(saved ? '관심 대학에 저장했습니다.' : '관심 대학 저장을 해제했습니다.');
+    showToast(saved ? '관심 대학에 저장했어요.' : '관심 대학 저장을 해제했어요.');
   }
 
   saveState();
@@ -617,9 +617,9 @@ function updateAdmissionInterest(key, action = 'toggle') {
   return true;
 }
 function admissionEmptyStateMessage() {
-  if (!admissionFilters.university) return '선택한 조건에 맞는 참고 자료가 없습니다.';
+  if (!admissionFilters.university) return '선택한 조건에 맞는 참고 자료가 없어요.';
   const universityRecords = ADMISSION_REFERENCE_DATA.filter((item) => item.university === admissionFilters.university);
-  if (universityRecords.length) return '공식 입시결과는 확보되어 있지만 현재 선택 조건에 맞는 기본 노출 자료가 없습니다.';
+  if (universityRecords.length) return '공식 입시결과는 확보돼 있지만 현재 선택 조건에 맞는 기본 노출 자료가 없어요.';
 
   const audit = UNIVERSITY_AUDIT_2026.find((item) => item.universityName === admissionFilters.university);
   const admissionCategory = admissionCategoryForViewMode(admissionViewMode);
@@ -628,10 +628,10 @@ function admissionEmptyStateMessage() {
     : admissionCategory === '학생부종합'
       ? [audit?.comprehensiveAdmissionStatus]
       : [audit?.subjectAdmissionStatus, audit?.comprehensiveAdmissionStatus];
-  if (statuses.some((status) => status === 'not-checked')) return '아직 공식 입시결과를 확인 중인 대학입니다.';
-  if (statuses.every((status) => status === 'not-published')) return '대학이 해당 공식 입시결과 수치를 공개하지 않았습니다.';
-  if (statuses.every((status) => ['no-subject-admission', 'no-comprehensive-admission'].includes(status))) return '해당 전형 또는 모집단위의 공식 결과가 없습니다.';
-  return '현재 공식 입시결과를 확보하지 못했습니다.';
+  if (statuses.some((status) => status === 'not-checked')) return '아직 공식 입시결과를 확인 중인 대학이에요.';
+  if (statuses.every((status) => status === 'not-published')) return '대학이 해당 공식 입시결과 수치를 공개하지 않았어요.';
+  if (statuses.every((status) => ['no-subject-admission', 'no-comprehensive-admission'].includes(status))) return '해당 전형 또는 모집단위의 공식 결과가 없어요.';
+  return '현재 공식 입시결과를 확보하지 못했어요.';
 }
 function renderAdmissionReferences() {
   const notice = document.querySelector('.admission-conversion-notice'); if (notice) notice.textContent = ADMISSION_CONVERSION_NOTICE;
@@ -650,8 +650,8 @@ function renderAdmissionReferences() {
   $('#admission-current-score').textContent = Number.isFinite(comparison.value) ? `${comparison.label} ${fmt(comparison.value)}` : '내신 계산 후 이용 가능';
   $('#admission-view-button').disabled = !admissionViewMode || !state.calculated || !Number.isFinite(comparison.value);
   if (!admissionViewMode) { result.innerHTML = ''; renderAdmissionInterests(); return; }
-  if (!state.calculated || !Number.isFinite(comparison.value)) { result.innerHTML = '<div class="empty-state">내신 계산을 완료하면 현재 내신과 전년도 공개 입시결과를 비교할 수 있습니다.</div>'; renderAdmissionInterests(); return; }
-  if (!ADMISSION_REFERENCE_DATA.length) { result.innerHTML = '<div class="empty-state">등록된 전년도 입시결과 데이터가 없습니다.<br /><small>대교협 대입정보포털 어디가의 공개 자료를 확인한 뒤 연도별 데이터 파일에 추가합니다.</small></div>'; renderAdmissionInterests(); return; }
+  if (!state.calculated || !Number.isFinite(comparison.value)) { result.innerHTML = '<div class="empty-state">내신 계산을 완료하면 현재 내신과 전년도 공개 입시결과를 비교할 수 있어요.</div>'; renderAdmissionInterests(); return; }
+  if (!ADMISSION_REFERENCE_DATA.length) { result.innerHTML = '<div class="empty-state">등록된 전년도 입시결과 데이터가 없어요.<br /><small>대교협 대입정보포털 어디가의 공개 자료를 확인한 뒤 연도별 데이터 파일에 추가해요.</small></div>'; renderAdmissionInterests(); return; }
   const view = prepareAdmissionResultView(ADMISSION_REFERENCE_DATA, {
     admissionViewMode,
     filters: admissionFilters,
@@ -677,12 +677,12 @@ function renderAdmissionReferences() {
   } else {
     const referenceGroups = view.comprehensiveReferenceGroups;
     sections.push(
-      renderAdmissionUniversityGroup({ key: 'comprehensive-similar', title: '등록자 내신 참고값이 비슷한 범위 ±0.2', description: '전년도 등록자 내신 참고용으로만 확인하세요.', groupView: referenceGroups?.similar, comparison }),
-      renderAdmissionUniversityGroup({ key: 'comprehensive-higher', title: '등록자 내신 참고값이 높은 결과', description: '전년도 등록자 내신 참고용입니다.', groupView: referenceGroups?.higher, comparison }),
-      renderAdmissionUniversityGroup({ key: 'comprehensive-lower', title: '등록자 내신 참고값이 낮은 결과', description: '전년도 등록자 내신 참고용입니다.', groupView: referenceGroups?.lower, comparison }),
+      renderAdmissionUniversityGroup({ key: 'comprehensive-similar', title: '등록자 내신 참고값이 비슷한 범위 ±0.2', description: '전년도 등록자 내신 참고용으로만 확인해 주세요.', groupView: referenceGroups?.similar, comparison }),
+      renderAdmissionUniversityGroup({ key: 'comprehensive-higher', title: '등록자 내신 참고값이 높은 결과', description: '전년도 등록자 내신 참고용이에요.', groupView: referenceGroups?.higher, comparison }),
+      renderAdmissionUniversityGroup({ key: 'comprehensive-lower', title: '등록자 내신 참고값이 낮은 결과', description: '전년도 등록자 내신 참고용이에요.', groupView: referenceGroups?.lower, comparison }),
     );
     const unavailableEntries = (view.comprehensive?.allResults ?? []).filter(({ item }) => ![item.cut70Converted, item.averageGradeConverted, item.cut50Converted].some((value) => value != null && value !== '' && Number.isFinite(Number(value))));
-    sections.push(renderAdmissionUniversityGroup({ key: 'comprehensive-unavailable', title: '내신 수치 미공개', description: '전년도 공개 자료에 내신 수치가 없는 모집단위입니다.', groupView: createAdmissionUniversityGroupView(unavailableEntries), comparison }));
+    sections.push(renderAdmissionUniversityGroup({ key: 'comprehensive-unavailable', title: '내신 수치 미공개', description: '전년도 공개 자료에 내신 수치가 없는 모집단위예요.', groupView: createAdmissionUniversityGroupView(unavailableEntries), comparison }));
   }
   result.innerHTML = sections.filter(Boolean).join('') || `<div class="empty-state">${escapeHtml(admissionEmptyStateMessage())}</div>`;
   renderAdmissionInterests();
@@ -699,7 +699,7 @@ function renderGoal() {
   const result = $('#goal-result');
   const details = goalDetails();
   if (!details) {
-    result.innerHTML = '<p class="muted">내신 계산 후 목표(1.00~5.00)를 입력하면 남은 학기 기준 필요 평균을 계산합니다.</p>';
+    result.innerHTML = '<p class="muted">내신 계산 후 목표(1.00~5.00)를 입력하면 남은 학기 기준 필요 평균을 계산해요.</p>';
     return;
   }
   const difficulty = describeGoalDifficulty(details.required);
@@ -707,9 +707,9 @@ function renderGoal() {
   const actualCredits = calculateTotalCredits(actual); const remainingCredits = calculateTotalCredits(remaining, false);
   const highest = (actual.reduce((sum, item) => sum + Number(item.gradeValue) * (details.weighted ? Number(item.credit) : 1), 0) + (details.weighted ? remainingCredits : remaining.length)) / (details.weighted ? actualCredits + remainingCredits : actual.length + remaining.length);
   const scenarios = details.required >= 1 && details.required <= 5 ? createGoalScenarioSummaries(actual, remaining, details.required, details.weighted).map(({ name, semesterResults, finalAverage }) => { const rows = semesterResults.map((item) => `<div class="scenario-semester"><span>${escapeHtml(semesterLabel(item.semesterId))}</span><strong>${fmt(item.target)}</strong></div>`).join(''); return `<article class="scenario-card"><h4>${name}</h4><div class="scenario-semesters">${rows}</div><p>예상 최종 내신 <strong>${fmt(finalAverage)}</strong></p></article>`; }).join('') : '';
-  const guidance = details.simple ? '<li>간편 입력 결과는 학기 평균 기준 참고값입니다.</li><li>실제 과목별 학점 입력 시 결과가 달라질 수 있습니다.</li>' : '<li>상세 입력 과목의 실제 학점 가중치로 계산했습니다.</li>';
+  const guidance = details.simple ? '<li>간편 입력 결과는 학기 평균 기준 참고값이에요.</li><li>실제 과목별 학점 입력 시 결과가 달라질 수 있어요.</li>' : '<li>상세 입력 과목의 실제 학점 가중치로 계산했어요.</li>';
   const summaryText = details.required >= 1 && details.required <= 5 ? `목표 내신 ${fmt(Number(state.targetAverage))}을 위해 남은 학기 평균 ${fmt(details.required)}가 필요해요.` : difficulty;
-  result.innerHTML = `<section class="goal-summary"><span>남은 학기 필요 평균</span><strong>${details.required >= 1 && details.required <= 5 ? `${fmt(details.required)}등급` : '-'}</strong><p>${summaryText}</p>${details.required < 1 || details.required > 5 ? `<small>남은 모든 과목을 1등급으로 가정한 최고 가능 최종 내신: ${fmt(highest)}</small>` : ''}</section>${scenarios ? `<section class="scenario-grid" aria-label="목표 시나리오">${scenarios}</section>` : ''}<aside class="goal-guidance"><strong>안내</strong><ul>${guidance}<li>대학 합격 가능성을 의미하지 않습니다.</li></ul></aside>`;
+  result.innerHTML = `<section class="goal-summary"><span>남은 학기 필요 평균</span><strong>${details.required >= 1 && details.required <= 5 ? `${fmt(details.required)}등급` : '-'}</strong><p>${summaryText}</p>${details.required < 1 || details.required > 5 ? `<small>남은 모든 과목을 1등급으로 가정한 최고 가능 최종 내신: ${fmt(highest)}</small>` : ''}</section>${scenarios ? `<section class="scenario-grid" aria-label="목표 시나리오">${scenarios}</section>` : ''}<aside class="goal-guidance"><strong>안내</strong><ul>${guidance}<li>대학 합격 가능성을 의미하지 않아요.</li></ul></aside>`;
 }
 function renderPrintReport() {
   const model = buildPrintReportModel(state, { remainingRecords: fallbackRemainingSemesters() });
@@ -725,7 +725,7 @@ function render() {
   $('#student-id').value = state.student.studentId; $('#student-name').value = state.student.studentName;
   const validStudentId = /^\d{5}$/.test(state.student.studentId);
   const validStudentName = Boolean(state.student.studentName.trim());
-  $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해주세요.' : '';
+  $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해 주세요.' : '';
   $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
 }
 
@@ -794,7 +794,7 @@ semesterCards.addEventListener('change', (event) => {
   if (field === 'gradeValue' && event.target.value && (Number(event.target.value) < 1 || Number(event.target.value) > 5)) { record[field] = ''; showToast('등급은 1~5등급만 입력할 수 있어요.', 'error'); }
   state.calculated = false; state.goalCalculated = false; saveState(); renderSemesterCards(); renderGradeDerivedViews();
 });
-$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderSemesterCards(); renderGradeDerivedViews(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개입니다.`); });
+$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderSemesterCards(); renderGradeDerivedViews(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개예요.`); });
 $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculated = true; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
@@ -1019,20 +1019,20 @@ $('#export-button').addEventListener('click', () => {
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
   const blob = new Blob([JSON.stringify(createStudentBackup({ ...state, admissionUi: collectStudentBackupUiState() }), null, 2)], { type: 'application/json' });
   const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `naesin-simulator-backup-${stamp}.json`; link.click(); URL.revokeObjectURL(link.href);
-  showToast('백업 파일을 내려받았습니다.');
+  showToast('백업 파일을 내려받았어요.');
 });
 $('#import-input').addEventListener('change', async (event) => {
   const file = event.target.files?.[0]; if (!file) return;
   try {
     const imported = parseStudentBackup(await file.text());
-    if (hasCurrentStudentInput() && !confirm('현재 입력 내용이 백업 파일의 내용으로 바뀝니다. 불러올까요?')) {
+    if (hasCurrentStudentInput() && !confirm('현재 입력 내용이 백업 파일의 내용으로 바뀌어요. 불러올까요?')) {
       event.target.value = '';
       return;
     }
     state = normalizeState(imported);
     expandedSemesterId = state.activeSemester;
     restoreStudentBackupUiState(imported.admissionUi);
-    render(); showToast('백업 데이터를 불러왔습니다.');
+    render(); showToast('백업 데이터를 불러왔어요.');
   } catch (error) { console.error(error); showToast(error instanceof Error ? error.message : '백업 파일 형식을 확인해 주세요.', 'error'); }
   event.target.value = '';
 });
@@ -1050,7 +1050,7 @@ $('#reset-button').addEventListener('click', () => {
   closeDepartmentSuggestions();
   resetAdmissionViewPaging();
   render();
-  showToast('입력한 학생 데이터와 성적을 초기화했습니다.');
+  showToast('입력한 학생 데이터와 성적을 초기화했어요.');
 });
 $('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
 document.querySelector('.student-form').addEventListener('input', (event) => {
