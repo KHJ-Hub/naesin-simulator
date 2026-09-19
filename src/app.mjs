@@ -765,7 +765,7 @@ function admissionInterestComparisonValue(value, suffix = '') {
 function renderAdmissionInterestComparisonTable(items, type) {
   if (!items.length) return '';
   const hasAverage = items.some((item) => Number.isFinite(item.averageGradeOriginal) || Number.isFinite(item.averageGradeConverted));
-  const row = (label, renderValue, className = '') => `<tr class="${className}"><th scope="row">${escapeHtml(label)}</th>${items.map((item) => `<td>${renderValue(item)}</td>`).join('')}</tr>`;
+  const row = (label, renderValue, className = '') => ({ label, renderValue, className });
   const commonRows = [
     row('모집단위', (item) => `<strong>${escapeHtml(item.department)}</strong>`, 'is-key-row'),
     row('전형명', (item) => `<strong>${escapeHtml(item.admissionName)}</strong>`, 'is-key-row'),
@@ -788,16 +788,19 @@ function renderAdmissionInterestComparisonTable(items, type) {
           row('평균등급 환산 참고', (item) => admissionInterestComparisonValue(item.averageGradeConverted), 'is-key-row'),
         ] : []),
       ]
-    : [
+      : [
         row('공개 자료 유형', (item) => escapeHtml(item.primaryReference.label)),
         row('9등급 원본값', (item) => admissionInterestComparisonValue(item.primaryReference.original)),
         row('5등급 환산 참고값', (item) => admissionInterestComparisonValue(item.primaryReference.converted), 'is-key-row'),
       ];
+  const rows = [...commonRows, ...dataRows, ...differenceRows];
   const title = type === 'subject' ? '관심 대학 학생부교과 비교' : '관심 대학 학생부종합 참고 비교';
   const note = type === 'comprehensive'
     ? '<p class="interest-compare-note">학생부종합전형은 내신 외 다양한 요소를 함께 평가하므로 아래 값은 전년도 등록자 내신 참고자료예요.</p>'
     : '<p class="interest-compare-note">공개된 전년도 입시결과와 5등급 환산 참고값을 나란히 보여줘요. 미공개 값은 추정하지 않아요.</p>';
-  return `<section class="interest-compare-section" data-interest-compare-section="${type}"><h4>${title}</h4><div class="interest-compare-table-scroll"><table class="interest-compare-table"><thead><tr><th scope="col">비교 항목</th>${items.map((item) => `<th scope="col">${escapeHtml(item.universityName)}</th>`).join('')}</tr></thead><tbody>${[...commonRows, ...dataRows, ...differenceRows].join('')}</tbody></table></div>${note}</section>`;
+  const desktopRows = rows.map(({ label, renderValue, className }) => `<tr class="${className}"><th scope="row">${escapeHtml(label)}</th>${items.map((item) => `<td>${renderValue(item)}</td>`).join('')}</tr>`).join('');
+  const mobileRows = rows.map(({ label, renderValue, className }) => `<section class="interest-compare-mobile-row ${className}"><h5>${escapeHtml(label)}</h5><div class="interest-compare-mobile-values">${items.map((item, index) => `<div class="interest-compare-mobile-value"><span class="interest-compare-mobile-university"><b aria-hidden="true">${String.fromCharCode(65 + index)}</b>${escapeHtml(item.universityName)}</span><div>${renderValue(item)}</div></div>`).join('')}</div></section>`).join('');
+  return `<section class="interest-compare-section" data-interest-compare-section="${type}"><h4>${title}</h4><div class="interest-compare-table-scroll"><table class="interest-compare-table"><thead><tr><th scope="col">비교 항목</th>${items.map((item) => `<th scope="col">${escapeHtml(item.universityName)}</th>`).join('')}</tr></thead><tbody>${desktopRows}</tbody></table></div><div class="interest-compare-mobile" aria-label="${escapeHtml(title)}">${mobileRows}</div>${note}</section>`;
 }
 
 function renderAdmissionInterestComparison() {

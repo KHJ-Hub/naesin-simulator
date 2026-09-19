@@ -93,8 +93,11 @@ test('학생 UI는 관심 대학 2개부터 비교 버튼을 만들고 선택·�
   assert.match(app, /data-admission-interest-compare-select/);
   assert.match(app, /admissionInterestComparisonSelection\.size >= MAX_ADMISSION_INTEREST_COMPARISONS/);
   assert.match(app, /renderAdmissionInterestComparisonTable\(comparison\.subject, 'subject'\)[\s\S]*?renderAdmissionInterestComparisonTable\(comparison\.comprehensive, 'comprehensive'\)/);
+  assert.match(app, /interest-compare-mobile-row[\s\S]*?interest-compare-mobile-university[\s\S]*?String\.fromCharCode\(65 \+ index\)/);
   assert.match(app, /updateAdmissionInterest\(removeButton\.dataset\.admissionRemove, 'remove'\)/);
   assert.match(styles, /\.interest-compare-table-scroll[\s\S]*?overflow-x:\s*auto/);
   assert.match(styles, /\.interest-compare-entry\s*\{[\s\S]*?margin:\s*18px 0 10px/);
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.interest-compare-table/);
+  assert.match(styles, /@media \(max-width: 600px\)[\s\S]*?\.interest-compare-table-scroll\s*\{[\s\S]*?display:\s*none/);
+  assert.match(styles, /@media \(max-width: 600px\)[\s\S]*?\.interest-compare-mobile\s*\{[\s\S]*?display:\s*grid/);
 });

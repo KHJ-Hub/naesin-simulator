@@ -1633,6 +1633,10 @@ button, input, select {
   font-size: .95rem;
 }
 
+.interest-compare-mobile {
+  display: none;
+}
+
 @media print {
   .interest-compare-entry,
   .interest-compare-panel {
@@ -1660,6 +1664,109 @@ button, input, select {
   }
   .interest-compare-table thead th:first-child {
     z-index: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .interest-compare-table-scroll {
+    display: none;
+  }
+
+  .interest-compare-mobile {
+    display: grid;
+    gap: .65rem;
+    min-width: 0;
+  }
+
+  .interest-compare-mobile-row {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: .82rem;
+    background: #fff;
+  }
+
+  .interest-compare-mobile-row h5 {
+    margin: 0;
+    padding: .58rem .7rem;
+    background: #eceeff;
+    color: var(--title-strong);
+    font-size: .82rem;
+    line-height: 1.35;
+  }
+
+  .interest-compare-mobile-values {
+    display: grid;
+    min-width: 0;
+  }
+
+  .interest-compare-mobile-value {
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+    gap: .6rem;
+    align-items: start;
+    min-width: 0;
+    padding: .62rem .7rem;
+    font-size: .8rem;
+    line-height: 1.45;
+  }
+
+  .interest-compare-mobile-value + .interest-compare-mobile-value {
+    border-top: 1px solid var(--line);
+  }
+
+  .interest-compare-mobile-university {
+    display: flex;
+    gap: .42rem;
+    align-items: flex-start;
+    min-width: 0;
+    color: var(--ink);
+    font-weight: 750;
+    overflow-wrap: anywhere;
+  }
+
+  .interest-compare-mobile-university b {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 1.35rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    background: var(--lavender-100);
+    color: var(--lavender-500);
+    font-size: .68rem;
+  }
+
+  .interest-compare-mobile-value:nth-child(2) .interest-compare-mobile-university b {
+    background: #e9edff;
+    color: #4054a8;
+  }
+
+  .interest-compare-mobile-value:nth-child(3) .interest-compare-mobile-university b {
+    background: var(--teal-50);
+    color: var(--teal-700);
+  }
+
+  .interest-compare-mobile-value > div {
+    min-width: 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .interest-compare-mobile-row.is-key-row {
+    border-color: #c9d0f3;
+    box-shadow: 0 6px 16px rgba(67, 72, 135, .06);
+  }
+
+  .interest-compare-mobile-row.is-key-row h5 {
+    background: #e7e9ff;
+  }
+
+  .interest-compare-mobile-value small {
+    display: block;
+    margin-top: .14rem;
+    color: var(--muted);
+    font-size: .69rem;
   }
 }
 
