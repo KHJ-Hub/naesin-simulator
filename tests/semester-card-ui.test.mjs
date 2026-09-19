@@ -44,8 +44,31 @@ test('상세 입력 완료값이 간편 평균보다 우선하는 기존 계산 
   assert.match(app, /if \(status\.complete\) return \{ badge: '상세 입력 완료'/);
 });
 
+test('간편·상세 입력 영역 끝에 학기 완료 버튼을 제공한다', () => {
+  assert.match(app, /data-semester-complete=/);
+  assert.match(app, /성적 입력 완료/);
+  assert.match(styles, /\.semester-complete-button[\s\S]*?min-height: 46px/);
+});
+
+test('학기 완료는 입력값을 검증한 뒤 현재 카드만 접고 다음 학기로 이동한다', () => {
+  assert.match(app, /function completeSemesterInput\(semesterId\)/);
+  assert.match(app, /validAverageInput\(Number\(input\.value\)\)/);
+  assert.match(app, /missingRows[\s\S]*?등급을 입력해 주세요/);
+  assert.match(app, /expandedSemesterId = null/);
+  assert.match(app, /nextCard[\s\S]*?scrollIntoView\(\{ behavior: 'smooth', block: 'nearest' \}\)/);
+  assert.doesNotMatch(app, /completeSemesterInput[\s\S]{0,800}state\.calculated = true/);
+});
+
+test('입력 오류는 필드 가까이에 표시하고 완료 후에도 다시 열어 수정할 수 있다', () => {
+  assert.match(app, /semester-input-error/);
+  assert.match(app, /field\.setAttribute\('aria-invalid', 'true'\)/);
+  assert.match(app, /data-semester-toggle=/);
+  assert.doesNotMatch(app, /data-semester-complete[^\n]+disabled/);
+});
+
 test('모바일은 입력 방식과 계산 영역을 한 열로 배치하고 터치 높이를 유지한다', () => {
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.semester-mode-options \{ grid-template-columns: 1fr/);
   assert.match(styles, /\.semester-mode-option[\s\S]*?min-height: 60px/);
+  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.semester-complete-button \{ width: 100%; min-height: 48px/);
   assert.match(styles, /\.grade-calculation-actions \{ grid-template-columns: 1fr/);
 });

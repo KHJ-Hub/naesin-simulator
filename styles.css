@@ -4056,6 +4056,28 @@ h3:not(.hero-grid h2),
   line-height: 1.5;
 }
 
+.semester-complete-button {
+  justify-self: end;
+  min-width: 180px;
+  min-height: 46px;
+  margin-top: 3px;
+  padding-inline: 20px;
+}
+
+.semester-input-error {
+  display: block;
+  margin-top: 5px;
+  color: var(--danger);
+  font-size: .78rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.semester-card [aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(190, 42, 77, .12);
+}
+
 .semester-card-help {
   margin-top: 12px;
 }
@@ -4108,6 +4130,7 @@ h3:not(.hero-grid h2),
   .semester-quick-entry { padding: 12px; }
   .semester-detail-heading { align-items: baseline; }
   .semester-priority-note { font-size: .76rem; }
+  .semester-complete-button { width: 100%; min-height: 48px; }
   .semester-card-help { margin-top: 10px; }
   .grade-calculation-actions { grid-template-columns: 1fr; margin-top: 12px; }
   .grade-calculation-actions #calculate-button { width: 100%; }

@@ -364,7 +364,7 @@ function semesterCardView(semesterId) {
   const detailedAverage = status.complete ? calculateOverallAverage(status.valid, state.weighted) : NaN;
   if (status.complete) return { badge: '상세 입력 완료', tone: 'complete', summary: `상세 입력 완료 · 평균 ${fmt(detailedAverage)}` };
   if (hasDetailedInput) return { badge: '입력 중', tone: 'progress', summary: hasQuick ? `상세 입력 중 · 평균 ${fmt(quick)} 적용` : '과목별 성적 입력 중' };
-  if (hasQuick) return { badge: '간편 입력 완료', tone: 'complete', summary: `평균 ${fmt(quick)}` };
+  if (hasQuick) return { badge: '간편 입력 완료', tone: 'complete', summary: `간편 입력 완료 · 평균 ${fmt(quick)}` };
   return { badge: '입력 전', tone: 'empty', summary: '입력 전' };
 }
 
@@ -401,10 +401,11 @@ function renderSemesterCards() {
     const quick = quickAverage(semesterId);
     const quickValue = validAverageInput(quick) ? quick.toFixed(2) : '';
     const modeNote = mode ? `<p class="semester-priority-note">${escapeHtml(modeLabel(semesterId))}</p>` : '';
+    const completeButton = mode ? `<button type="button" class="primary-button semester-complete-button" data-semester-complete="${semesterId}">성적 입력 완료</button>` : '';
     const inputBody = mode === 'quick'
-      ? `<div class="quick-entry semester-quick-entry"><label>이 학기 평균 내신 <input class="input" data-quick-average="${semesterId}" type="number" min="1" max="5" step="0.01" value="${quickValue}" placeholder="예: 2.14" /></label><p class="muted">성적표의 학기 종합 평균을 1.00~5.00 범위로 입력해 주세요.</p>${modeNote}</div>`
+      ? `<div class="quick-entry semester-quick-entry"><label>이 학기 평균 내신 <input class="input" data-quick-average="${semesterId}" type="number" min="1" max="5" step="0.01" value="${quickValue}" placeholder="예: 2.14" /></label><p class="muted">성적표의 학기 종합 평균을 1.00~5.00 범위로 입력해 주세요.</p>${modeNote}${completeButton}</div>`
       : mode === 'detailed'
-        ? `<div class="semester-detailed-entry"><div class="semester-detail-heading"><strong>과목별 성적</strong><span>${detailedRows(semesterId).length}개 과목</span></div><div class="grade-list">${gradeRowsHtml(semesterId)}</div><div class="course-selection">${courseSelectionHtml(semesterId)}</div>${modeNote}</div>`
+        ? `<div class="semester-detailed-entry"><div class="semester-detail-heading"><strong>과목별 성적</strong><span>${detailedRows(semesterId).length}개 과목</span></div><div class="grade-list">${gradeRowsHtml(semesterId)}</div><div class="course-selection">${courseSelectionHtml(semesterId)}</div>${modeNote}${completeButton}</div>`
         : '<div class="semester-mode-prompt">입력 방식을 선택하면 해당 학기의 입력란이 나타나요.</div>';
     return `<article class="semester-card ${isExpanded ? 'is-open' : ''}" data-semester-card="${semesterId}">
       <button type="button" class="semester-card-header" data-semester-toggle="${semesterId}" aria-expanded="${isExpanded}" aria-controls="semester-card-body-${semesterId}">
@@ -434,6 +435,74 @@ function refreshSemesterCardHeader(semesterId) {
     badge.textContent = view.badge;
     badge.className = `semester-status-badge is-${view.tone}`;
   }
+}
+function clearSemesterCompletionErrors(card) {
+  card.querySelectorAll('.semester-input-error').forEach((error) => error.remove());
+  card.querySelectorAll('[aria-invalid="true"]').forEach((field) => field.removeAttribute('aria-invalid'));
+}
+function addSemesterInputError(field, message) {
+  field.setAttribute('aria-invalid', 'true');
+  const error = document.createElement('small');
+  error.className = 'semester-input-error';
+  error.setAttribute('role', 'alert');
+  error.textContent = message;
+  const label = field.closest('label');
+  if (label) label.append(error);
+  else field.insertAdjacentElement('afterend', error);
+}
+function completeSemesterInput(semesterId) {
+  const card = semesterCards.querySelector(`[data-semester-card="${semesterId}"]`);
+  if (!card) return;
+  clearSemesterCompletionErrors(card);
+  const mode = semesterSelectedMode(semesterId);
+  if (mode === 'quick') {
+    const input = card.querySelector(`[data-quick-average="${semesterId}"]`);
+    if (!input || !validAverageInput(Number(input.value))) {
+      if (input) {
+        addSemesterInputError(input, '1.00~5.00 범위의 학기 평균을 입력해 주세요.');
+        input.focus();
+      }
+      showToast('학기 평균을 입력해 주세요.', 'error');
+      return;
+    }
+  } else if (mode === 'detailed') {
+    const status = detailedStatus(semesterId);
+    if (!status.gradedRows.length) {
+      const button = card.querySelector('[data-semester-complete]');
+      if (button) addSemesterInputError(button, '등급을 입력할 과목이 없어요.');
+      showToast('등급을 입력할 과목을 확인해 주세요.', 'error');
+      return;
+    }
+    const missingRows = status.gradedRows.filter((record) => !(Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5));
+    if (missingRows.length) {
+      const missingIds = new Set(missingRows.map((record) => record.id));
+      const fields = [...card.querySelectorAll('[data-id]')]
+        .filter((row) => missingIds.has(row.dataset.id))
+        .map((row) => row.querySelector('[data-field="gradeValue"]'))
+        .filter(Boolean);
+      fields.forEach((field) => addSemesterInputError(field, '등급을 입력해 주세요.'));
+      fields[0]?.focus();
+      fields[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast(`입력하지 않은 등급이 ${missingRows.length}개 있어요.`, 'error');
+      return;
+    }
+  } else {
+    showToast('먼저 입력 방식을 선택해 주세요.', 'error');
+    return;
+  }
+
+  state.activeSemester = semesterId;
+  expandedSemesterId = null;
+  saveState();
+  renderSemesterCards();
+  renderGradeDerivedViews();
+  const semesterIndex = SEMESTERS.findIndex(({ id }) => id === semesterId);
+  const nextSemesterId = SEMESTERS[semesterIndex + 1]?.id;
+  window.requestAnimationFrame(() => {
+    const nextCard = nextSemesterId ? semesterCards.querySelector(`[data-semester-card="${nextSemesterId}"]`) : null;
+    (nextCard ?? semesterCards.querySelector(`[data-semester-card="${semesterId}"]`))?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  showToast(`${semesterLabel(semesterId)} 성적 입력을 완료했어요.`);
 }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
 function gradeInputRows() { return records().filter((record) => ['grade', 'both'].includes(record.gradingType) && record.fiveLevelEligible !== false); }
@@ -890,6 +959,11 @@ function render() {
 
 const semesterCards = $('#semester-cards');
 semesterCards.addEventListener('click', (event) => {
+  const completeButton = event.target.closest('[data-semester-complete]');
+  if (completeButton) {
+    completeSemesterInput(completeButton.dataset.semesterComplete);
+    return;
+  }
   const toggle = event.target.closest('[data-semester-toggle]');
   if (toggle) {
     const semesterId = toggle.dataset.semesterToggle;
