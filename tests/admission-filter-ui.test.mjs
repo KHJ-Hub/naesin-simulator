@@ -38,10 +38,11 @@ test('학과 검색은 대학 선택 없이 사용할 수 있는 검색 입력�
 
 test('학과 자유 입력은 자동완성 선택 없이 입력·Enter·변경 시 결과를 다시 렌더링한다', () => {
   assert.match(app, /DEPARTMENT_SEARCH_DEBOUNCE_MS = 180/);
-  assert.match(app, /admissionFilters\.department = event\.target\.value\.trim\(\)/);
+  assert.match(app, /function updateDepartmentSuggestions\(input,[\s\S]*?admissionFilters\.department = input\.value\.trim\(\)/);
   assert.match(app, /departmentSearchTimer = window\.setTimeout\(\(\) => \{[\s\S]*?renderAdmissionReferences\(\)/);
   assert.match(app, /if \(key === 'department'\)[\s\S]*?renderAdmissionReferences\(\)/);
-  assert.match(app, /if \(event\.key !== 'Enter' \|\| event\.isComposing\) return;[\s\S]*?closeDepartmentSuggestions\(\);[\s\S]*?renderAdmissionReferences\(\)/);
+  assert.match(app, /if \(event\.key !== 'Enter'\) return;[\s\S]*?commitDepartmentSearch\(event\.target\)/);
+  assert.match(app, /addEventListener\('search',[\s\S]*?commitDepartmentSearch\(event\.target\)/);
 });
 
 test('학과 자동완성은 입력 중에만 열리고 확정·취소 동작에서 즉시 닫힌다', () => {
@@ -52,6 +53,15 @@ test('학과 자동완성은 입력 중에만 열리고 확정·취소 동작에
   assert.match(app, /document\.addEventListener\('pointerdown',[\s\S]*?\.admission-department-field[\s\S]*?closeDepartmentSuggestions\(\)/);
   assert.match(app, /#admission-view-button'\)\.addEventListener\('click',[\s\S]*?closeDepartmentSuggestions\(\)/);
   assert.match(app, /#admission-department'\)\.addEventListener\('(?:focus|click)', openDepartmentSuggestions\)/);
+});
+
+test('모바일 한글 IME 조합 종료 시 후보를 즉시 갱신하고 조합 중 Search 입력을 보존한다', () => {
+  assert.match(app, /let isDepartmentSearchComposing = false/);
+  assert.match(app, /let pendingDepartmentSearchCommit = false/);
+  assert.match(app, /addEventListener\('compositionstart',[\s\S]*?isDepartmentSearchComposing = true/);
+  assert.match(app, /addEventListener\('compositionupdate',[\s\S]*?updateDepartmentSuggestions\(event\.target\)/);
+  assert.match(app, /addEventListener\('compositionend',[\s\S]*?updateDepartmentSuggestions\(event\.target\)[\s\S]*?pendingDepartmentSearchCommit[\s\S]*?commitDepartmentSearch\(event\.target\)/);
+  assert.match(app, /event\.isComposing \|\| isDepartmentSearchComposing \|\| event\.keyCode === 229/);
 });
 
 test('학과 자동완성 후보 선택은 자유 검색어와 별개로 적용되고 목록을 닫는다', () => {

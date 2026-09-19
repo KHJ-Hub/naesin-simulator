@@ -94,6 +94,8 @@ let admissionInterestComparisonOpen = false;
 const DEPARTMENT_SEARCH_DEBOUNCE_MS = 180;
 let departmentSearchTimer = null;
 let isDepartmentSuggestionsOpen = false;
+let isDepartmentSearchComposing = false;
+let pendingDepartmentSearchCommit = false;
 
 function admissionRegionKeysForFilters({ allWhenUnscoped = false } = {}) {
   const selectedRegion = admissionResultRegionKey(admissionFilters.region);
@@ -546,6 +548,27 @@ function openDepartmentSuggestions() {
   isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
   renderDepartmentSuggestions(options.departmentSuggestions);
 }
+function updateDepartmentSuggestions(input, { open = true } = {}) {
+  admissionFilters.department = input.value.trim();
+  const options = getAdmissionViewFilterOptions(admissionReferenceData, { admissionViewMode, filters: admissionFilters });
+  if (open) isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
+  renderDepartmentSuggestions(options.departmentSuggestions);
+}
+function commitDepartmentSearch(input) {
+  clearTimeout(departmentSearchTimer);
+  departmentSearchTimer = null;
+  updateDepartmentSuggestions(input, { open: false });
+  closeDepartmentSuggestions();
+  resetAdmissionViewPaging();
+  renderAdmissionReferences();
+}
+function scheduleDepartmentSearchRender() {
+  clearTimeout(departmentSearchTimer);
+  departmentSearchTimer = window.setTimeout(() => {
+    departmentSearchTimer = null;
+    renderAdmissionReferences();
+  }, DEPARTMENT_SEARCH_DEBOUNCE_MS);
+}
 function renderAdmissionFilterOptions() {
   const options = getAdmissionViewFilterOptions(admissionReferenceData, { admissionViewMode, filters: admissionFilters });
   const configurations = [
@@ -955,17 +978,28 @@ document.querySelector('#admission-filters').addEventListener('change', async (e
   renderAdmissionReferences();
 });
 $('#admission-department').addEventListener('input', (event) => {
-  admissionFilters.department = event.target.value.trim();
+  updateDepartmentSuggestions(event.target);
   resetAdmissionViewPaging();
-  const options = getAdmissionViewFilterOptions(admissionReferenceData, { admissionViewMode, filters: admissionFilters });
-  isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
-  renderDepartmentSuggestions(options.departmentSuggestions);
-  clearTimeout(departmentSearchTimer);
-  if (event.isComposing) return;
-  departmentSearchTimer = window.setTimeout(() => {
-    departmentSearchTimer = null;
-    renderAdmissionReferences();
-  }, DEPARTMENT_SEARCH_DEBOUNCE_MS);
+  if (event.isComposing || isDepartmentSearchComposing) return;
+  scheduleDepartmentSearchRender();
+});
+$('#admission-department').addEventListener('compositionstart', () => {
+  isDepartmentSearchComposing = true;
+  pendingDepartmentSearchCommit = false;
+});
+$('#admission-department').addEventListener('compositionupdate', (event) => {
+  window.requestAnimationFrame(() => updateDepartmentSuggestions(event.target));
+});
+$('#admission-department').addEventListener('compositionend', (event) => {
+  isDepartmentSearchComposing = false;
+  updateDepartmentSuggestions(event.target);
+  resetAdmissionViewPaging();
+  if (pendingDepartmentSearchCommit) {
+    pendingDepartmentSearchCommit = false;
+    commitDepartmentSearch(event.target);
+    return;
+  }
+  scheduleDepartmentSearchRender();
 });
 $('#admission-department').addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
@@ -973,15 +1007,15 @@ $('#admission-department').addEventListener('keydown', (event) => {
     closeDepartmentSuggestions();
     return;
   }
-  if (event.key !== 'Enter' || event.isComposing) return;
+  if (event.key !== 'Enter') return;
   event.preventDefault();
-  clearTimeout(departmentSearchTimer);
-  departmentSearchTimer = null;
-  admissionFilters.department = event.target.value.trim();
-  closeDepartmentSuggestions();
-  resetAdmissionViewPaging();
-  renderAdmissionReferences();
+  if (event.isComposing || isDepartmentSearchComposing || event.keyCode === 229) {
+    pendingDepartmentSearchCommit = true;
+    return;
+  }
+  commitDepartmentSearch(event.target);
 });
+$('#admission-department').addEventListener('search', (event) => commitDepartmentSearch(event.target));
 $('#admission-department').addEventListener('focus', openDepartmentSuggestions);
 $('#admission-department').addEventListener('click', openDepartmentSuggestions);
 $('#admission-department-suggestions').addEventListener('pointerdown', (event) => {
