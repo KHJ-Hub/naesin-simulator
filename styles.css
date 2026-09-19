@@ -296,6 +296,22 @@ h1, h2, h3 { letter-spacing: -.025em; }
   }
 }
 
+.app-version {
+  margin-top: 7px;
+  color: #7b8190;
+  font-size: .7rem;
+  letter-spacing: .02em;
+}
+
+.toggle-line {
+  min-height: 44px;
+  cursor: pointer;
+}
+
+@media print {
+  .app-version { display: none !important; }
+}
+
 /* Tablet touch layout: 768–1024px. Keep controls generous and avoid dense rows. */
 @media (min-width: 768px) and (max-width: 1199px) {
   :root {
@@ -3855,6 +3871,11 @@ h3:not(.hero-grid h2),
 }
 
 @media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
   .semester-card-list { gap: 9px; }
   .semester-card { border-radius: 15px; }
   .semester-card-header {
@@ -3881,4 +3902,13 @@ h3:not(.hero-grid h2),
   .semester-card-help { margin-top: 10px; }
   .grade-calculation-actions { grid-template-columns: 1fr; margin-top: 12px; }
   .grade-calculation-actions #calculate-button { width: 100%; }
+}
+
+/* Prevent iOS form focus zoom without enlarging radio/checkbox controls. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

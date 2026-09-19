@@ -7,7 +7,7 @@ import {
   validAverageInput,
 } from './grade-calculator.mjs';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs';
-import { admissionDifference } from './admission-reference.mjs';
+import { admissionDifference } from './admission-reference-core.mjs';
 
 const SEMESTER_ORDER = new Map(SEMESTERS.map(({ id }, index) => [id, index]));
 
