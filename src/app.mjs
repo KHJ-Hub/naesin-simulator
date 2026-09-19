@@ -96,6 +96,8 @@ let departmentSearchTimer = null;
 let isDepartmentSuggestionsOpen = false;
 let isDepartmentSearchComposing = false;
 let pendingDepartmentSearchCommit = false;
+let ignoreNativeDepartmentSearchUntil = 0;
+let departmentResultScrollTimer = null;
 
 function admissionRegionKeysForFilters({ allWhenUnscoped = false } = {}) {
   const selectedRegion = admissionResultRegionKey(admissionFilters.region);
@@ -623,13 +625,23 @@ function updateDepartmentSuggestions(input, { open = true } = {}) {
   if (open) isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
   renderDepartmentSuggestions(options.departmentSuggestions);
 }
-function commitDepartmentSearch(input) {
+function scrollAdmissionResultsIntoView() {
+  clearTimeout(departmentResultScrollTimer);
+  departmentResultScrollTimer = window.setTimeout(() => {
+    departmentResultScrollTimer = null;
+    $('#admission-reference-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 120);
+}
+async function commitDepartmentSearch(input, { dismissKeyboard = false, revealResults = false } = {}) {
   clearTimeout(departmentSearchTimer);
   departmentSearchTimer = null;
   updateDepartmentSuggestions(input, { open: false });
   closeDepartmentSuggestions();
+  if (dismissKeyboard) input.blur();
   resetAdmissionViewPaging();
+  await ensureAdmissionData({ allWhenUnscoped: true });
   renderAdmissionReferences();
+  if (revealResults) scrollAdmissionResultsIntoView();
 }
 function scheduleDepartmentSearchRender() {
   clearTimeout(departmentSearchTimer);
@@ -1070,7 +1082,7 @@ $('#admission-department').addEventListener('compositionend', (event) => {
   resetAdmissionViewPaging();
   if (pendingDepartmentSearchCommit) {
     pendingDepartmentSearchCommit = false;
-    commitDepartmentSearch(event.target);
+    commitDepartmentSearch(event.target, { dismissKeyboard: true, revealResults: true });
     return;
   }
   scheduleDepartmentSearchRender();
@@ -1083,14 +1095,22 @@ $('#admission-department').addEventListener('keydown', (event) => {
   }
   if (event.key !== 'Enter') return;
   event.preventDefault();
+  ignoreNativeDepartmentSearchUntil = Date.now() + 500;
   if (event.isComposing || isDepartmentSearchComposing || event.keyCode === 229) {
     pendingDepartmentSearchCommit = true;
     return;
   }
-  commitDepartmentSearch(event.target);
+  commitDepartmentSearch(event.target, { dismissKeyboard: true, revealResults: true });
 });
-$('#admission-department').addEventListener('search', (event) => commitDepartmentSearch(event.target));
-$('#admission-department').addEventListener('focus', openDepartmentSuggestions);
+$('#admission-department').addEventListener('search', (event) => {
+  if (Date.now() < ignoreNativeDepartmentSearchUntil) return;
+  commitDepartmentSearch(event.target, { dismissKeyboard: true, revealResults: true });
+});
+$('#admission-department').addEventListener('focus', () => {
+  clearTimeout(departmentResultScrollTimer);
+  departmentResultScrollTimer = null;
+  openDepartmentSuggestions();
+});
 $('#admission-department').addEventListener('click', openDepartmentSuggestions);
 $('#admission-department-suggestions').addEventListener('pointerdown', (event) => {
   if (event.target.closest('[data-department-suggestion]')) event.preventDefault();
@@ -1112,10 +1132,9 @@ document.addEventListener('pointerdown', (event) => {
 });
 $('#admission-view-button').addEventListener('click', async () => {
   closeDepartmentSuggestions();
-  const result = $('#admission-reference-result');
   await ensureAdmissionData({ allWhenUnscoped: true });
   renderAdmissionReferences();
-  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  scrollAdmissionResultsIntoView();
 });
 document.querySelector('#admission-reference-panel').addEventListener('change', (event) => {
   if (event.target.name === 'admission-view-mode' || event.target.matches('[data-admission-view-mode]')) {
