@@ -27,6 +27,12 @@ import {
   resetAdmissionGroupLimits,
 } from './admission-result-view.mjs?v=20260918-ownership1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260918-interest-session1';
+import {
+  MAX_ADMISSION_INTEREST_COMPARISONS,
+  MIN_ADMISSION_INTEREST_COMPARISONS,
+  buildAdmissionInterestComparison,
+  reconcileAdmissionInterestComparisonSelection,
+} from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260919-readiness1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
@@ -83,6 +89,8 @@ const admissionOpenUniversityKeys = new Set();
 const admissionUniversityResultLimits = new Map();
 const admissionUniversityGroupLimits = new Map();
 const admissionResultGroupExpanded = createAdmissionAccordionState();
+const admissionInterestComparisonSelection = new Set();
+let admissionInterestComparisonOpen = false;
 const DEPARTMENT_SEARCH_DEBOUNCE_MS = 180;
 let departmentSearchTimer = null;
 let isDepartmentSuggestionsOpen = false;
@@ -256,6 +264,8 @@ function collectStudentBackupUiState() {
   };
 }
 async function restoreStudentBackupUiState(saved = {}) {
+  admissionInterestComparisonOpen = false;
+  admissionInterestComparisonSelection.clear();
   admissionViewMode = normalizeAdmissionViewMode(saved?.admissionViewMode);
   STUDENT_ADMISSION_FILTER_KEYS.forEach((key) => {
     admissionFilters[key] = String(saved?.admissionFilters?.[key] ?? '').trim().slice(0, 150);
@@ -639,10 +649,85 @@ function renderAdmissionUniversityGroup({ key, title, description = '', groupVie
     : '';
   return `<details class="admission-result-group admission-result-group-${escapeHtml(key)}" data-admission-result-group-key="${escapeHtml(key)}"${isExpanded ? ' open' : ''}><summary class="admission-result-group-heading" aria-expanded="${isExpanded}"><div><h3>${escapeHtml(title)}</h3>${description ? `<p>${escapeHtml(description)}</p>` : ''}</div><span>${groupView.totalCount}개</span></summary>${expandedContent}</details>`;
 }
+function admissionInterestComparisonDifference(value) {
+  if (!Number.isFinite(value)) return '<span class="muted">-</span>';
+  return `<strong class="interest-compare-difference">${value > 0 ? '+' : ''}${fmt(value)}</strong>`;
+}
+
+function admissionInterestComparisonValue(value, suffix = '') {
+  return Number.isFinite(Number(value)) ? `${fmt(Number(value))}${suffix}` : '<span class="muted">미공개</span>';
+}
+
+function renderAdmissionInterestComparisonTable(items, type) {
+  if (!items.length) return '';
+  const hasAverage = items.some((item) => Number.isFinite(item.averageGradeOriginal) || Number.isFinite(item.averageGradeConverted));
+  const row = (label, renderValue, className = '') => `<tr class="${className}"><th scope="row">${escapeHtml(label)}</th>${items.map((item) => `<td>${renderValue(item)}</td>`).join('')}</tr>`;
+  const commonRows = [
+    row('모집단위', (item) => `<strong>${escapeHtml(item.department)}</strong>`, 'is-key-row'),
+    row('전형명', (item) => `<strong>${escapeHtml(item.admissionName)}</strong>`, 'is-key-row'),
+    row('지역', (item) => escapeHtml(item.region ?? '-')),
+    row('설립유형', (item) => escapeHtml(item.ownershipLabel ?? '-')),
+    row('기준학년도', (item) => `${escapeHtml(item.referenceYear)}학년도`),
+  ];
+  const differenceRows = [
+    row('현재 내신과 차이', (item) => `${admissionInterestComparisonDifference(item.currentDifference)}<small>${escapeHtml(item.primaryReference.label)}</small>`, 'is-key-row'),
+    row('목표 내신과 차이', (item) => `${admissionInterestComparisonDifference(item.targetDifference)}<small>${escapeHtml(item.primaryReference.label)}</small>`, 'is-key-row'),
+  ];
+  const dataRows = type === 'subject'
+    ? [
+        row('9등급 원본 50% cut', (item) => admissionInterestComparisonValue(item.cut50Original)),
+        row('9등급 원본 70% cut', (item) => admissionInterestComparisonValue(item.cut70Original)),
+        row('5등급 환산 50% cut', (item) => admissionInterestComparisonValue(item.cut50Converted), 'is-key-row'),
+        row('5등급 환산 70% cut', (item) => admissionInterestComparisonValue(item.cut70Converted), 'is-key-row'),
+        ...(hasAverage ? [
+          row('평균등급 원본', (item) => admissionInterestComparisonValue(item.averageGradeOriginal)),
+          row('평균등급 환산 참고', (item) => admissionInterestComparisonValue(item.averageGradeConverted), 'is-key-row'),
+        ] : []),
+      ]
+    : [
+        row('공개 자료 유형', (item) => escapeHtml(item.primaryReference.label)),
+        row('9등급 원본값', (item) => admissionInterestComparisonValue(item.primaryReference.original)),
+        row('5등급 환산 참고값', (item) => admissionInterestComparisonValue(item.primaryReference.converted), 'is-key-row'),
+      ];
+  const title = type === 'subject' ? '관심 대학 학생부교과 비교' : '관심 대학 학생부종합 참고 비교';
+  const note = type === 'comprehensive'
+    ? '<p class="interest-compare-note">학생부종합전형은 내신 외 다양한 요소를 함께 평가하므로 아래 값은 전년도 등록자 내신 참고자료예요.</p>'
+    : '<p class="interest-compare-note">공개된 전년도 입시결과와 5등급 환산 참고값을 나란히 보여줘요. 미공개 값은 추정하지 않아요.</p>';
+  return `<section class="interest-compare-section" data-interest-compare-section="${type}"><h4>${title}</h4><div class="interest-compare-table-scroll"><table class="interest-compare-table"><thead><tr><th scope="col">비교 항목</th>${items.map((item) => `<th scope="col">${escapeHtml(item.universityName)}</th>`).join('')}</tr></thead><tbody>${[...commonRows, ...dataRows, ...differenceRows].join('')}</tbody></table></div>${note}</section>`;
+}
+
+function renderAdmissionInterestComparison() {
+  const selectedItems = state.admissionInterests.filter((item) => admissionInterestComparisonSelection.has(admissionInterestKey(item)));
+  if (selectedItems.length < MIN_ADMISSION_INTEREST_COMPARISONS) return '<p class="muted interest-compare-empty">비교할 항목을 2개 이상 선택해 주세요.</p>';
+  const currentGrade = state.calculated ? calculateOverallAverage(effectiveRecords(), state.weighted) : null;
+  const targetGrade = validAverageInput(Number(state.targetAverage)) ? Number(state.targetAverage) : null;
+  const comparison = buildAdmissionInterestComparison(selectedItems, { currentGrade, targetGrade });
+  const mixedNotice = comparison.mixed ? '<p class="interest-compare-mixed">교과와 종합은 입결 기준이 달라 각각 비교해요.</p>' : '';
+  return `${mixedNotice}${renderAdmissionInterestComparisonTable(comparison.subject, 'subject')}${renderAdmissionInterestComparisonTable(comparison.comprehensive, 'comprehensive')}`;
+}
+
 function renderAdmissionInterests() {
   const container = $('#admission-interests');
-  if (!state.admissionInterests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없어요.</p>'; return; }
-  container.innerHTML = state.admissionInterests.map((item) => `<article class="interest-item"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><small>${escapeHtml(item.referenceYear)}학년도 · 70% cut ${fmt(item.cut70)} · ${item.comparisonBasis === 'reference' ? '전년도 등록자 내신 참고' : item.comparisonBasis === 'target' ? '목표 내신' : '현재 내신'}${item.comparisonScore == null ? '' : ` ${fmt(item.comparisonScore)}`}</small></div><button type="button" class="icon-button" data-admission-remove="${escapeHtml(admissionInterestKey(item))}">삭제</button></article>`).join('');
+  const interests = state.admissionInterests;
+  const validSelection = reconcileAdmissionInterestComparisonSelection(interests, admissionInterestComparisonSelection);
+  admissionInterestComparisonSelection.clear();
+  validSelection.forEach((key) => admissionInterestComparisonSelection.add(key));
+  if (interests.length < MIN_ADMISSION_INTEREST_COMPARISONS) admissionInterestComparisonOpen = false;
+  if (!interests.length) { container.innerHTML = '<p class="muted">저장한 관심 대학·학과가 없어요.</p>'; return; }
+
+  const savedList = interests.map((item) => `<article class="interest-item"><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><small>${escapeHtml(item.referenceYear)}학년도 · ${item.comparisonReferenceType === 'average-grade' ? '평균등급' : item.comparisonReferenceType === 'cut50' ? '50% cut' : '70% cut'} ${fmt(item.cut70 ?? item.cut50 ?? item.averageGradeOriginal)} · ${item.comparisonBasis === 'reference' ? '전년도 등록자 내신 참고' : item.comparisonBasis === 'target' ? '목표 내신' : '현재 내신'}${item.comparisonScore == null ? '' : ` ${fmt(item.comparisonScore)}`}</small></div><button type="button" class="icon-button" data-admission-remove="${escapeHtml(admissionInterestKey(item))}">삭제</button></article>`).join('');
+  const compareEntry = interests.length >= MIN_ADMISSION_INTEREST_COMPARISONS
+    ? `<div class="interest-compare-entry"><button type="button" class="secondary-button interest-compare-toggle" data-admission-interest-compare-toggle aria-expanded="${admissionInterestComparisonOpen}" aria-controls="admission-interest-comparison">${admissionInterestComparisonOpen ? '비교 닫기' : '관심 대학 비교하기'}</button></div>`
+    : '';
+  const comparePanel = admissionInterestComparisonOpen
+    ? `<section id="admission-interest-comparison" class="interest-compare-panel"><div class="interest-compare-heading"><div><strong>비교할 항목 선택</strong><p>2~3개를 선택해 나란히 비교할 수 있어요.</p></div><span>${admissionInterestComparisonSelection.size}/${MAX_ADMISSION_INTEREST_COMPARISONS}</span></div><div class="interest-compare-choices">${interests.map((item) => {
+        const key = admissionInterestKey(item);
+        const checked = admissionInterestComparisonSelection.has(key);
+        const disabled = !checked && admissionInterestComparisonSelection.size >= MAX_ADMISSION_INTEREST_COMPARISONS;
+        return `<label class="${checked ? 'is-selected' : ''}${disabled ? ' is-disabled' : ''}"><input type="checkbox" data-admission-interest-compare-select="${escapeHtml(key)}" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} /><span><strong>${escapeHtml(item.university)}</strong><small>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</small></span></label>`;
+      }).join('')}</div><div class="interest-compare-results">${renderAdmissionInterestComparison()}</div></section>`
+    : '';
+  container.innerHTML = `<div class="interest-list">${savedList}</div>${compareEntry}${comparePanel}`;
 }
 
 function updateAdmissionInterest(key, action = 'toggle') {
@@ -1018,10 +1103,33 @@ $('#admission-reference-result').addEventListener('click', async (event) => {
   renderAdmissionReferences();
 });
 $('#admission-interests').addEventListener('click', (event) => {
+  const compareToggle = event.target.closest('[data-admission-interest-compare-toggle]');
+  if (compareToggle) {
+    event.preventDefault();
+    admissionInterestComparisonOpen = !admissionInterestComparisonOpen;
+    if (admissionInterestComparisonOpen && admissionInterestComparisonSelection.size < MIN_ADMISSION_INTEREST_COMPARISONS) {
+      state.admissionInterests.slice(0, MIN_ADMISSION_INTEREST_COMPARISONS).forEach((item) => admissionInterestComparisonSelection.add(admissionInterestKey(item)));
+    }
+    renderAdmissionInterests();
+    return;
+  }
   const removeButton = event.target.closest('[data-admission-remove]');
   if (!removeButton) return;
   event.preventDefault();
   updateAdmissionInterest(removeButton.dataset.admissionRemove, 'remove');
+});
+$('#admission-interests').addEventListener('change', (event) => {
+  const comparisonChoice = event.target.closest('[data-admission-interest-compare-select]');
+  if (!comparisonChoice) return;
+  const key = comparisonChoice.dataset.admissionInterestCompareSelect;
+  if (comparisonChoice.checked && admissionInterestComparisonSelection.size >= MAX_ADMISSION_INTEREST_COMPARISONS) {
+    comparisonChoice.checked = false;
+    showToast('관심 대학은 최대 3개까지 비교할 수 있어요.', 'error');
+    return;
+  }
+  if (comparisonChoice.checked) admissionInterestComparisonSelection.add(key);
+  else admissionInterestComparisonSelection.delete(key);
+  renderAdmissionInterests();
 });
 document.querySelector('#admission-reference-panel').addEventListener('click', (event) => {
   const universitySummaryControl = event.target.closest('.admission-university > summary');
@@ -1108,6 +1216,8 @@ $('#reset-button').addEventListener('click', () => {
   admissionFilters.field = '';
   admissionFilters.department = '';
   admissionFilters.admissionName = '';
+  admissionInterestComparisonOpen = false;
+  admissionInterestComparisonSelection.clear();
   closeDepartmentSuggestions();
   resetAdmissionViewPaging();
   render();
