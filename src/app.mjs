@@ -6,8 +6,9 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260917-achievement-select1';
-import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260921-entry-year1';
+import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260921-entry-year1';
+import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260921-entry-year1';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260919-readiness1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
@@ -32,7 +33,7 @@ import {
   reconcileAdmissionInterestComparisonSelection,
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
-import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260921-semester-model1';
+import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260921-entry-year1';
 import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
@@ -54,7 +55,7 @@ import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
-  actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
+  actual: [],
   student: { studentId: '', studentName: '' },
   targetAverage: '',
   weighted: true,
@@ -176,8 +177,11 @@ function loadState() {
   // 학생 개인 데이터는 브라우저 저장소에서 읽지 않고 페이지마다 빈 상태로 시작한다.
   return defaultState();
 }
+function studentCatalogContext(student = state?.student) {
+  return resolveEntryYear(student, { supportedEntryYears: getSupportedEntryYears(catalogCourses()) });
+}
 function normalizeRecord(record = {}) {
-  const configured = courseById(record.courseId);
+  const configured = courseById(record.courseId, record.entryYear ?? null) ?? courseById(record.courseId);
   if (configured) {
     const normalized = recordFromCourse(configured, normalizeBackupRecordId(record.id, makeId()));
     const grade = Number(record.gradeValue);
@@ -197,6 +201,7 @@ function normalizeRecord(record = {}) {
   const credit = Number(record.credit);
   const normalized = {
     id: normalizeBackupRecordId(record.id, makeId()),
+    entryYear: Number.isInteger(Number(record.entryYear)) ? Number(record.entryYear) : null,
     semesterId: SEMESTERS.some((semester) => semester.id === record.semesterId) ? record.semesterId : SEMESTERS[0].id,
     subjectName: String(record.subjectName ?? '').slice(0, 80),
     subjectGroup: String(record.subjectGroup ?? '기타').trim().slice(0, 40) || '기타',
@@ -219,16 +224,20 @@ function allowedAchievements(record) {
 }
 function normalizeState(saved = {}) {
   const base = defaultState();
+  const student = { studentId: String(saved.student?.studentId ?? saved.studentId ?? '').replace(/\D/g, '').slice(0, 5), studentName: String(saved.student?.studentName ?? saved.studentName ?? saved.student?.name ?? '').trim().slice(0, 30) };
+  const catalogContext = studentCatalogContext(student);
   const savedActual = Array.isArray(saved.actual) ? saved.actual.map(normalizeRecord) : [];
   const includeAchievementCourses = saved.includeAchievementCourses === true;
-  const commonActual = commonCourses().filter((course) => !savedActual.some((record) => record.courseId === course.id)).map((course) => recordFromCourse(course, makeId()));
+  const commonActual = catalogContext.status === 'supported'
+    ? commonCourses(catalogContext.entryYear).filter((course) => !savedActual.some((record) => record.courseId === course.id && recordEntryYear(record, catalogCourses()) === catalogContext.entryYear)).map((course) => recordFromCourse(course, makeId()))
+    : [];
   const targetAverage = Number(saved.targetAverage);
   const normalizedTargetAverage = validAverageInput(targetAverage) ? String(Number(targetAverage.toFixed(2))) : '';
   const calculated = Boolean(saved.calculated);
   return {
     ...base,
     actual: [...savedActual, ...commonActual],
-    student: { studentId: String(saved.student?.studentId ?? saved.studentId ?? '').replace(/\D/g, '').slice(0, 5), studentName: String(saved.student?.studentName ?? saved.studentName ?? saved.student?.name ?? '').trim().slice(0, 30) },
+    student,
     targetAverage: normalizedTargetAverage, weighted: saved.weighted !== false,
     activeSemester: SEMESTERS.some((semester) => semester.id === saved.activeSemester) ? saved.activeSemester : base.activeSemester,
     calculated, goalCalculated: calculated && Boolean(saved.goalCalculated) && Boolean(normalizedTargetAverage),
@@ -284,7 +293,8 @@ async function restoreStudentBackupUiState(saved = {}) {
   resetAdmissionViewPaging();
 }
 function hasCurrentStudentInput() {
-  const defaultCourseIds = new Set(commonCourses().map((course) => course.id));
+  const context = studentCatalogContext();
+  const defaultCourseIds = new Set(context.status === 'supported' ? commonCourses(context.entryYear).map((course) => course.id) : []);
   return Boolean(
     state.student.studentId
     || state.student.studentName
@@ -295,9 +305,28 @@ function hasCurrentStudentInput() {
   );
 }
 function records() { return state.actual; }
+function activeDetailedRecords() {
+  const context = studentCatalogContext();
+  if (context.status !== 'supported') return [];
+  const courses = catalogCourses();
+  return records().filter((record) => recordEntryYear(record, courses) === context.entryYear);
+}
+function gradeCalculationState() {
+  return buildCatalogAwareGradeState(state, studentCatalogContext(), catalogCourses());
+}
+function syncStudentCatalog() {
+  const context = studentCatalogContext();
+  if (context.status !== 'supported') return context;
+  const courses = catalogCourses();
+  const existing = new Set(records().map((record) => `${recordEntryYear(record, courses)}:${record.courseId}`));
+  commonCourses(context.entryYear).forEach((course) => {
+    if (!existing.has(`${context.entryYear}:${course.id}`)) records().push(recordFromCourse(course, makeId()));
+  });
+  return context;
+}
 function semesterLabel(id) { return SEMESTERS.find((item) => item.id === id)?.label ?? id; }
 function quickAverage(semesterId) { return Number(state.quickAverages?.[semesterId]); }
-function detailedRows(semesterId) { return records().filter((record) => record.semesterId === semesterId); }
+function detailedRows(semesterId) { return activeDetailedRecords().filter((record) => record.semesterId === semesterId); }
 function detailedStatus(semesterId) {
   const rows = detailedRows(semesterId);
   const gradedRows = rows.filter((record) => ['grade', 'both'].includes(record.gradingType));
@@ -305,9 +334,9 @@ function detailedStatus(semesterId) {
   return { rows, gradedRows, valid, complete: gradedRows.length > 0 && valid.length === gradedRows.length };
 }
 function effectiveRecords() {
-  return buildStudentGradeModels(state).current.semesterRecords;
+  return buildStudentGradeModels(gradeCalculationState()).current.semesterRecords;
 }
-function usesQuickAverage() { return buildStudentGradeModels(state).current.hasQuick; }
+function usesQuickAverage() { return buildStudentGradeModels(gradeCalculationState()).current.hasQuick; }
 function modeLabel(semesterId) {
   const status = detailedStatus(semesterId);
   const quick = validAverageInput(quickAverage(semesterId));
@@ -368,19 +397,40 @@ function gradeRowsHtml(semesterId) {
 }
 
 function courseSelectionHtml(semesterId) {
-  const used = new Set(records().filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
+  const context = studentCatalogContext();
+  if (context.status !== 'supported') return '<p class="muted">이 입학생 연도는 과목별 상세입력을 아직 지원하지 않아요.</p>';
+  const used = new Set(activeDetailedRecords().filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
   const studentId = String(state.student?.studentId ?? '');
   const classNumber = /^\d{5}$/.test(studentId) ? Number(studentId.slice(1, 3)) : null;
-  const available = selectableCoursesForSemester(semesterId, undefined, { classNumber }).filter((course) => !used.has(course.id));
+  const available = selectableCoursesForSemester(semesterId, context.entryYear, { classNumber }).filter((course) => !used.has(course.id));
   const firstGradeNote = semesterId.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택해 주세요.</p>' : '';
   return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
 }
 
 function renderSemesterCards() {
+  const catalogContext = studentCatalogContext();
+  const detailedSupported = catalogContext.status === 'supported';
+  const status = $('#course-catalog-status');
+  if (status) {
+    if (catalogContext.status === 'supported') {
+      status.className = 'course-catalog-status is-supported';
+      status.textContent = `${catalogContext.entryYear}학년도 입학생 과목 정보를 사용해요.`;
+    } else if (catalogContext.status === 'unsupported') {
+      status.className = 'course-catalog-status is-warning';
+      status.textContent = `현재 ${catalogContext.entryYear}학년도 입학생 과목 정보는 아직 준비되지 않았어요. 성적 계산은 학기 평균 간편입력으로 이용해 주세요.`;
+    } else if (catalogContext.status === 'invalid') {
+      status.className = 'course-catalog-status is-warning';
+      status.textContent = '학번 첫 자리에 현재 학년(1~3)을 확인해 주세요. 과목별 상세입력은 학년을 확인한 뒤 이용할 수 있어요.';
+    } else {
+      status.className = 'course-catalog-status';
+      status.textContent = '학번을 입력하면 입학생 연도에 맞는 과목 정보를 확인해요. 학기 평균 간편입력은 바로 이용할 수 있어요.';
+    }
+  }
   $('#semester-cards').innerHTML = SEMESTERS.map((semester) => {
     const semesterId = semester.id;
     const isExpanded = expandedSemesterId === semesterId;
-    const mode = semesterSelectedMode(semesterId);
+    const selectedMode = semesterSelectedMode(semesterId);
+    const mode = selectedMode === 'detailed' && !detailedSupported ? null : selectedMode;
     const view = semesterCardView(semesterId);
     const quick = quickAverage(semesterId);
     const quickValue = validAverageInput(quick) ? quick.toFixed(2) : '';
@@ -400,7 +450,7 @@ function renderSemesterCards() {
       <div class="semester-card-body" id="semester-card-body-${semesterId}" ${isExpanded ? '' : 'hidden'}>
         <div class="semester-mode-options" role="group" aria-label="${escapeHtml(semester.label)} 입력 방식">
           <button type="button" class="semester-mode-option ${mode === 'quick' ? 'is-selected' : ''}" data-input-mode="quick" data-semester-id="${semesterId}" aria-pressed="${mode === 'quick'}"><strong>학기 평균으로 간단히 입력</strong><small>성적표의 학기 종합 평균만 입력</small></button>
-          <button type="button" class="semester-mode-option ${mode === 'detailed' ? 'is-selected' : ''}" data-input-mode="detailed" data-semester-id="${semesterId}" aria-pressed="${mode === 'detailed'}"><strong>과목별로 자세히 입력</strong><small>과목별 등급과 학점을 반영해 계산</small></button>
+          <button type="button" class="semester-mode-option ${mode === 'detailed' ? 'is-selected' : ''}" data-input-mode="detailed" data-semester-id="${semesterId}" aria-pressed="${mode === 'detailed'}" ${detailedSupported ? '' : 'disabled aria-disabled="true"'}><strong>과목별로 자세히 입력</strong><small>${detailedSupported ? '과목별 등급과 학점을 반영해 계산' : '지원 입학생 연도에서 이용 가능'}</small></button>
         </div>
         ${inputBody}
       </div>
@@ -489,11 +539,11 @@ function completeSemesterInput(semesterId) {
   showToast(`${semesterLabel(semesterId)} 성적 입력을 완료했어요.`);
 }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char])); }
-function gradeInputRows() { return records().filter((record) => ['grade', 'both'].includes(record.gradingType) && record.fiveLevelEligible !== false); }
+function gradeInputRows() { return activeDetailedRecords().filter((record) => ['grade', 'both'].includes(record.gradingType) && record.fiveLevelEligible !== false); }
 function validRows() { return gradeInputRows().filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }
 
 function renderCurrentGradeResult() {
-  const model = buildStudentGradeModels(state).current;
+  const model = buildStudentGradeModels(gradeCalculationState()).current;
   const current = state.calculated ? model.average : null;
   const container = $('#current-grade-result');
   if (!state.calculated || !Number.isFinite(current)) {
@@ -505,7 +555,7 @@ function renderCurrentGradeResult() {
   container.innerHTML = `<span>계산된 현재 내신</span><strong>${fmt(current)}</strong><small>${escapeHtml(model.calculationBasis)}</small>`;
 }
 function renderSemesterSummary() {
-  const semesters = buildStudentGradeModels(state).current.semesters;
+  const semesters = buildStudentGradeModels(gradeCalculationState()).current.semesters;
   $('#semester-summary').innerHTML = semesters.map((semester) => {
     const average = state.calculated && semester.complete ? semester.average : null;
     const width = average == null ? 0 : Math.max(0, Math.min(100, (10 - average) * 12.5));
@@ -525,7 +575,7 @@ function gradePositionComparisonHtml(model) {
 }
 function renderGradePosition() {
   const container = $('#grade-position');
-  const current = state.calculated ? buildStudentGradeModels(state).current.average : null;
+  const current = state.calculated ? buildStudentGradeModels(gradeCalculationState()).current.average : null;
   const model = buildGradePositionModel(current);
   if (!model) {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 현재 등급 위치를 확인할 수 있어요.</div>';
@@ -538,9 +588,9 @@ function renderSubjectSummary() {
     $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있어요.</div>';
     return;
   }
-  const detailedRecords = buildStudentGradeModels(state).current.completedSemesters.flatMap((semester) => semester.source === 'detailed' ? semester.validRows : []);
+  const detailedRecords = buildStudentGradeModels(gradeCalculationState()).current.completedSemesters.flatMap((semester) => semester.source === 'detailed' ? semester.validRows : []);
   const summary = calculateSubjectGroupAverages(state.calculated ? detailedRecords : [], state.weighted);
-  const overall = state.calculated ? buildStudentGradeModels(state).current.average : null;
+  const overall = state.calculated ? buildStudentGradeModels(gradeCalculationState()).current.average : null;
   const advice = (average) => {
     if (!Number.isFinite(overall)) return '';
     const gap = average - overall;
@@ -789,7 +839,7 @@ function renderAdmissionInterestComparisonTable(items, type) {
 function renderAdmissionInterestComparison() {
   const selectedItems = state.admissionInterests.filter((item) => admissionInterestComparisonSelection.has(admissionInterestKey(item)));
   if (selectedItems.length < MIN_ADMISSION_INTEREST_COMPARISONS) return '<p class="muted interest-compare-empty">비교할 항목을 2개 이상 선택해 주세요.</p>';
-  const currentGrade = state.calculated ? buildStudentGradeModels(state).current.average : null;
+  const currentGrade = state.calculated ? buildStudentGradeModels(gradeCalculationState()).current.average : null;
   const targetGrade = validAverageInput(Number(state.targetAverage)) ? Number(state.targetAverage) : null;
   const comparison = buildAdmissionInterestComparison(selectedItems, { currentGrade, targetGrade });
   const mixedNotice = comparison.mixed ? '<p class="interest-compare-mixed">교과와 종합은 입결 기준이 달라 각각 비교해요.</p>' : '';
@@ -915,7 +965,7 @@ function renderAdmissionReferences() {
 }
 function goalDetails() {
   const target = Number(state.targetAverage);
-  const models = buildStudentGradeModels(state);
+  const models = buildStudentGradeModels(gradeCalculationState());
   const actual = models.current.semesterRecords;
   const remaining = models.remaining.remainingRecords;
   if (!state.calculated || !state.goalCalculated || !Number.isFinite(target) || target < 1 || target > 5 || !actual.length) return null;
@@ -949,7 +999,7 @@ function renderGoal() {
   result.innerHTML = `<section class="goal-summary"><span>남은 학기 필요 평균</span><strong>${details.required >= 1 && details.required <= 5 ? `${fmt(details.required)}등급` : '-'}</strong><p>${summaryText}</p>${details.required < 1 || details.required > 5 ? `<small>남은 모든 과목을 1등급으로 가정한 최고 가능 최종 내신: ${fmt(highest)}</small>` : ''}</section>${scenarios ? `<section class="scenario-grid" aria-label="목표 시나리오">${scenarios}</section>` : ''}<aside class="goal-guidance"><strong>안내</strong><ul>${guidance}<li>대학 합격 가능성을 의미하지 않아요.</li></ul></aside>`;
 }
 function renderPrintReport() {
-  const model = buildPrintReportModel(state);
+  const model = buildPrintReportModel(gradeCalculationState());
   $('#print-report').innerHTML = renderPrintReportHtml(model);
 }
 function renderGradeDerivedViews() {
@@ -962,8 +1012,15 @@ function render() {
   $('#student-id').value = state.student.studentId; $('#student-name').value = state.student.studentName;
   const validStudentId = /^\d{5}$/.test(state.student.studentId);
   const validStudentName = Boolean(state.student.studentName.trim());
-  $('#student-info-error').textContent = !validStudentId && state.student.studentId ? '학번은 숫자 5자리로 입력해 주세요.' : '';
-  $('#student-info-summary').textContent = validStudentId && validStudentName ? `학번 ${state.student.studentId} · ${state.student.studentName}` : '';
+  const catalogContext = studentCatalogContext();
+  $('#student-info-error').textContent = !validStudentId && state.student.studentId
+    ? '학번은 숫자 5자리로 입력해 주세요.'
+    : catalogContext.status === 'invalid'
+      ? '학번 첫 자리는 현재 학년인 1~3이어야 해요.'
+      : '';
+  $('#student-info-summary').textContent = validStudentId && validStudentName
+    ? `학번 ${state.student.studentId} · ${state.student.studentName}${catalogContext.entryYear ? ` · ${catalogContext.entryYear}학년도 입학생` : ''}`
+    : '';
 }
 
 const semesterCards = $('#semester-cards');
@@ -984,6 +1041,10 @@ semesterCards.addEventListener('click', (event) => {
   const modeButton = event.target.closest('[data-input-mode][data-semester-id]');
   if (modeButton) {
     const semesterId = modeButton.dataset.semesterId;
+    if (modeButton.dataset.inputMode === 'detailed' && studentCatalogContext().status !== 'supported') {
+      showToast('이 입학생 연도는 학기 평균 간편입력으로 이용해 주세요.', 'error');
+      return;
+    }
     state.activeSemester = semesterId;
     expandedSemesterId = semesterId;
     state.inputModes[semesterId] = modeButton.dataset.inputMode;
@@ -994,7 +1055,8 @@ semesterCards.addEventListener('click', (event) => {
   if (addButton) {
     const semesterId = addButton.dataset.addCourse;
     const picker = semesterCards.querySelector(`[data-course-picker="${semesterId}"]`);
-    const course = courseById(picker?.value);
+    const context = studentCatalogContext();
+    const course = context.status === 'supported' ? courseById(picker?.value, context.entryYear) : null;
     if (!course) { showToast('학교 개설 과목에서 선택해 주세요.', 'error'); return; }
     records().push(recordFromCourse(course, makeId())); state.calculated = false; state.goalCalculated = false; saveState(); render();
     return;
@@ -1354,6 +1416,14 @@ document.querySelector('.student-form').addEventListener('input', (event) => {
     const enteredId = event.target.value.replace(/\D/g, '').slice(0, 5);
     state.student.studentId = enteredId;
     event.target.value = enteredId;
+    syncStudentCatalog();
+    if (studentCatalogContext().status !== 'supported') {
+      Object.keys(state.inputModes).forEach((semesterId) => {
+        if (state.inputModes[semesterId] === 'detailed') delete state.inputModes[semesterId];
+      });
+    }
+    state.calculated = false;
+    state.goalCalculated = false;
   }
   if (event.target.id === 'student-name') { state.student.studentName = event.target.value.trimStart().replace(/\s+$/g, ''); event.target.value = state.student.studentName; }
   render();

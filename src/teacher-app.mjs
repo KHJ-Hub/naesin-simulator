@@ -1,5 +1,6 @@
 import { ACTIVE_ENTRY_YEAR } from './course-catalog.mjs?v=20260914-grading-types3';
 import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260914-teacher-store2';
+import { catalogSupportForYear } from './student-course-catalog.mjs?v=20260921-entry-year1';
 
 const $ = (selector) => document.querySelector(selector);
 let courses = catalogCourses();
@@ -18,13 +19,21 @@ function yearCourses() { return courses.filter((course) => String(course.entryYe
 function matchesStatus(course) { return statusFilter === 'all' || (statusFilter === 'active' ? isActive(course) : !isActive(course)); }
 function renderFilters() {
   const years = [...new Set([ACTIVE_ENTRY_YEAR, ...courses.map((course) => Number(course.entryYear))])].sort((a, b) => a - b);
-  $('#filter-year').innerHTML = years.map((year) => `<option value="${year}">${year}학년도 입학생</option>`).join('');
+  $('#filter-year').innerHTML = years.map((year) => {
+    const support = catalogSupportForYear(year, courses);
+    const label = support.studentSupported ? '학생 화면 지원 중' : support.hasCatalogData ? '과목 데이터 있음 · 학생 화면 미지원' : '과목 데이터 없음';
+    return `<option value="${year}">${year}학년도 입학생 · ${label}</option>`;
+  }).join('');
   $('#filter-year').value = filters.year;
   document.querySelectorAll('[data-status-filter]').forEach((button) => button.classList.toggle('is-selected', button.dataset.statusFilter === statusFilter));
 }
 function courseCard(course) {
   const active = isActive(course);
-  return `<article class="teacher-course-card ${active ? '' : 'is-inactive'}"><div class="teacher-course-main"><strong>${escapeHtml(course.subjectName)}</strong><div class="teacher-course-meta"><span>${escapeHtml(course.subjectGroup)}</span><span>${course.credit}학점</span><span>${gradingLabel(course.gradingType)}</span><span>${requirementLabel(course.requirement)}</span></div><small>${active ? '학생 화면에 표시됨' : '학생 화면에 표시되지 않음'}</small></div><div class="teacher-course-actions"><span class="status-chip ${active ? '' : 'is-off'}">${active ? '개설 ON' : '개설 OFF'}</span><button class="quiet-button" data-edit="${escapeHtml(course.id)}">수정</button><button class="quiet-button" data-disable="${escapeHtml(course.id)}">${active ? '비활성화' : '활성화'}</button></div></article>`;
+  const support = catalogSupportForYear(course.entryYear, courses);
+  const studentVisibility = support.studentSupported
+    ? (active ? '학생 화면 지원 중 · 개설 과목' : '학생 화면 지원 중 · 현재 미개설')
+    : '과목 데이터 있음 · 학생 화면 미지원';
+  return `<article class="teacher-course-card ${active ? '' : 'is-inactive'}"><div class="teacher-course-main"><strong>${escapeHtml(course.subjectName)}</strong><div class="teacher-course-meta"><span>${escapeHtml(course.subjectGroup)}</span><span>${course.credit}학점</span><span>${gradingLabel(course.gradingType)}</span><span>${requirementLabel(course.requirement)}</span></div><small>${studentVisibility}</small></div><div class="teacher-course-actions"><span class="status-chip ${active ? '' : 'is-off'}">${active ? '개설 ON' : '개설 OFF'}</span><button class="quiet-button" data-edit="${escapeHtml(course.id)}">수정</button><button class="quiet-button" data-disable="${escapeHtml(course.id)}">${active ? '비활성화' : '활성화'}</button></div></article>`;
 }
 function renderBrowser() {
   const all = yearCourses();

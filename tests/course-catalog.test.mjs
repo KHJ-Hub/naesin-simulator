@@ -41,5 +41,6 @@ test('성취도 전용 과목 레코드는 숫자 등급 없이 A/B/C 입력 구
   assert.equal(record.fiveLevelEligible, false);
   assert.equal(record.gradeValue, '');
   assert.equal(record.achievement, '');
+  assert.equal(record.entryYear, 2026);
   assert.deepEqual(gradingInputs(record.gradingType), { grade: false, achievement: true, passfail: false });
 });

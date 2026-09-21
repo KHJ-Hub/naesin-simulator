@@ -146,6 +146,12 @@ export function buildPrintReportModel(state = {}, { remainingRecords = null, now
   }));
 
   const calculationBasis = gradeModels.current.calculationBasis;
+  const catalogContext = state.catalogContext && typeof state.catalogContext === 'object' ? state.catalogContext : null;
+  const catalogBasis = catalogContext?.status === 'supported'
+    ? `${catalogContext.entryYear}학년도 입학생 과목 기준`
+    : catalogContext?.status === 'unsupported'
+      ? `${catalogContext.entryYear}학년도 상세 과목 미지원 · 간편입력 기준`
+      : null;
   let creditSummary = '입력된 상세 과목 없음';
   if (hasDetailed && hasQuick) {
     creditSummary = `상세 입력 ${detailedCredits.toFixed(1)}학점 · 간편 입력 ${quickSemesterCount}개 학기 · 학기별 동일 비중`;
@@ -215,6 +221,8 @@ export function buildPrintReportModel(state = {}, { remainingRecords = null, now
       enteredCourseCount,
       totalCourseCount,
       calculationBasis,
+      catalogEntryYear: catalogContext?.entryYear ?? null,
+      catalogBasis,
       creditSummary,
       hasQuickAverage: hasQuick,
     },
@@ -417,5 +425,6 @@ export function renderPrintReport(model) {
 
   const subjectSection = model.quickConsult ? '' : `<section class="print-subject-section"><h2>교과별 요약</h2><table class="print-subject-table"><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects}</tbody></table></section>`;
   const reportDescription = model.reportDescription ? `<p class="print-report-description">${escapeHtml(model.reportDescription)}</p>` : '';
-  return `<div class="print-page"><div class="print-sheet print-sheet-primary"><header class="print-report-header"><p>${escapeHtml(model.reportLabel || '학생 상담용 내신 요약 결과표')}</p><h1>${escapeHtml(model.title)}</h1>${reportDescription}</header><dl class="print-student"><div><dt>학번</dt><dd>${escapeHtml(model.student.studentId || '-')}</dd></div><div><dt>이름</dt><dd>${escapeHtml(model.student.studentName || '-')}</dd></div><div><dt>작성일</dt><dd>${escapeHtml(model.student.generatedAt)}</dd></div></dl><section class="print-current-section"><h2>현재 성적 요약</h2><div class="print-summary"><div class="print-key-metric"><span>현재 전체 내신</span><strong>${fmt(model.current.average)}</strong></div><div><span>입력 완료 학기</span><strong>${model.current.completedSemesterCount} / ${SEMESTERS.length}</strong></div><div><span>성적 입력</span><strong>${escapeHtml(model.current.inputStatus)}</strong></div></div><p class="print-meta-row"><span>계산 기준: ${escapeHtml(model.current.calculationBasis)}</span><span>학점 정보: ${escapeHtml(model.current.creditSummary)}</span></p></section><section class="print-semester-section"><h2>학기별 성적 분석</h2><table class="print-semester-table"><thead><tr><th>학기</th><th>평균 등급</th><th>입력 상태</th></tr></thead><tbody>${semesterRows(model)}</tbody></table></section>${subjectSection}<section class="print-goal-section"><h2>목표 내신 시뮬레이션</h2>${goalHtml}</section></div><div class="${secondaryClass}"><section class="print-admission-section"><h2>관심 대학 전년도 입시결과 참고</h2>${interestReport}</section>${appendix}<section class="print-notice-section"><h2>안내</h2><div class="print-notice-grid"><p class="print-note">${escapeHtml(model.notices.conversion)}</p><p class="print-note">${escapeHtml(model.notices.comprehensive)}</p><p class="print-note">본 결과표는 성적 수치와 전년도 공개 자료를 확인하기 위한 상담 참고자료이며 대학 합격 가능성을 의미하지 않습니다.</p></div></section></div></div>`;
+  const catalogBasis = model.current.catalogBasis ? `<span>과목 기준: ${escapeHtml(model.current.catalogBasis)}</span>` : '';
+  return `<div class="print-page"><div class="print-sheet print-sheet-primary"><header class="print-report-header"><p>${escapeHtml(model.reportLabel || '학생 상담용 내신 요약 결과표')}</p><h1>${escapeHtml(model.title)}</h1>${reportDescription}</header><dl class="print-student"><div><dt>학번</dt><dd>${escapeHtml(model.student.studentId || '-')}</dd></div><div><dt>이름</dt><dd>${escapeHtml(model.student.studentName || '-')}</dd></div><div><dt>작성일</dt><dd>${escapeHtml(model.student.generatedAt)}</dd></div></dl><section class="print-current-section"><h2>현재 성적 요약</h2><div class="print-summary"><div class="print-key-metric"><span>현재 전체 내신</span><strong>${fmt(model.current.average)}</strong></div><div><span>입력 완료 학기</span><strong>${model.current.completedSemesterCount} / ${SEMESTERS.length}</strong></div><div><span>성적 입력</span><strong>${escapeHtml(model.current.inputStatus)}</strong></div></div><p class="print-meta-row"><span>계산 기준: ${escapeHtml(model.current.calculationBasis)}</span>${catalogBasis}<span>학점 정보: ${escapeHtml(model.current.creditSummary)}</span></p></section><section class="print-semester-section"><h2>학기별 성적 분석</h2><table class="print-semester-table"><thead><tr><th>학기</th><th>평균 등급</th><th>입력 상태</th></tr></thead><tbody>${semesterRows(model)}</tbody></table></section>${subjectSection}<section class="print-goal-section"><h2>목표 내신 시뮬레이션</h2>${goalHtml}</section></div><div class="${secondaryClass}"><section class="print-admission-section"><h2>관심 대학 전년도 입시결과 참고</h2>${interestReport}</section>${appendix}<section class="print-notice-section"><h2>안내</h2><div class="print-notice-grid"><p class="print-note">${escapeHtml(model.notices.conversion)}</p><p class="print-note">${escapeHtml(model.notices.comprehensive)}</p><p class="print-note">본 결과표는 성적 수치와 전년도 공개 자료를 확인하기 위한 상담 참고자료이며 대학 합격 가능성을 의미하지 않습니다.</p></div></section></div></div>`;
 }

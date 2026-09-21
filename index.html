@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
     <title>배정고 내신 설계 노트</title>
-    <link rel="stylesheet" href="./styles.css?v=20260921-semester-model1" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-entry-year1" />
   </head>
   <body>
     <main class="app-shell">
@@ -31,6 +31,7 @@
 
       <section class="panel" id="simulator-panel">
         <div class="panel-heading"><div><p class="eyebrow">STEP 1</p><h2>실제 성적 입력</h2><p>학기별 실제 성적을 입력하면 현재 내신을 계산해요.</p></div></div>
+        <p id="course-catalog-status" class="course-catalog-status" role="status" aria-live="polite"></p>
         <div id="semester-cards" class="semester-card-list" aria-label="학기별 성적 입력"></div>
         <aside class="side-help semester-card-help"><h3>입력 안내</h3><ul><li>각 학기를 열어 학기 평균 또는 과목별 입력을 선택해 주세요.</li><li>과목별 입력을 완료한 학기는 간편 평균보다 상세 입력값을 우선 사용해요.</li><li>입력 방식만 바꿔도 기존 값은 삭제되지 않아요.</li></ul></aside>
         <div class="grade-calculation-actions"><button id="calculate-button" class="primary-button">내신 계산하기</button><div id="current-grade-result" class="current-grade-result" aria-live="polite"></div></div>
@@ -88,6 +89,6 @@
     </dialog>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260921-semester-model1"></script>
+    <script type="module" src="./src/app.mjs?v=20260921-entry-year1"></script>
   </body>
 </html>

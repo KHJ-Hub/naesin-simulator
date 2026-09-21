@@ -35,7 +35,9 @@ export function sortCoursesForDisplay(items) {
 }
 
 export function catalogCourses({ includeInactive = true } = {}) { return cloneCourses(includeInactive ? courses : courses.filter((course) => course.active !== false && course.enabled !== false)); }
-export function catalogCourseById(id) { return courses.find((course) => course.id === id) ?? null; }
+export function catalogCourseById(id, entryYear = null) {
+  return courses.find((course) => course.id === id && (entryYear === null || Number(course.entryYear) === Number(entryYear))) ?? null;
+}
 export function isGradeInputCourse(course = {}) { return ['grade', 'both'].includes(course.gradingType) && course.fiveLevelEligible !== false; }
 export function isSupplementalAchievementCourse(course = {}) { return !isGradeInputCourse(course); }
 export function coursesForSemester(semesterId, entryYear = ACTIVE_ENTRY_YEAR, { includeAchievementCourses = false } = {}) {
