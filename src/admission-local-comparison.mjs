@@ -5,9 +5,9 @@ import {
   isStudentRecordSubject,
   normalizeAcademicField,
   normalizeAdmissionCategory,
-} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
+} from './admission-record-normalizer.mjs?v=20260922-open-major1';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
-import { admissionMajorSimilarityTier, resolveAdmissionMajorTaxonomy } from './admission-major-taxonomy.mjs?v=20260922-academic-field1';
+import { admissionMajorSimilarityTier, resolveAdmissionMajorTaxonomy } from './admission-major-taxonomy.mjs?v=20260922-open-major1';
 import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 
 export const LOCAL_ADMISSION_SCOPES = Object.freeze({
@@ -117,6 +117,9 @@ export function findLocalAdmissionComparisons(target = {}, data = [], {
     const reference = getLocalComparisonReference(candidate);
     if (!reference || reference.kind !== targetReference.kind) return [];
     const field = normalizeAcademicField(candidate.academicField ?? candidate.field);
+    // 계열 미정 모집단위는 그 성격이 같은 모집단위끼리만 비교한다.
+    // 일반 전공의 광역 fallback에도 자유전공/무전공을 끼워 넣지 않는다.
+    if ((targetField === ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR) !== (field === ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR)) return [];
     const sameAcademicField = targetField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN && field === targetField;
     const similarityTier = admissionMajorSimilarityTier(target, candidate);
     const difference = Number((reference.converted - targetReference.converted).toFixed(2));

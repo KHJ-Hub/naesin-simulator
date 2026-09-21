@@ -95,6 +95,28 @@ test('유사 전공 후보가 1~2개뿐이면 관련 없는 학과로 3개를 �
   assert.deepEqual(result.results.map(({ item }) => item.department), ['경제금융학부']);
 });
 
+test('자유전공/무전공은 같은 계열끼리만 부산권 유사 입결을 비교한다', () => {
+  const target = subject({ department: '자유전공학부', academicField: 'open-major' });
+  const result = findLocalAdmissionComparisons(target, [
+    target,
+    subject({ universityId: 'open-a', university: '부산자유대학교', region: '부산광역시', department: '무전공학부', academicField: 'open-major', cut70Converted: 1.80 }),
+    subject({ universityId: 'natural-a', university: '부산자연대학교', region: '부산광역시', department: '컴퓨터공학과', academicField: 'natural', cut70Converted: 1.721 }),
+  ]);
+  assert.equal(result.available, true);
+  assert.equal(result.comparisonTier, 'major-group');
+  assert.deepEqual(result.results.map(({ item }) => item.department), ['무전공학부']);
+});
+
+test('일반 전공의 부산권 fallback에 자유전공/무전공을 억지로 포함하지 않는다', () => {
+  const target = subject({ department: '분류근거없는학과', academicField: 'unknown' });
+  const result = findLocalAdmissionComparisons(target, [
+    target,
+    subject({ universityId: 'open-a', university: '부산자유대학교', region: '부산광역시', department: '자유전공학부', academicField: 'open-major', cut70Converted: 1.721 }),
+  ]);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'no-comparable-local-data');
+});
+
 test('실제 세종대학교 경제학과 비교에서는 영어 계열을 제외하고 경제 관련 모집단위만 우선한다', () => {
   const target = ADMISSION_REFERENCE_DATA.find((item) => item.university === '세종대학교'
     && item.department === '경제학과'

@@ -97,6 +97,19 @@ test('원본 academicField 누락을 taxonomy로 파생할 수 있으면 경고�
   assert.equal(dashboard.warnings.filter((item) => item.type === '계열 분류 불가').length, 1);
 });
 
+test('자유전공/무전공은 정상 계열로 별도 집계하고 품질 경고에서 제외한다', () => {
+  const dashboard = buildAdmissionDataDashboard([
+    baseRecord({ academicField: undefined, department: '자유전공학부' }),
+    baseRecord({ academicField: undefined, department: '자율전공학부' }),
+    baseRecord({ academicField: undefined, department: '무전공학부' }),
+    baseRecord({ academicField: undefined, department: '분류할수없는융합전공' }),
+  ], universities);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.counts['open-major'], 3);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredAsOpenMajor, 3);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 1);
+  assert.equal(dashboard.warnings.filter((item) => item.type === '계열 분류 불가').length, 1);
+});
+
 test('경고 우선순위 필터는 중요과 확인 필요를 구분하고 기본값에서 둘 다 유지한다', () => {
   const dashboard = buildAdmissionDataDashboard([
     baseRecord({ admissionName: '', academicField: undefined, department: '분류불가전공' }),

@@ -1,10 +1,11 @@
 import {
   ADMISSION_CATEGORIES,
+  ADMISSION_ACADEMIC_FIELDS,
   ADMISSION_DATA_AVAILABILITY,
   analyzeAcademicFieldFromDepartment,
   normalizeAcademicField,
   normalizeAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
+} from './admission-record-normalizer.mjs?v=20260922-open-major1';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
 
 export const ADMISSION_DASHBOARD_STATUSES = Object.freeze(Object.values(ADMISSION_DATA_AVAILABILITY));
@@ -268,8 +269,10 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
     inferredByNormalization: 0,
     inferredByExplicitField: 0,
     inferredByTaxonomy: 0,
+    inferredAsOpenMajor: 0,
     unclassified: 0,
     unclassifiedByReason: {},
+    counts: Object.fromEntries(Object.values(ADMISSION_ACADEMIC_FIELDS).map((field) => [field, 0])),
   };
 
   records.forEach((raw, index) => {
@@ -290,8 +293,10 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
       dashboardRecordId: `${master?.universityId ?? rawUniversityId ?? 'unknown'}-${index}`,
     };
     normalizedRecords.push(item);
+    academicFieldInfo.counts[item.academicField] = (academicFieldInfo.counts[item.academicField] ?? 0) + 1;
     const hasValidSourceAcademicField = Boolean(sourceAcademicField) && normalizedSourceAcademicField !== 'unknown';
     if (hasValidSourceAcademicField && item.academicField !== 'unknown') academicFieldInfo.sourceProvided += 1;
+    else if (item.academicField === ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR) academicFieldInfo.inferredAsOpenMajor += 1;
     else if (item.academicField !== 'unknown' && inference.resolution === 'normalization') academicFieldInfo.inferredByNormalization += 1;
     else if (item.academicField !== 'unknown' && inference.resolution === 'explicit-field') academicFieldInfo.inferredByExplicitField += 1;
     else if (item.academicField !== 'unknown') academicFieldInfo.inferredByTaxonomy += 1;

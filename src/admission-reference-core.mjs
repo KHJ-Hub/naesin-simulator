@@ -5,7 +5,7 @@ import {
   isComparableAdmissionRecord,
   isStudentRecordComprehensive,
   validAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
+} from './admission-record-normalizer.mjs?v=20260922-open-major1';
 import { isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
 import { filterAdmissionRecords } from './admission-filter-options.mjs';
 
@@ -21,7 +21,7 @@ export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
 export const ADMISSION_CONVERSION_NOTICE = '5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값이에요. 실제 대학별 2028학년도 평가·환산 방식과 다를 수 있어요.';
 
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
-  referenceYear: 'number (canonical)', universityId: 'string|null', region: 'string', university: 'string', field: 'string|null', academicField: 'humanities|natural|arts|other|unknown',
+  referenceYear: 'number (canonical)', universityId: 'string|null', region: 'string', university: 'string', field: 'string|null', academicField: 'humanities|natural|arts|open-major|other|unknown',
   department: 'string', admissionName: 'string', admissionCategory: '학생부교과|학생부종합',
   majorSearchGroup: 'string|null (검색 보조값)', normalizedMajorKeyword: 'string|null (검색 보조값)',
   admissionType: 'string|null (별도 전형 유형이 있을 때만)', category: 'legacy alias',

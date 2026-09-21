@@ -1,6 +1,6 @@
 import { ADMISSION_ELIGIBILITY_TYPES, classifyAdmissionEligibility } from './admission-eligibility.mjs';
 import { DEFAULT_SCHOOL_REGION, isSchoolRegionEligible, normalizeRegionalEligibility } from './admission-regional-eligibility.mjs';
-import { normalizeAdmissionMajorName } from './admission-major-taxonomy.mjs?v=20260922-academic-field1';
+import { normalizeAdmissionMajorName } from './admission-major-taxonomy.mjs?v=20260922-open-major1';
 
 /** 전국 입시결과 파일이 공유하는 정규 스키마와 검증 규칙이다. */
 export const ADMISSION_CATEGORIES = Object.freeze({
@@ -33,6 +33,7 @@ export const ADMISSION_ACADEMIC_FIELDS = Object.freeze({
   HUMANITIES: 'humanities',
   NATURAL: 'natural',
   ARTS: 'arts',
+  OPEN_MAJOR: 'open-major',
   OTHER: 'other',
   UNKNOWN: 'unknown',
 });
@@ -54,6 +55,12 @@ const ACADEMIC_FIELD_ALIASES = Object.freeze({
   '예체능': ADMISSION_ACADEMIC_FIELDS.ARTS,
   '예술': ADMISSION_ACADEMIC_FIELDS.ARTS,
   '체육': ADMISSION_ACADEMIC_FIELDS.ARTS,
+  'open-major': ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
+  'undeclared': ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
+  '자유전공': ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
+  '자율전공': ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
+  '무전공': ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
+  '자유전공/무전공': ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
   other: ADMISSION_ACADEMIC_FIELDS.OTHER,
   '기타': ADMISSION_ACADEMIC_FIELDS.OTHER,
   unknown: ADMISSION_ACADEMIC_FIELDS.UNKNOWN,
@@ -65,7 +72,9 @@ export function normalizeAcademicField(value) {
   return ACADEMIC_FIELD_ALIASES[normalized] ?? ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
 }
 
-const OPEN_MAJOR_NAME_PATTERN = /(자유전공|자율전공|(?:^|[^법])무전공|자유학부|자율학부|통합모집(?:단위)?)/i;
+// 계열 미정 성격이 모집단위명 자체에 드러난 경우에만 사용한다.
+// '광역모집', '통합모집', '융합학부'만으로는 자유전공/무전공을 추정하지 않는다.
+const OPEN_MAJOR_NAME_PATTERN = /(자유전공|자율전공|(?:^|[^법])무전공|자유학부|자율학부)/i;
 const BROAD_MAJOR_NAME_PATTERN = /(자유전공|자율전공|(?:^|[^법])무전공|자유학부|자율학부|융합학부|융합계열|통합모집(?:단위)?)/i;
 
 function explicitAcademicFieldFromName(name) {
@@ -77,7 +86,7 @@ function explicitAcademicFieldFromName(name) {
     || /\((?:인문|인문계열|인문사회|인문사회계열)\)/.test(name)
   ) fields.add(ADMISSION_ACADEMIC_FIELDS.HUMANITIES);
   if (
-    /(자연(?:과학)?(?:계열|분야|과학대학|대학|자율|자유)|이공계열|공학계열|공과대학)/.test(name)
+    /(자연(?:과학)?(?:계열|분야|과학대학|대학|자율|자유)|이공계열|공학계열|공과대학|이과대학)/.test(name)
     || /\((?:자연|자연계열|자연과학|자연과학계열|이공|이공계열|공학|공학계열)\)/.test(name)
   ) fields.add(ADMISSION_ACADEMIC_FIELDS.NATURAL);
   if (
@@ -126,7 +135,10 @@ function classifyAcademicFieldFromNormalizedName(name) {
   if (explicit.academicField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN) return explicit.academicField;
   if (OPEN_MAJOR_NAME_PATTERN.test(name)) {
     const broadTaxonomy = classifyBroadMajorFromClearTaxonomy(name);
-    return broadTaxonomy.hasConflict ? ADMISSION_ACADEMIC_FIELDS.UNKNOWN : broadTaxonomy.academicField;
+    if (broadTaxonomy.hasConflict) return ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
+    return broadTaxonomy.academicField === ADMISSION_ACADEMIC_FIELDS.UNKNOWN
+      ? ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR
+      : broadTaxonomy.academicField;
   }
 
   // 대학·계열명이 분명한 광역 모집단위는 세부 키워드보다 먼저 판별한다.
@@ -159,9 +171,11 @@ export function analyzeAcademicFieldFromDepartment(department) {
     normalizedName,
     resolution: academicField === ADMISSION_ACADEMIC_FIELDS.UNKNOWN
       ? 'unclassified'
-      : rawField === ADMISSION_ACADEMIC_FIELDS.UNKNOWN
-        ? 'normalization'
-        : rawExplicit.academicField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN ? 'explicit-field' : 'taxonomy',
+      : academicField === ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR
+        ? 'open-major'
+        : rawField === ADMISSION_ACADEMIC_FIELDS.UNKNOWN
+          ? 'normalization'
+          : rawExplicit.academicField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN ? 'explicit-field' : 'taxonomy',
   });
 }
 

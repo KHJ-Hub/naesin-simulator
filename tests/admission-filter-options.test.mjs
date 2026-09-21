@@ -77,7 +77,7 @@ const FIELD_FIXTURE = Object.freeze([
   result({ department: '국어국문학과', academicField: 'humanities' }),
   result({ department: '컴퓨터공학과', academicField: 'natural' }),
   result({ department: '회화과', academicField: 'arts' }),
-  result({ department: '자율전공학부', academicField: 'other' }),
+  result({ department: '자율전공학부', academicField: undefined }),
   result({ department: '미래융합학과', academicField: 'unknown' }),
 ]);
 
@@ -120,8 +120,8 @@ test('부산 남고 설정에서 여자대학교는 결과와 대학 선택지�
 });
 
 test('부산과 부산대학교의 실제 academicField에서 계열 선택지를 생성한다', () => {
-  assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시' }), ['humanities', 'natural', 'arts', 'other-unknown']);
-  assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시', university: '부산대학교' }), ['humanities', 'natural', 'arts', 'other-unknown']);
+  assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시' }), ['humanities', 'natural', 'arts', 'open-major', 'other-unknown']);
+  assert.deepEqual(getAvailableAcademicFields(ADMISSION_REFERENCE_DATA, { region: '부산광역시', university: '부산대학교' }), ['humanities', 'natural', 'arts', 'open-major', 'other-unknown']);
 });
 
 test('대학 선택 여부와 관계없이 현재 범위의 공식 모집단위를 중복 없이 반환한다', () => {
@@ -168,6 +168,18 @@ test('건축 검색은 명칭을 합치지 않고 관련 공식 모집단위명�
   assert.equal(departmentSearchMetadata('건축학부').department, '건축학부');
 });
 
+test('자유전공·자율전공·무전공 자유검색은 원본 모집단위명을 유지하며 관련 결과를 찾는다', () => {
+  const records = [
+    result({ department: '자유전공학부', academicField: undefined }),
+    result({ department: '자율전공학부', academicField: undefined }),
+    result({ department: '무전공학부', academicField: undefined }),
+    result({ department: '공공안전학부(공직법무전공)', academicField: undefined }),
+  ];
+  assert.deepEqual(searchAvailableDepartments(records, {}, '자유전공').map((item) => item.department), ['자유전공학부']);
+  assert.deepEqual(searchAvailableDepartments(records, {}, '자율전공').map((item) => item.department), ['자율전공학부']);
+  assert.deepEqual(searchAvailableDepartments(records, {}, '무전공').map((item) => item.department), ['무전공학부']);
+});
+
 test('기존 field 값은 canonical academicField로 읽되 검색 보조값과 원본 모집단위명을 보존한다', () => {
   const normalized = normalizeAdmissionRecord(result({ field: '공학', academicField: undefined, majorSearchGroup: '건축', normalizedMajorKeyword: '건축설계' }));
   assert.equal(normalized.field, '공학');
@@ -177,7 +189,7 @@ test('기존 field 값은 canonical academicField로 읽되 검색 보조값과 
   assert.equal(normalized.normalizedMajorKeyword, '건축설계');
   assert.equal(inferAcademicFieldFromDepartment('컴퓨터교육과'), 'natural');
   assert.equal(inferAcademicFieldFromDepartment('체육교육과'), 'arts');
-  assert.equal(inferAcademicFieldFromDepartment('자율전공학부'), 'unknown');
+  assert.equal(inferAcademicFieldFromDepartment('자율전공학부'), 'open-major');
   assert.equal(inferAcademicFieldFromDepartment('경영대학자유전공학부'), 'humanities');
   assert.equal(inferAcademicFieldFromDepartment('미래융합학과'), 'unknown');
   assert.equal(inferAcademicFieldFromDepartment('데이터사이언스학과'), 'natural');
@@ -185,16 +197,17 @@ test('기존 field 값은 canonical academicField로 읽되 검색 보조값과 
   assert.equal(inferAcademicFieldFromDepartment('공공정책학과'), 'humanities');
 });
 
-test('계열 필터는 인문·자연·예체능과 기타/미분류 묶음을 canonical 값으로 적용한다', () => {
-  assert.deepEqual(getAvailableAcademicFields(FIELD_FIXTURE, { university: '부산대학교' }), ['humanities', 'natural', 'arts', 'other-unknown']);
+test('계열 필터는 자유전공/무전공을 기타/미분류와 분리해 canonical 값으로 적용한다', () => {
+  assert.deepEqual(getAvailableAcademicFields(FIELD_FIXTURE, { university: '부산대학교' }), ['humanities', 'natural', 'arts', 'open-major', 'other-unknown']);
   assert.equal(filterAdmissionRecords(FIELD_FIXTURE, {}).length, 5);
   assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'humanities' }).map((item) => item.department), ['국어국문학과']);
   assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'natural' }).map((item) => item.department), ['컴퓨터공학과']);
   assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'arts' }).map((item) => item.department), ['회화과']);
-  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'other-unknown' }).map((item) => item.department), ['자율전공학부', '미래융합학과']);
+  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'open-major' }).map((item) => item.department), ['자율전공학부']);
+  assert.deepEqual(filterAdmissionRecords(FIELD_FIXTURE, { field: 'other-unknown' }).map((item) => item.department), ['미래융합학과']);
   assert.equal(filterAdmissionRecords(FIELD_FIXTURE, { region: '서울특별시', field: 'natural' }).length, 0);
   const audit = summarizeAdmissionAcademicFields(FIELD_FIXTURE);
-  assert.deepEqual(audit.counts, { humanities: 1, natural: 1, arts: 1, other: 1, unknown: 1 });
+  assert.deepEqual(audit.counts, { humanities: 1, natural: 1, arts: 1, 'open-major': 1, other: 0, unknown: 1 });
   assert.deepEqual(audit.unknownDepartments, ['미래융합학과']);
 });
 

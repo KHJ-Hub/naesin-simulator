@@ -3,7 +3,7 @@ import {
   normalizeAcademicField,
   normalizeAdmissionRecord,
   validAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
+} from './admission-record-normalizer.mjs?v=20260922-open-major1';
 import { ADMISSION_ELIGIBILITY_TYPES, isStudentVisibleAdmissionForSchool } from './admission-eligibility.mjs';
 import { UNIVERSITIES, UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 import { normalizeUniversityOwnership } from './data/university-ownership-2026.mjs';
@@ -33,6 +33,7 @@ export const ADMISSION_ACADEMIC_FIELD_LABELS = Object.freeze({
   [ADMISSION_ACADEMIC_FIELDS.HUMANITIES]: '인문',
   [ADMISSION_ACADEMIC_FIELDS.NATURAL]: '자연',
   [ADMISSION_ACADEMIC_FIELDS.ARTS]: '예체능',
+  [ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR]: '자유전공/무전공',
   [ADMISSION_ACADEMIC_FIELDS.OTHER]: '기타',
   [ADMISSION_ACADEMIC_FIELDS.UNKNOWN]: '계열 미분류',
   'other-unknown': '기타/미분류',
@@ -42,6 +43,7 @@ export const ADMISSION_ACADEMIC_FIELD_FILTERS = Object.freeze([
   ADMISSION_ACADEMIC_FIELDS.HUMANITIES,
   ADMISSION_ACADEMIC_FIELDS.NATURAL,
   ADMISSION_ACADEMIC_FIELDS.ARTS,
+  ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
   'other-unknown',
 ]);
 
@@ -153,6 +155,8 @@ export function departmentMatchesSearch(item, query = '') {
   const needle = normalizeDepartmentSearchText(query);
   if (!needle) return true;
   const metadata = departmentSearchMetadata(item);
+  // '무전공' 검색이 '법무전공'에 우연히 걸리지 않도록 계열 미정 모집단위만 좁힌다.
+  if (needle === '무전공' && itemAcademicField(item) !== ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR) return false;
   return normalizeDepartmentSearchText(`${metadata.department} ${metadata.normalizedMajorKeyword} ${metadata.majorSearchGroup ?? ''}`).includes(needle);
 }
 
@@ -264,8 +268,7 @@ export function searchAvailableDepartments(data, filters = {}, query = '', { lim
   const departments = new Map();
   departmentRecords(data, filters).forEach((item) => {
     const metadata = departmentSearchMetadata(item);
-    const haystack = normalizeDepartmentSearchText(`${metadata.department} ${metadata.normalizedMajorKeyword} ${metadata.majorSearchGroup ?? ''}`);
-    if (haystack.includes(needle) && !departments.has(item.department)) departments.set(item.department, metadata);
+    if (departmentMatchesSearch(item, query) && !departments.has(item.department)) departments.set(item.department, metadata);
   });
   return [...departments.values()].sort((left, right) => koSort(left.department, right.department)).slice(0, Math.max(0, limit));
 }

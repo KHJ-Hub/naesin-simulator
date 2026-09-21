@@ -62,6 +62,13 @@ function explicitMajorGroup(item = {}) {
 export function resolveAdmissionMajorTaxonomy(item = {}) {
   const department = String(item.department ?? '').trim();
   const searchText = normalizeMajorTaxonomyText(`${department} ${item.normalizedMajorKeyword ?? ''} ${item.majorSearchGroup ?? ''}`);
+  if (String(item.academicField ?? item.field ?? '') === 'open-major') {
+    return Object.freeze({
+      majorGroup: 'open-major',
+      detailedField: 'open-major',
+      normalizedKeyword: normalizeMajorTaxonomyText(item.normalizedMajorKeyword ?? department),
+    });
+  }
   const explicit = explicitMajorGroup(item);
   const matchedRule = ADMISSION_MAJOR_GROUP_RULES.find(({ majorGroup, keywords }) => (
     majorGroup === explicit || keywords.some((keyword) => searchText.includes(normalizeMajorTaxonomyText(keyword)))

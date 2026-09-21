@@ -26,7 +26,7 @@ test('의미가 명확한 누락 전공만 기존 canonical 계열로 안전하�
 });
 
 test('자유·자율전공은 이름에 명시된 단일 계열을 최우선으로 분류한다', () => {
-  const natural = ['자유전공학부(자연)', '자유전공학부 자연계열', '자연과학자율전공', '이공계열자유전공'];
+  const natural = ['자유전공학부(자연)', '자유전공학부 자연계열', '자연과학자율전공', '이공계열자유전공', '이과대학자유전공학부'];
   const humanities = ['자율전공학부(인문)', '자유전공학부 인문계열', '인문사회자율전공', '인문학기반자유전공학부'];
   const arts = ['자유전공(예체능계열)'];
   natural.forEach((name) => assert.equal(inferAcademicFieldFromDepartment(name), 'natural', name));
@@ -40,11 +40,16 @@ test('광역 모집단위는 명확한 taxonomy 키워드가 하나일 때만 �
   assert.equal(inferAcademicFieldFromDepartment('공공안전학부(공직법무전공)'), 'humanities');
 });
 
-test('의류·패션·게임·일반 융합·계열 미표시 자유전공은 억지로 단일 계열로 분류하지 않는다', () => {
+test('계열 미표시 자유전공·자율전공·무전공은 별도 canonical 계열로 분류한다', () => {
+  for (const name of ['자유전공학부', '자율전공학부', '무전공학부', '자유전공', '자율전공', '자유전공계열']) {
+    assert.equal(inferAcademicFieldFromDepartment(name), 'open-major', name);
+  }
+});
+
+test('의류·패션·게임·일반 융합·광역모집은 근거 없이 자유전공이나 단일 계열로 분류하지 않는다', () => {
   for (const name of [
     '의류학과', '패션산업학과', '게임콘텐츠학과', '디지털콘텐츠학과',
-    '첨단융합학부', '미래융합학과', '자유전공학부', '자율전공학부',
-    '무전공학부', '자율융합계열', '자율설계학부', '글로벌자율전공학부',
+    '첨단융합학부', '미래융합학과', '자율융합계열', '자율설계학부', '광역모집', '통합모집단위',
     '자유전공학부(인문사회・자연)', '문화예술・공과대학 자유전공학과',
   ]) {
     assert.equal(inferAcademicFieldFromDepartment(name), 'unknown', name);
@@ -64,15 +69,24 @@ test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 �
     universityAudits: UNIVERSITY_AUDIT_2026,
   });
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByNormalization, 5);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByExplicitField, 311);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByExplicitField, 312);
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByTaxonomy, 15464);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 479);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredAsOpenMajor, 234);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 244);
+  assert.deepEqual(dashboard.summary.quality.academicFieldInfo.counts, {
+    humanities: 5813,
+    natural: 8700,
+    arts: 966,
+    'open-major': 234,
+    other: 302,
+    unknown: 244,
+  });
   assert.deepEqual(dashboard.summary.quality.zeroResultInfo.byReason, {
     'source-review-needed': 1,
     'outside-current-scope': 6,
     'official-not-published': 13,
   });
   assert.equal(dashboard.summary.quality.zeroResultInfo.total, 20);
-  assert.equal(dashboard.summary.quality.actionableCount, 480);
+  assert.equal(dashboard.summary.quality.actionableCount, 245);
   assert.equal(dashboard.warnings.filter((item) => item.type === '입결 0건' && item.severity === 'info').length, 19);
 });
