@@ -4,7 +4,7 @@ import {
   analyzeAcademicFieldFromDepartment,
   normalizeAcademicField,
   normalizeAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260921-taxonomy-audit1';
+} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
 
 export const ADMISSION_DASHBOARD_STATUSES = Object.freeze(Object.values(ADMISSION_DATA_AVAILABILITY));
@@ -266,6 +266,7 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
   const academicFieldInfo = {
     sourceProvided: 0,
     inferredByNormalization: 0,
+    inferredByExplicitField: 0,
     inferredByTaxonomy: 0,
     unclassified: 0,
     unclassifiedByReason: {},
@@ -292,6 +293,7 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
     const hasValidSourceAcademicField = Boolean(sourceAcademicField) && normalizedSourceAcademicField !== 'unknown';
     if (hasValidSourceAcademicField && item.academicField !== 'unknown') academicFieldInfo.sourceProvided += 1;
     else if (item.academicField !== 'unknown' && inference.resolution === 'normalization') academicFieldInfo.inferredByNormalization += 1;
+    else if (item.academicField !== 'unknown' && inference.resolution === 'explicit-field') academicFieldInfo.inferredByExplicitField += 1;
     else if (item.academicField !== 'unknown') academicFieldInfo.inferredByTaxonomy += 1;
     else {
       academicFieldInfo.unclassified += 1;

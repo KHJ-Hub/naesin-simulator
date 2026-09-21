@@ -3,7 +3,7 @@ import {
   normalizeAcademicField,
   normalizeAdmissionRecord,
   validAdmissionRecord,
-} from './admission-record-normalizer.mjs';
+} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
 import { ADMISSION_ELIGIBILITY_TYPES, isStudentVisibleAdmissionForSchool } from './admission-eligibility.mjs';
 import { UNIVERSITIES, UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 import { normalizeUniversityOwnership } from './data/university-ownership-2026.mjs';

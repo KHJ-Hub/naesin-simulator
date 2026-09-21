@@ -177,7 +177,7 @@ test('기존 field 값은 canonical academicField로 읽되 검색 보조값과 
   assert.equal(normalized.normalizedMajorKeyword, '건축설계');
   assert.equal(inferAcademicFieldFromDepartment('컴퓨터교육과'), 'natural');
   assert.equal(inferAcademicFieldFromDepartment('체육교육과'), 'arts');
-  assert.equal(inferAcademicFieldFromDepartment('자율전공학부'), 'other');
+  assert.equal(inferAcademicFieldFromDepartment('자율전공학부'), 'unknown');
   assert.equal(inferAcademicFieldFromDepartment('경영대학자유전공학부'), 'humanities');
   assert.equal(inferAcademicFieldFromDepartment('미래융합학과'), 'unknown');
   assert.equal(inferAcademicFieldFromDepartment('데이터사이언스학과'), 'natural');

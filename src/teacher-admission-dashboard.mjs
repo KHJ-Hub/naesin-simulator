@@ -5,7 +5,7 @@ import {
   loadAdmissionResultsByRegion,
 } from './admission-results-loader.mjs?v=20260921-service-settings1';
 import { UNIVERSITIES } from './data/universities.mjs?v=20260921-service-settings1';
-import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260921-taxonomy-audit1';
+import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260922-academic-field1';
 import {
   ADMISSION_DASHBOARD_REGION_ORDER,
   ADMISSION_DASHBOARD_STATUSES,
@@ -15,7 +15,7 @@ import {
   filterAdmissionDashboardUniversities,
   filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
-} from './admission-data-dashboard-core.mjs?v=20260921-taxonomy-audit1';
+} from './admission-data-dashboard-core.mjs?v=20260922-academic-field1';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
@@ -63,6 +63,7 @@ function renderSummary() {
   $('#admission-dashboard-quality-summary').innerHTML = [
     summaryCard('중요', `${summary.quality.importantCount.toLocaleString('ko-KR')}건`, '우선 확인할 오류'),
     summaryCard('확인 필요', `${summary.quality.reviewCount.toLocaleString('ko-KR')}건`, '관리자 검토 대상'),
+    summaryCard('계열명 명시 분류', `${summary.quality.academicFieldInfo.inferredByExplicitField.toLocaleString('ko-KR')}건`, '모집단위명에 적힌 인문·자연·예체능 기준'),
     summaryCard('taxonomy 안전 분류', `${summary.quality.academicFieldInfo.inferredByTaxonomy.toLocaleString('ko-KR')}건`, '원본은 비어 있으나 모집단위명으로 명확히 분류'),
     summaryCard('표기 정규화 분류', `${summary.quality.academicFieldInfo.inferredByNormalization.toLocaleString('ko-KR')}건`, '안전한 표기 정리만으로 분류'),
     summaryCard('계열 분류 불가', `${summary.quality.academicFieldInfo.unclassified.toLocaleString('ko-KR')}건`, '확인 필요에 포함'),

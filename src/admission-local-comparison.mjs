@@ -5,9 +5,9 @@ import {
   isStudentRecordSubject,
   normalizeAcademicField,
   normalizeAdmissionCategory,
-} from './admission-record-normalizer.mjs';
+} from './admission-record-normalizer.mjs?v=20260922-academic-field1';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
-import { admissionMajorSimilarityTier, resolveAdmissionMajorTaxonomy } from './admission-major-taxonomy.mjs';
+import { admissionMajorSimilarityTier, resolveAdmissionMajorTaxonomy } from './admission-major-taxonomy.mjs?v=20260922-academic-field1';
 import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 
 export const LOCAL_ADMISSION_SCOPES = Object.freeze({

@@ -9,10 +9,10 @@ import {
 import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260921-entry-year1';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260921-entry-year1';
 import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260921-entry-year1';
-import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260919-readiness1';
+import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-academic-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
-import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS } from './admission-filter-options.mjs?v=20260918-ownership1';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS } from './admission-filter-options.mjs?v=20260922-academic-field1';
 import {
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
@@ -24,7 +24,7 @@ import {
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
-} from './admission-result-view.mjs?v=20260918-ownership1';
+} from './admission-result-view.mjs?v=20260922-academic-field1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260921-security-audit1';
 import {
   MAX_ADMISSION_INTEREST_COMPARISONS,
@@ -40,7 +40,7 @@ import {
   canCompareWithBusanAdmissions,
   findLocalAdmissionComparisons,
   renderLocalAdmissionComparison,
-} from './admission-local-comparison.mjs?v=20260919-student-tone1';
+} from './admission-local-comparison.mjs?v=20260922-academic-field1';
 import {
   ADMISSION_UNIVERSITY_INITIAL_GROUP_COUNT,
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
