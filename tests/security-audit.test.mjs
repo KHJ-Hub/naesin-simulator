@@ -4,11 +4,10 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('공개 프런트 설정에는 Apps Script URL이나 관리자 비밀번호가 들어 있지 않다', async () => {
+test('공개 프런트 설정에는 공개 가능한 Apps Script endpoint만 있고 관리자 비밀번호는 없다', async () => {
   const config = await read('../src/feedback-config.mjs');
-  assert.match(config, /FEEDBACK_GAS_URL\s*=\s*''/);
+  assert.match(config, /FEEDBACK_GAS_URL\s*=\s*'https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec'/);
   assert.doesNotMatch(config, /FEEDBACK_ADMIN_PASSWORD\s*=/);
-  assert.doesNotMatch(config, /https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/);
 });
 
 test('Pages 배포물은 실행에 필요한 정적 파일만 허용 목록으로 구성한다', async () => {
