@@ -4399,8 +4399,12 @@ h3:not(.hero-grid h2),
 .admission-dashboard-status-summary span { display: block; color: var(--muted); font-size: .75rem; font-weight: 750; }
 .admission-dashboard-summary strong,
 .admission-dashboard-status-summary strong { display: block; margin-top: 4px; color: var(--lavender-500); font-size: 1.25rem; overflow-wrap: anywhere; }
-.admission-dashboard-summary small { display: block; margin-top: 4px; color: var(--muted); font-size: .68rem; line-height: 1.4; }
+.admission-dashboard-summary small,
+.admission-dashboard-status-summary small { display: block; margin-top: 4px; color: var(--muted); font-size: .68rem; line-height: 1.4; }
 .admission-dashboard-status-summary strong { color: var(--indigo-500); font-size: 1.05rem; }
+.admission-dashboard-quality-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 12px 0; }
+.admission-dashboard-warning-toolbar { display: flex; justify-content: flex-end; margin-top: 12px; }
+.admission-dashboard-warning-toolbar label { display: grid; gap: 4px; min-width: 210px; color: var(--muted); font-size: .78rem; font-weight: 800; }
 .admission-dashboard-regions { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; }
 .admission-dashboard-region-head,
 .admission-dashboard-regions article { display: grid; grid-template-columns: minmax(90px, 1.15fr) repeat(5, minmax(68px, .7fr)); gap: 8px; align-items: center; padding: 10px 12px; }
@@ -4437,7 +4441,12 @@ h3:not(.hero-grid h2),
 .admission-dashboard-record-more { justify-self: center; }
 .admission-dashboard-more { display: block; min-width: 180px; margin: 14px auto 0; }
 .admission-dashboard-warnings article { display: grid; grid-template-columns: minmax(105px, .35fr) minmax(0, 2fr); gap: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
-.admission-dashboard-warning-type { align-self: start; width: fit-content; padding: 5px 8px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: .7rem; font-weight: 800; }
+.admission-dashboard-warning-labels { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; }
+.admission-dashboard-warning-labels .admission-dashboard-warning-severity,
+.admission-dashboard-warning-labels .admission-dashboard-warning-type { display: inline-flex; width: fit-content; margin: 0; padding: 5px 8px; border-radius: 999px; font-size: .7rem; font-weight: 800; }
+.admission-dashboard-warning-labels .admission-dashboard-warning-severity { background: var(--danger-soft); color: var(--danger); }
+.admission-dashboard-warning-labels .admission-dashboard-warning-type { background: var(--neutral-50); color: var(--muted); }
+.admission-dashboard-warnings article.is-review .admission-dashboard-warning-severity { background: var(--teal-50); color: var(--teal-700); }
 .admission-dashboard-warnings strong,
 .admission-dashboard-warnings span,
 .admission-dashboard-warnings p { overflow-wrap: anywhere; }
@@ -4471,6 +4480,8 @@ h3:not(.hero-grid h2),
   .teacher-feedback-card-actions .quiet-button { width: 100%; }
   .admission-dashboard-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admission-dashboard-status-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admission-dashboard-warning-toolbar { justify-content: stretch; }
+  .admission-dashboard-warning-toolbar label { width: 100%; min-width: 0; }
   .admission-dashboard-filters { grid-template-columns: 1fr 1fr; }
   .admission-dashboard-search { grid-column: 1 / -1; }
   .admission-dashboard-region-head { display: none; }

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import {
   buildAdmissionDataDashboard,
   filterAdmissionDashboardUniversities,
+  filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
 } from '../src/admission-data-dashboard-core.mjs';
 
@@ -69,16 +70,41 @@ test('metadata에 있지만 입결 0건인 대학과 metadata에 없는 universi
   assert.ok(dashboard.warnings.some((item) => item.type === '대학 연결 오류' && item.description.includes('unknown-id')));
 });
 
-test('전형명·기준연도·계열·필수 식별값과 환산 이상을 읽기 전용 경고로 탐지한다', () => {
+test('전형명·기준연도·계열·필수 식별값과 환산 이상을 우선순위별 읽기 전용 경고로 탐지한다', () => {
   const dashboard = buildAdmissionDataDashboard([
     baseRecord({ admissionName: '', referenceYear: null, academicField: 'unknown', department: '', cut70Converted: null }),
   ], universities);
   const types = new Set(dashboard.warnings.map((item) => item.type));
   assert.ok(types.has('전형명 누락'));
   assert.ok(types.has('기준연도 누락'));
-  assert.ok(types.has('계열 확인 필요'));
+  assert.ok(types.has('계열 분류 불가'));
   assert.ok(types.has('환산값 이상'));
   assert.ok(types.has('필수 식별값 누락'));
+  assert.ok(dashboard.warnings.some((item) => item.type === '계열 분류 불가' && item.severity === 'review'));
+  assert.ok(dashboard.warnings.some((item) => item.type === '전형명 누락' && item.severity === 'important'));
+});
+
+test('원본 academicField 누락을 taxonomy로 파생할 수 있으면 경고가 아닌 정보 통계로 분리한다', () => {
+  const dashboard = buildAdmissionDataDashboard([
+    baseRecord({ academicField: undefined, department: '경제금융학부' }),
+    baseRecord({ academicField: 'unknown', department: '컴퓨터공학과' }),
+    baseRecord({ academicField: undefined, department: '분류할수없는융합전공' }),
+  ], universities);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByTaxonomy, 2);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 1);
+  assert.equal(dashboard.warnings.filter((item) => item.type === '계열 분류 불가').length, 1);
+});
+
+test('경고 우선순위 필터는 중요과 확인 필요를 구분하고 기본값에서 둘 다 유지한다', () => {
+  const dashboard = buildAdmissionDataDashboard([
+    baseRecord({ admissionName: '', academicField: undefined, department: '분류불가전공' }),
+  ], universities);
+  const all = filterAdmissionDashboardWarnings(dashboard.warnings, 'actionable');
+  const important = filterAdmissionDashboardWarnings(dashboard.warnings, 'important');
+  const review = filterAdmissionDashboardWarnings(dashboard.warnings, 'review');
+  assert.equal(all.length, important.length + review.length);
+  assert.ok(important.every((item) => item.severity === 'important'));
+  assert.ok(review.every((item) => item.severity === 'review'));
 });
 
 test('average-only 레코드의 cut 혼용 흔적을 평균과 별개로 경고한다', () => {
@@ -131,6 +157,8 @@ test('teacher.html은 기존 기능 사이에 입결 현황 탭을 두고 최초
   assert.match(html, /data-teacher-main-view="admissions" hidden/);
   assert.match(module, /data-teacher-main-tab="admissions"[\s\S]*loadDashboard/);
   assert.match(module, /loadAdmissionDashboardDataset/);
+  assert.match(html, /admission-dashboard-filter-warning-severity/);
+  assert.match(module, /filterAdmissionDashboardWarnings/);
   assert.match(module, /UNIVERSITY_PAGE_SIZE = 20/);
   assert.match(styles, /\.admission-dashboard-university/);
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*\.admission-dashboard-record/);

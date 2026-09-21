@@ -1,18 +1,20 @@
-import { APP_BUILD_DATE } from './app-version.mjs?v=20260921-admin-admissions1';
+import { APP_BUILD_DATE } from './app-version.mjs?v=20260921-admin-admissions2';
 import {
   admissionResultRegions,
   clearAdmissionResultsCache,
   loadAdmissionResultsByRegion,
-} from './admission-results-loader.mjs?v=20260921-admin-admissions1';
-import { UNIVERSITIES } from './data/universities.mjs?v=20260921-admin-admissions1';
+} from './admission-results-loader.mjs?v=20260921-admin-admissions2';
+import { UNIVERSITIES } from './data/universities.mjs?v=20260921-admin-admissions2';
 import {
   ADMISSION_DASHBOARD_REGION_ORDER,
   ADMISSION_DASHBOARD_STATUSES,
   ADMISSION_DASHBOARD_STATUS_LABELS,
+  ADMISSION_DASHBOARD_WARNING_SEVERITY_LABELS,
   buildAdmissionDataDashboard,
   filterAdmissionDashboardUniversities,
+  filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
-} from './admission-data-dashboard-core.mjs?v=20260921-admin-admissions1';
+} from './admission-data-dashboard-core.mjs?v=20260921-admin-admissions2';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
@@ -36,6 +38,7 @@ let failures = [];
 let loading = false;
 let universityLimit = UNIVERSITY_PAGE_SIZE;
 let warningLimit = WARNING_PAGE_SIZE;
+let warningSeverity = 'actionable';
 
 function summaryCard(label, value, hint = '') {
   return `<article><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${hint ? `<small>${escapeHtml(hint)}</small>` : ''}</article>`;
@@ -56,6 +59,12 @@ function renderSummary() {
   $('#admission-dashboard-status-summary').innerHTML = ADMISSION_DASHBOARD_STATUSES
     .map((status) => summaryCard(ADMISSION_DASHBOARD_STATUS_LABELS[status], `${summary.statusCounts[status].toLocaleString('ko-KR')}건`))
     .join('');
+  $('#admission-dashboard-quality-summary').innerHTML = [
+    summaryCard('중요', `${summary.quality.importantCount.toLocaleString('ko-KR')}건`, '우선 확인할 오류'),
+    summaryCard('확인 필요', `${summary.quality.reviewCount.toLocaleString('ko-KR')}건`, '관리자 검토 대상'),
+    summaryCard('taxonomy 자동 분류', `${summary.quality.academicFieldInfo.inferredByTaxonomy.toLocaleString('ko-KR')}건`, '원본은 비어 있으나 화면 분석에서 정상 분류'),
+    summaryCard('계열 분류 불가', `${summary.quality.academicFieldInfo.unclassified.toLocaleString('ko-KR')}건`, '확인 필요에 포함'),
+  ].join('');
 }
 
 function renderRegions() {
@@ -106,12 +115,13 @@ function renderUniversityRecords(details) {
 }
 
 function renderWarnings() {
-  const visible = dashboard.warnings.slice(0, warningLimit);
-  $('#admission-dashboard-warning-count').textContent = `${dashboard.warnings.length.toLocaleString('ko-KR')}건 중 ${visible.length.toLocaleString('ko-KR')}건 표시`;
-  warningList.innerHTML = visible.length ? visible.map((item) => `<article><span class="admission-dashboard-warning-type">${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><p>${escapeHtml(item.description)}</p></div></article>`).join('') : '<p class="empty-state">현재 탐지된 데이터 품질 경고가 없습니다.</p>';
+  const filtered = filterAdmissionDashboardWarnings(dashboard.warnings, warningSeverity);
+  const visible = filtered.slice(0, warningLimit);
+  $('#admission-dashboard-warning-count').textContent = `${filtered.length.toLocaleString('ko-KR')}건 중 ${visible.length.toLocaleString('ko-KR')}건 표시`;
+  warningList.innerHTML = visible.length ? visible.map((item) => `<article class="is-${escapeHtml(item.severity)}"><div class="admission-dashboard-warning-labels"><span class="admission-dashboard-warning-severity">${escapeHtml(ADMISSION_DASHBOARD_WARNING_SEVERITY_LABELS[item.severity] ?? '확인 필요')}</span><span class="admission-dashboard-warning-type">${escapeHtml(item.type)}</span></div><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><p>${escapeHtml(item.description)}</p></div></article>`).join('') : '<p class="empty-state">현재 조건에 해당하는 데이터 품질 경고가 없습니다.</p>';
   const more = $('#admission-dashboard-more-warnings');
-  more.hidden = visible.length >= dashboard.warnings.length;
-  more.textContent = `경고 더 보기 (${Math.min(WARNING_PAGE_SIZE, dashboard.warnings.length - visible.length)}건)`;
+  more.hidden = visible.length >= filtered.length;
+  more.textContent = `경고 더 보기 (${Math.min(WARNING_PAGE_SIZE, filtered.length - visible.length)}건)`;
 }
 
 function renderDashboard() {
@@ -140,6 +150,8 @@ async function loadDashboard({ force = false } = {}) {
     dashboard = buildAdmissionDataDashboard(dataset.records, UNIVERSITIES);
     universityLimit = UNIVERSITY_PAGE_SIZE;
     warningLimit = WARNING_PAGE_SIZE;
+    warningSeverity = 'actionable';
+    $('#admission-dashboard-filter-warning-severity').value = 'actionable';
     detailLimits.clear();
     renderDashboard();
   } catch (error) {
@@ -173,6 +185,11 @@ document.querySelector('[data-teacher-main-tab="admissions"]').addEventListener(
 $('#admission-dashboard-reload').addEventListener('click', () => loadDashboard({ force: true }));
 $('#admission-dashboard-more-universities').addEventListener('click', () => { universityLimit += UNIVERSITY_PAGE_SIZE; renderUniversities(); });
 $('#admission-dashboard-more-warnings').addEventListener('click', () => { warningLimit += WARNING_PAGE_SIZE; renderWarnings(); });
+$('#admission-dashboard-filter-warning-severity').addEventListener('change', (event) => {
+  warningSeverity = event.target.value;
+  warningLimit = WARNING_PAGE_SIZE;
+  if (dashboard) renderWarnings();
+});
 universityList.addEventListener('toggle', (event) => {
   const details = event.target.closest('[data-admission-dashboard-university]');
   if (details?.open) renderUniversityRecords(details);

@@ -1,6 +1,8 @@
 import {
   ADMISSION_CATEGORIES,
   ADMISSION_DATA_AVAILABILITY,
+  inferAcademicFieldFromDepartment,
+  normalizeAcademicField,
   normalizeAdmissionRecord,
 } from './admission-record-normalizer.mjs';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
@@ -22,6 +24,14 @@ export const ADMISSION_DASHBOARD_STATUS_LABELS = Object.freeze({
   'not-published': '미공개',
   'not-checked': '미확인',
   'no-result': '결과 없음',
+});
+export const ADMISSION_DASHBOARD_WARNING_SEVERITIES = Object.freeze({
+  IMPORTANT: 'important',
+  REVIEW: 'review',
+});
+export const ADMISSION_DASHBOARD_WARNING_SEVERITY_LABELS = Object.freeze({
+  [ADMISSION_DASHBOARD_WARNING_SEVERITIES.IMPORTANT]: '중요',
+  [ADMISSION_DASHBOARD_WARNING_SEVERITIES.REVIEW]: '확인 필요',
 });
 
 const CHECK_NEEDED_STATUSES = new Set([
@@ -52,9 +62,11 @@ function recordCategoryCounts(records = []) {
   };
 }
 
-function warning(type, record, description, universityName = '') {
+function warning(type, record, description, universityName = '', severity = ADMISSION_DASHBOARD_WARNING_SEVERITIES.IMPORTANT) {
   return {
     type,
+    severity,
+    recordId: text(record?.dashboardRecordId),
     universityId: text(record?.universityId),
     university: text(record?.university) || universityName || '확인 불가',
     department: text(record?.department) || '-',
@@ -71,9 +83,28 @@ function conversionWarnings(raw, item) {
   ];
   const needsConversion = Number(raw?.originalScale ?? 9) === 9;
   if (!needsConversion) return [];
-  return fields
+  const invalidLabels = fields
     .filter(([original, converted]) => hasValue(item[original]) && !validConverted(item[converted]))
-    .map(([, , label]) => warning('환산값 이상', item, `${label} 원본값은 있지만 유효한 5등급 환산값이 없습니다.`));
+    .map(([, , label]) => label);
+  return invalidLabels.length
+    ? [warning('환산값 이상', item, `${invalidLabels.join(', ')} 원본값은 있지만 유효한 5등급 환산값이 없습니다.`)]
+    : [];
+}
+
+function invalidNumericWarning(raw, item) {
+  const fields = [
+    ['cut70Original', '70%컷 원본', 1, 9],
+    ['cut50Original', '50%컷 원본', 1, 9],
+    ['averageGradeOriginal', '평균등급 원본', 1, 9],
+    ['cut70Converted', '70%컷 환산', 1, 5],
+    ['cut50Converted', '50%컷 환산', 1, 5],
+    ['averageGradeConverted', '평균등급 환산', 1, 5],
+  ];
+  const invalid = fields.filter(([field, , min, max]) => {
+    const value = raw?.[field];
+    return hasValue(value) && (!Number.isFinite(Number(value)) || Number(value) < min || Number(value) > max);
+  }).map(([, label]) => label);
+  return invalid.length ? warning('숫자 형식 오류', item, `${invalid.join(', ')} 값이 허용 범위를 벗어났거나 숫자가 아닙니다.`) : null;
 }
 
 function recordWarnings(raw, item, universityById, universityByName) {
@@ -86,9 +117,17 @@ function recordWarnings(raw, item, universityById, universityByName) {
   }
   if (!text(item.admissionName)) warnings.push(warning('전형명 누락', item, 'admissionName이 비어 있습니다.'));
   if (!Number.isInteger(Number(item.referenceYear))) warnings.push(warning('기준연도 누락', item, 'referenceYear가 없거나 유효하지 않습니다.'));
-  if (!text(raw?.academicField ?? raw?.field) || item.academicField === 'unknown') {
-    warnings.push(warning('계열 확인 필요', item, 'academicField가 누락되었거나 unknown입니다.'));
+  if (item.academicField === 'unknown') {
+    warnings.push(warning(
+      '계열 분류 불가',
+      item,
+      '원본 계열값이 없거나 유효하지 않고, 모집단위 taxonomy로도 안전하게 분류할 수 없습니다.',
+      '',
+      ADMISSION_DASHBOARD_WARNING_SEVERITIES.REVIEW,
+    ));
   }
+  const numericWarning = invalidNumericWarning(raw, item);
+  if (numericWarning) warnings.push(numericWarning);
   warnings.push(...conversionWarnings(raw, item));
   if (item.dataAvailability === ADMISSION_DATA_AVAILABILITY.AVERAGE_ONLY
     && [item.cut50Original, item.cut70Original, item.cut50Converted, item.cut70Converted].some(hasValue)) {
@@ -104,6 +143,17 @@ function recordWarnings(raw, item, universityById, universityByName) {
     warnings.push(warning('필수 식별값 누락', item, `${missingIdentifiers.join(', ')} 필드가 비어 있습니다.`));
   }
   return warnings;
+}
+
+function deduplicateWarnings(warnings = []) {
+  const seen = new Set();
+  return warnings.filter((item) => {
+    const targetKey = item.recordId || [item.universityId, item.university, item.department, item.admissionName].join('\u0001');
+    const key = [item.severity, item.type, targetKey, item.description].join('\u0001');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function universitySummary(university, records, warnings) {
@@ -122,7 +172,7 @@ function universitySummary(university, records, warnings) {
     subject: categories.subject,
     comprehensive: categories.comprehensive,
     statusCounts: counts,
-    checkNeeded: (records.length === 0 ? 1 : 0) + statusAttention + warningCount,
+    checkNeeded: statusAttention + warningCount,
     records,
   };
 }
@@ -131,19 +181,35 @@ export function buildAdmissionDataDashboard(records = [], universities = []) {
   const universityById = new Map(universities.map((item) => [item.universityId, item]));
   const universityByName = new Map(universities.map((item) => [item.name, item]));
   const normalizedRecords = [];
-  const warnings = [];
+  const collectedWarnings = [];
+  const academicFieldInfo = {
+    sourceProvided: 0,
+    inferredByTaxonomy: 0,
+    unclassified: 0,
+  };
 
   records.forEach((raw, index) => {
     const normalized = normalizeAdmissionRecord(raw);
+    const sourceAcademicField = text(raw?.academicField ?? raw?.field);
+    const normalizedSourceAcademicField = normalizeAcademicField(sourceAcademicField);
+    const inferredAcademicField = inferAcademicFieldFromDepartment(normalized.department);
+    const dashboardAcademicField = normalized.academicField === 'unknown' && inferredAcademicField !== 'unknown'
+      ? inferredAcademicField
+      : normalized.academicField;
     const rawUniversityId = text(raw?.universityId);
     const master = (rawUniversityId && universityById.get(rawUniversityId)) || universityByName.get(text(normalized.university)) || null;
     const item = {
       ...normalized,
+      academicField: dashboardAcademicField,
       universityId: rawUniversityId || master?.universityId || null,
       dashboardRecordId: `${master?.universityId ?? rawUniversityId ?? 'unknown'}-${index}`,
     };
     normalizedRecords.push(item);
-    warnings.push(...recordWarnings(raw, item, universityById, universityByName));
+    const hasValidSourceAcademicField = Boolean(sourceAcademicField) && normalizedSourceAcademicField !== 'unknown';
+    if (hasValidSourceAcademicField && item.academicField !== 'unknown') academicFieldInfo.sourceProvided += 1;
+    else if (item.academicField !== 'unknown') academicFieldInfo.inferredByTaxonomy += 1;
+    else academicFieldInfo.unclassified += 1;
+    collectedWarnings.push(...recordWarnings(raw, item, universityById, universityByName));
   });
 
   const recordsByUniversity = new Map();
@@ -155,8 +221,21 @@ export function buildAdmissionDataDashboard(records = [], universities = []) {
   });
   universities.forEach((university) => {
     if ((recordsByUniversity.get(university.universityId) ?? []).length === 0) {
-      warnings.push(warning('입결 0건', { universityId: university.universityId }, 'universities metadata에는 있지만 입결 레코드가 없습니다.', university.name));
+      collectedWarnings.push(warning(
+        '입결 0건',
+        { universityId: university.universityId },
+        'universities metadata에는 있지만 입결 레코드가 없습니다.',
+        university.name,
+        ADMISSION_DASHBOARD_WARNING_SEVERITIES.REVIEW,
+      ));
     }
+  });
+
+  const warnings = deduplicateWarnings(collectedWarnings).sort((a, b) => {
+    const severityOrder = { important: 0, review: 1 };
+    return (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
+      || a.university.localeCompare(b.university, 'ko')
+      || a.department.localeCompare(b.department, 'ko');
   });
 
   const universitiesSummary = universities
@@ -173,6 +252,12 @@ export function buildAdmissionDataDashboard(records = [], universities = []) {
     referenceYears: years,
     latestUpdatedAt: updatedDates[0] ?? null,
     statusCounts: statusCounts(normalizedRecords),
+    quality: {
+      importantCount: warnings.filter((item) => item.severity === ADMISSION_DASHBOARD_WARNING_SEVERITIES.IMPORTANT).length,
+      reviewCount: warnings.filter((item) => item.severity === ADMISSION_DASHBOARD_WARNING_SEVERITIES.REVIEW).length,
+      actionableCount: warnings.length,
+      academicFieldInfo,
+    },
   };
   const regionSummaries = ADMISSION_DASHBOARD_REGION_ORDER.map((region) => {
     const canonicalRegion = normalizeAdmissionRegion(region);
@@ -214,6 +299,11 @@ export function filterAdmissionDashboardUniversities(universities = [], filters 
       records,
     }];
   });
+}
+
+export function filterAdmissionDashboardWarnings(warnings = [], severity = 'actionable') {
+  if (severity === 'actionable' || !text(severity)) return [...warnings];
+  return warnings.filter((item) => item.severity === severity);
 }
 
 export async function loadAdmissionDashboardDataset({ regionKeys = [], loadRegion }) {
