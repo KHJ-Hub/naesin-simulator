@@ -2,7 +2,7 @@ import {
   FEEDBACK_ADMIN_NOTE_MAX_LENGTH,
   FEEDBACK_GAS_URL,
   FEEDBACK_MESSAGE_MAX_LENGTH,
-} from './feedback-config.mjs?v=20260921-feedback-endpoint1';
+} from './feedback-config.mjs?v=20260921-feedback-cors1';
 
 export const FEEDBACK_CATEGORIES = Object.freeze([
   '오류가 있어요',
@@ -96,8 +96,36 @@ export async function feedbackApiRequest(action, payload = {}, {
   return result;
 }
 
-export function submitAnonymousFeedback(payload, options) {
-  return feedbackApiRequest('createFeedback', payload, options);
+export async function submitAnonymousFeedback(payload, {
+  endpoint = FEEDBACK_GAS_URL,
+  fetchImpl = globalThis.fetch,
+} = {}) {
+  // The anonymous create path is deliberately fire-and-confirm-delivery. Apps Script
+  // ContentService may finish the write and then expose its redirected response as
+  // opaque to a cross-origin browser. Local validation still catches invalid input,
+  // and an actual transport failure still rejects the fetch promise.
+  validateAnonymousFeedback(payload);
+  if (typeof fetchImpl !== 'function') throw new Error('네트워크 요청을 사용할 수 없어요.');
+  const response = await fetchImpl(feedbackEndpoint(endpoint), {
+    method: 'POST',
+    mode: 'no-cors',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'createFeedback', payload, adminToken: '' }),
+  });
+
+  if (response?.type === 'opaque' || response?.type === 'opaqueredirect') {
+    return { ok: true, delivery: 'opaque' };
+  }
+  if (!response?.ok) throw new Error('의견함 서버에 연결하지 못했어요.');
+  let result;
+  try { result = await response.json(); } catch { throw new Error('의견함 응답을 확인하지 못했어요.'); }
+  if (!result?.ok) {
+    const error = new Error(result?.error === 'rate_limited' ? '잠시 후 다시 시도해 주세요.' : '요청을 처리하지 못했습니다.');
+    error.code = result?.error ?? 'request_failed';
+    throw error;
+  }
+  return result;
 }
 
 export function loginFeedbackAdmin(password, options) {

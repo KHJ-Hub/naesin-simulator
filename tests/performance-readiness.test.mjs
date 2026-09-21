@@ -40,9 +40,9 @@ test('동적 UI 이벤트 위임은 컨테이너마다 한 번만 등록된다',
 });
 
 test('버전은 한 모듈에서 관리되고 화면 하단에 표시된다', () => {
-  assert.equal(version.APP_VERSION, '1.3.2');
+  assert.equal(version.APP_VERSION, '1.3.3');
   assert.equal(version.APP_BUILD_DATE, '2026.09.21');
-  assert.equal(version.appVersionLabel(), 'v1.3.2');
+  assert.equal(version.appVersionLabel(), 'v1.3.3');
   assert.match(html, /id="app-version"/);
   assert.match(app, /v\$\{APP_VERSION\}/);
   assert.doesNotMatch(app, /v\$\{APP_VERSION\} · \$\{APP_BUILD_DATE\}/);
@@ -59,6 +59,7 @@ test('루트 CSS와 JS에는 동일 배포 버전 쿼리가 붙는다', () => {
 test('학생 런타임의 외부 전송은 익명 의견 API로 한정되고 분석 스크립트는 없다', () => {
   assert.doesNotMatch(app, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|gtag\s*\(|analytics/i);
   assert.doesNotMatch(html, /googletagmanager|google-analytics|segment|mixpanel|hotjar/i);
-  assert.equal((feedbackCore.match(/fetchImpl\(feedbackEndpoint\(endpoint\)/g) ?? []).length, 1);
+  assert.equal((feedbackCore.match(/fetchImpl\(feedbackEndpoint\(endpoint\)/g) ?? []).length, 2);
+  assert.match(feedbackCore, /mode: 'no-cors'[\s\S]*action: 'createFeedback'/);
   assert.match(feedbackCore, /JSON\.stringify\(\{ action, payload, adminToken \}\)/);
 });

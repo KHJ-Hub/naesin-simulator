@@ -15,7 +15,7 @@ import {
 const ENDPOINT = 'https://script.google.com/macros/s/test-deployment/exec';
 
 function response(data, ok = true) {
-  return { ok, json: async () => data };
+  return { ok, type: 'basic', json: async () => data };
 }
 
 test('익명 의견 payload에는 허용된 의견과 기술 정보만 포함된다', () => {
@@ -76,11 +76,47 @@ test('학생 제출 API는 POST body에 createFeedback만 전송한다', async (
   assert.equal(result.id, 'feedback-1');
   assert.equal(request.url, ENDPOINT);
   assert.equal(request.options.method, 'POST');
+  assert.equal(request.options.mode, 'no-cors');
   assert.deepEqual(JSON.parse(request.options.body), {
     action: 'createFeedback',
     payload: { category: '기타', message: '테스트', grade: '' },
     adminToken: '',
   });
+});
+
+test('학생 제출은 Apps Script opaque 응답을 전송 성공으로 처리한다', async () => {
+  const result = await submitAnonymousFeedback({ category: '기타', message: '테스트', grade: '' }, {
+    endpoint: ENDPOINT,
+    fetchImpl: async () => ({ ok: false, status: 0, type: 'opaque' }),
+  });
+  assert.deepEqual(result, { ok: true, delivery: 'opaque' });
+});
+
+test('학생 제출은 입력 오류와 명백한 네트워크 실패를 성공으로 처리하지 않는다', async () => {
+  await assert.rejects(
+    submitAnonymousFeedback({ category: '', message: '테스트', grade: '' }, { endpoint: ENDPOINT, fetchImpl: async () => ({ type: 'opaque' }) }),
+    /종류/,
+  );
+  await assert.rejects(
+    submitAnonymousFeedback({ category: '기타', message: '테스트', grade: '' }, {
+      endpoint: ENDPOINT,
+      fetchImpl: async () => { throw new TypeError('Failed to fetch'); },
+    }),
+    /Failed to fetch/,
+  );
+});
+
+test('관리자 API는 no-cors를 사용하지 않고 JSON 성공 응답을 계속 검증한다', async () => {
+  let options;
+  await listFeedback('session-token', {
+    endpoint: ENDPOINT,
+    fetchImpl: async (_url, requestOptions) => {
+      options = requestOptions;
+      return response({ ok: true, feedback: [] });
+    },
+  });
+  assert.equal('mode' in options, false);
+  assert.deepEqual(JSON.parse(options.body), { action: 'listFeedback', payload: {}, adminToken: 'session-token' });
 });
 
 test('관리자 목록과 수정 요청에는 관리자 토큰이 포함된다', async () => {
