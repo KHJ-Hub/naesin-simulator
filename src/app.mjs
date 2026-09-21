@@ -1,14 +1,12 @@
 import {
   SEMESTERS,
   calculateOverallAverage,
-  calculateSemesterAverages,
   calculateSubjectGroupAverages,
-  calculateTotalCredits,
   calculateRequiredRemainingAverage,
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, coursesForSemester, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260917-achievement-select1';
+import { commonCourses, catalogCourseById as courseById, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260917-achievement-select1';
 import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260914-grading-types3';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260919-readiness1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
@@ -33,8 +31,9 @@ import {
   buildAdmissionInterestComparison,
   reconcileAdmissionInterestComparisonSelection,
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
-import { createGoalScenarioSummaries, getRemainingSimulationSemesters } from './goal-simulation.mjs?v=20260917-progressive-scenarios1';
-import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260919-readiness1';
+import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
+import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260921-semester-model1';
+import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
   canCompareWithBusanAdmissions,
@@ -306,27 +305,9 @@ function detailedStatus(semesterId) {
   return { rows, gradedRows, valid, complete: gradedRows.length > 0 && valid.length === gradedRows.length };
 }
 function effectiveRecords() {
-  const output = [];
-  SEMESTERS.forEach(({ id }) => {
-    const status = detailedStatus(id);
-    const quick = quickAverage(id);
-    if (status.complete) output.push(...status.valid);
-    else if (Number.isFinite(quick) && quick >= 1 && quick <= 5) output.push({ id: `quick-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 평균`, subjectGroup: '', credit: 1, gradeValue: quick, source: 'quick' });
-    else output.push(...status.valid);
-  });
-  return output;
+  return buildStudentGradeModels(state).current.semesterRecords;
 }
-function usesQuickAverage() { return SEMESTERS.some(({ id }) => !detailedStatus(id).complete && Number.isFinite(quickAverage(id))); }
-function completedSemesterIds() {
-  return SEMESTERS.filter(({ id }) => detailedStatus(id).complete || validAverageInput(quickAverage(id))).map(({ id }) => id);
-}
-function fallbackRemainingSemesters() {
-  const remainingSemesters = getRemainingSimulationSemesters(completedSemesterIds());
-  if (!remainingSemesters.length) return [];
-  if (usesQuickAverage()) return remainingSemesters.map(({ id }) => ({ id: `remaining-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 남은 학기`, subjectGroup: '', credit: 1 }));
-  const detailedCourses = remainingSemesters.flatMap(({ id }) => coursesForSemester(id).filter((course) => ['grade', 'both'].includes(course.gradingType)).map((course) => ({ ...recordFromCourse(course, `remaining-${course.id}`), gradeValue: '', subjectName: `${course.subjectName} (남은 학기)` })));
-  return detailedCourses.length ? detailedCourses : remainingSemesters.map(({ id }) => ({ id: `remaining-${id}`, semesterId: id, subjectName: `${semesterLabel(id)} 남은 학기`, subjectGroup: '', credit: 1 }));
-}
+function usesQuickAverage() { return buildStudentGradeModels(state).current.hasQuick; }
 function modeLabel(semesterId) {
   const status = detailedStatus(semesterId);
   const quick = validAverageInput(quickAverage(semesterId));
@@ -512,8 +493,8 @@ function gradeInputRows() { return records().filter((record) => ['grade', 'both'
 function validRows() { return gradeInputRows().filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }
 
 function renderCurrentGradeResult() {
-  const actual = state.calculated ? effectiveRecords() : [];
-  const current = calculateOverallAverage(actual, state.weighted);
+  const model = buildStudentGradeModels(state).current;
+  const current = state.calculated ? model.average : null;
   const container = $('#current-grade-result');
   if (!state.calculated || !Number.isFinite(current)) {
     container.classList.remove('calculated');
@@ -521,12 +502,12 @@ function renderCurrentGradeResult() {
     return;
   }
   container.classList.add('calculated');
-  container.innerHTML = `<span>계산된 현재 내신</span><strong>${fmt(current)}</strong>`;
+  container.innerHTML = `<span>계산된 현재 내신</span><strong>${fmt(current)}</strong><small>${escapeHtml(model.calculationBasis)}</small>`;
 }
 function renderSemesterSummary() {
-  const averages = calculateSemesterAverages(state.calculated ? effectiveRecords() : [], state.weighted);
-  $('#semester-summary').innerHTML = averages.map((semester) => {
-    const average = semester.average;
+  const semesters = buildStudentGradeModels(state).current.semesters;
+  $('#semester-summary').innerHTML = semesters.map((semester) => {
+    const average = state.calculated && semester.complete ? semester.average : null;
     const width = average == null ? 0 : Math.max(0, Math.min(100, (10 - average) * 12.5));
     return `<div class="bar-item"><div><span>${semester.label}</span></div><div class="bar-track"><i class="bar-fill" style="width:${width}%"></i></div><strong>${fmt(average)}</strong></div>`;
   }).join('');
@@ -544,7 +525,7 @@ function gradePositionComparisonHtml(model) {
 }
 function renderGradePosition() {
   const container = $('#grade-position');
-  const current = state.calculated ? calculateOverallAverage(effectiveRecords(), state.weighted) : null;
+  const current = state.calculated ? buildStudentGradeModels(state).current.average : null;
   const model = buildGradePositionModel(current);
   if (!model) {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 현재 등급 위치를 확인할 수 있어요.</div>';
@@ -557,8 +538,9 @@ function renderSubjectSummary() {
     $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있어요.</div>';
     return;
   }
-  const summary = calculateSubjectGroupAverages(state.calculated ? effectiveRecords() : [], state.weighted);
-  const overall = calculateOverallAverage(state.calculated ? effectiveRecords() : [], state.weighted);
+  const detailedRecords = buildStudentGradeModels(state).current.completedSemesters.flatMap((semester) => semester.source === 'detailed' ? semester.validRows : []);
+  const summary = calculateSubjectGroupAverages(state.calculated ? detailedRecords : [], state.weighted);
+  const overall = state.calculated ? buildStudentGradeModels(state).current.average : null;
   const advice = (average) => {
     if (!Number.isFinite(overall)) return '';
     const gap = average - overall;
@@ -807,7 +789,7 @@ function renderAdmissionInterestComparisonTable(items, type) {
 function renderAdmissionInterestComparison() {
   const selectedItems = state.admissionInterests.filter((item) => admissionInterestComparisonSelection.has(admissionInterestKey(item)));
   if (selectedItems.length < MIN_ADMISSION_INTEREST_COMPARISONS) return '<p class="muted interest-compare-empty">비교할 항목을 2개 이상 선택해 주세요.</p>';
-  const currentGrade = state.calculated ? calculateOverallAverage(effectiveRecords(), state.weighted) : null;
+  const currentGrade = state.calculated ? buildStudentGradeModels(state).current.average : null;
   const targetGrade = validAverageInput(Number(state.targetAverage)) ? Number(state.targetAverage) : null;
   const comparison = buildAdmissionInterestComparison(selectedItems, { currentGrade, targetGrade });
   const mixedNotice = comparison.mixed ? '<p class="interest-compare-mixed">교과와 종합은 입결 기준이 달라 각각 비교해요.</p>' : '';
@@ -932,12 +914,21 @@ function renderAdmissionReferences() {
   renderAdmissionInterests();
 }
 function goalDetails() {
-  const target = Number(state.targetAverage); const actual = effectiveRecords(); const remaining = fallbackRemainingSemesters();
+  const target = Number(state.targetAverage);
+  const models = buildStudentGradeModels(state);
+  const actual = models.current.semesterRecords;
+  const remaining = models.remaining.remainingRecords;
   if (!state.calculated || !state.goalCalculated || !Number.isFinite(target) || target < 1 || target > 5 || !actual.length) return null;
-  const simple = usesQuickAverage();
-  const weighted = simple ? false : state.weighted !== false;
+  const weighted = false;
   const required = calculateRequiredRemainingAverage(actual, remaining, target, weighted);
-  return required == null ? null : { required, actual, remaining, simple, weighted };
+  return required == null ? null : {
+    required,
+    actual,
+    remaining,
+    weighted,
+    calculationBasis: models.current.calculationBasis,
+    missingPastSemesters: models.remaining.missingPastSemesters,
+  };
 }
 function renderGoal() {
   const result = $('#goal-result');
@@ -948,15 +939,17 @@ function renderGoal() {
   }
   const difficulty = describeGoalDifficulty(details.required);
   const actual = details.actual; const remaining = details.remaining;
-  const actualCredits = calculateTotalCredits(actual); const remainingCredits = calculateTotalCredits(remaining, false);
-  const highest = (actual.reduce((sum, item) => sum + Number(item.gradeValue) * (details.weighted ? Number(item.credit) : 1), 0) + (details.weighted ? remainingCredits : remaining.length)) / (details.weighted ? actualCredits + remainingCredits : actual.length + remaining.length);
+  const highest = (actual.reduce((sum, item) => sum + Number(item.gradeValue), 0) + remaining.length) / (actual.length + remaining.length);
   const scenarios = details.required >= 1 && details.required <= 5 ? createGoalScenarioSummaries(actual, remaining, details.required, details.weighted).map(({ name, semesterResults, finalAverage }) => { const rows = semesterResults.map((item) => `<div class="scenario-semester"><span>${escapeHtml(semesterLabel(item.semesterId))}</span><strong>${fmt(item.target)}</strong></div>`).join(''); return `<article class="scenario-card"><h4>${name}</h4><div class="scenario-semesters">${rows}</div><p>예상 최종 내신 <strong>${fmt(finalAverage)}</strong></p></article>`; }).join('') : '';
-  const guidance = details.simple ? '<li>간편 입력 결과는 학기 평균 기준 참고값이에요.</li><li>실제 과목별 학점 입력 시 결과가 달라질 수 있어요.</li>' : '<li>상세 입력 과목의 실제 학점 가중치로 계산했어요.</li>';
+  const missingPast = details.missingPastSemesters.length
+    ? `<li>${details.missingPastSemesters.map(({ label }) => escapeHtml(label)).join(', ')} 성적이 비어 있어 현재 평균에서 제외했어요. 이전 학기 성적을 확인해 주세요.</li>`
+    : '';
+  const guidance = `<li>${escapeHtml(details.calculationBasis)}이에요.</li><li>남은 학기는 선택과목 수와 관계없이 학기별 동일 비중으로 계산해요.</li>${missingPast}`;
   const summaryText = details.required >= 1 && details.required <= 5 ? `목표 내신 ${fmt(Number(state.targetAverage))}을 위해 남은 학기 평균 ${fmt(details.required)}가 필요해요.` : difficulty;
   result.innerHTML = `<section class="goal-summary"><span>남은 학기 필요 평균</span><strong>${details.required >= 1 && details.required <= 5 ? `${fmt(details.required)}등급` : '-'}</strong><p>${summaryText}</p>${details.required < 1 || details.required > 5 ? `<small>남은 모든 과목을 1등급으로 가정한 최고 가능 최종 내신: ${fmt(highest)}</small>` : ''}</section>${scenarios ? `<section class="scenario-grid" aria-label="목표 시나리오">${scenarios}</section>` : ''}<aside class="goal-guidance"><strong>안내</strong><ul>${guidance}<li>대학 합격 가능성을 의미하지 않아요.</li></ul></aside>`;
 }
 function renderPrintReport() {
-  const model = buildPrintReportModel(state, { remainingRecords: fallbackRemainingSemesters() });
+  const model = buildPrintReportModel(state);
   $('#print-report').innerHTML = renderPrintReportHtml(model);
 }
 function renderGradeDerivedViews() {

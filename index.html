@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
     <title>배정고 내신 설계 노트</title>
-    <link rel="stylesheet" href="./styles.css?v=20260921-service-settings1" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-semester-model1" />
   </head>
   <body>
     <main class="app-shell">
@@ -37,7 +37,7 @@
       </section>
 
       <section class="dashboard-grid">
-        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 3</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 학점 가중 평균 사용</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
+        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 3</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
         <div class="flow-column">
           <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">나의 흐름</p><h2>학기별 변화</h2></div></div><div id="semester-summary" class="bar-list"></div></section>
           <section class="panel grade-position-panel" aria-labelledby="grade-position-title"><div class="panel-heading compact"><div><p class="eyebrow">환산 위치 참고</p><h2 id="grade-position-title">내 등급 위치</h2></div></div><div id="grade-position" aria-live="polite"></div></section>
@@ -88,6 +88,6 @@
     </dialog>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260921-service-settings1"></script>
+    <script type="module" src="./src/app.mjs?v=20260921-semester-model1"></script>
   </body>
 </html>

@@ -8,10 +8,10 @@ import {
 } from '../src/goal-simulation.mjs';
 import { calculateRequiredRemainingAverage } from '../src/grade-calculator.mjs';
 
-test('중간 학기가 비어 있어도 3-1까지 미입력 학기를 모두 남은 학기로 분류한다', () => {
+test('중간의 과거 누락은 미래로 보지 않고 마지막 완료 학기 뒤만 남은 학기로 분류한다', () => {
   assert.deepEqual(
     getRemainingSimulationSemesters(['1-1', '2-1']).map(({ id }) => id),
-    ['1-2', '2-2', '3-1'],
+    ['2-2', '3-1'],
   );
   assert.deepEqual(getRemainingSimulationSemesters([]), []);
 });

@@ -59,6 +59,7 @@ h3 { margin-bottom:8px; color:#5b4d97; font-size:clamp(.95rem,1.2vw,1.05rem); }
 .current-grade-result.calculated { justify-content:space-between; border-style:solid; border-color:var(--lavender-200); background:linear-gradient(135deg,#fff 0%,#f7f2ff 100%); text-align:left; }
 .current-grade-result span { color:var(--ink); font-weight:800; }
 .current-grade-result strong { color:var(--lavender-500); font-size:clamp(1.35rem,2.2vw,1.75rem); line-height:1; }
+.current-grade-result small { max-width:55%; color:var(--muted); font-size:.75rem; line-height:1.35; text-align:right; }
 .entry-layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:clamp(14px,2vw,24px); }
 .section-title { display:flex; justify-content:space-between; align-items:center; gap:10px; min-width:0; }
 .section-title > div { min-width:0; }

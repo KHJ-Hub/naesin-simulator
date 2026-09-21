@@ -76,7 +76,7 @@ test('백업 복원 데이터로 현재 내신·목표 시뮬레이션·관심 �
   const html = renderPrintReport(model);
   assert.equal(model.student.studentId, '10101');
   assert.equal(model.student.studentName, '김학생');
-  assert.equal(model.current.average, 2.46);
+  assert.equal(model.current.average, 2.3);
   assert.equal(model.goal.targetAverage, 2.2);
   assert.equal(model.interests.subject.length, 1);
   assert.equal(model.interests.comprehensive.length, 1);

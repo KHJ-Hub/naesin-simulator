@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, app, styles] = await Promise.all([
+const [html, app, styles, semesterModel] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/app.mjs', import.meta.url), 'utf8'),
   readFile(new URL('../styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/semester-grade-model.mjs', import.meta.url), 'utf8'),
 ]);
 
 test('성적 입력은 별도 간편·상세 섹션 대신 학기별 카드 한 곳에서 제공된다', () => {
@@ -40,7 +41,7 @@ test('입력 방식 전환은 기존 간편·상세 데이터를 삭제하지 �
 });
 
 test('상세 입력 완료값이 간편 평균보다 우선하는 기존 계산 규칙을 유지한다', () => {
-  assert.match(app, /if \(status\.complete\) output\.push\(\.\.\.status\.valid\);\s*else if \(Number\.isFinite\(quick\)/);
+  assert.match(semesterModel, /if \(detailedComplete\)[\s\S]*source = 'detailed'[\s\S]*else if \(quickAverage !== null\)/);
   assert.match(app, /if \(status\.complete\) return \{ badge: '상세 입력 완료'/);
 });
 

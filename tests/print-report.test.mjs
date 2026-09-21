@@ -68,7 +68,7 @@ test('상세입력 완료 학기는 저장된 간편입력보다 우선한다', 
   assert.equal(first.source, 'detailed');
   assert.equal(first.average, 2);
   assert.equal(model.semesters.find(({ id }) => id === '1-2').source, 'quick');
-  assert.match(model.current.calculationBasis, /상세 입력 학점 \+ 간편 입력/);
+  assert.match(model.current.calculationBasis, /학기별 동일 비중/);
 });
 
 test('세 목표 시나리오는 학기별 한 줄만 포함하고 중복되지 않는다', () => {

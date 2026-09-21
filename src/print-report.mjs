@@ -1,6 +1,5 @@
 import {
   SEMESTERS,
-  calculateOverallAverage,
   calculateSubjectGroupAverages,
   calculateTotalCredits,
   calculateRequiredRemainingAverage,
@@ -8,6 +7,7 @@ import {
 } from './grade-calculator.mjs';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs';
 import { admissionDifference } from './admission-reference-core.mjs';
+import { buildStudentGradeModels } from './semester-grade-model.mjs';
 
 const SEMESTER_ORDER = new Map(SEMESTERS.map(({ id }, index) => [id, index]));
 
@@ -24,59 +24,6 @@ function fixed(value) {
 
 function isGradeCourse(record = {}) {
   return (!record.gradingType || ['grade', 'both'].includes(record.gradingType)) && record.fiveLevelEligible !== false;
-}
-
-function isValidGrade(record = {}) {
-  const grade = numberOrNull(record.gradeValue);
-  const credit = numberOrNull(record.credit);
-  return isGradeCourse(record) && grade !== null && grade >= 1 && grade <= 5 && credit !== null && credit > 0;
-}
-
-function statusForSemester(state, semester) {
-  const rows = (Array.isArray(state.actual) ? state.actual : []).filter((record) => record.semesterId === semester.id);
-  const gradeRows = rows.filter(isGradeCourse);
-  const validRows = gradeRows.filter(isValidGrade);
-  const detailedComplete = gradeRows.length > 0 && validRows.length === gradeRows.length;
-  const quickAverage = numberOrNull(state.quickAverages?.[semester.id]);
-  const hasQuick = validAverageInput(quickAverage);
-  let source = 'missing';
-  let effectiveRows = [];
-
-  if (detailedComplete) {
-    source = 'detailed';
-    effectiveRows = validRows;
-  } else if (hasQuick) {
-    source = 'quick';
-    effectiveRows = [{
-      id: `print-quick-${semester.id}`,
-      semesterId: semester.id,
-      subjectName: `${semester.label} 평균`,
-      subjectGroup: '',
-      credit: 1,
-      gradeValue: quickAverage,
-      source: 'quick',
-    }];
-  } else if (validRows.length) {
-    source = 'partial';
-    effectiveRows = validRows;
-  }
-
-  const labels = {
-    detailed: '상세입력 완료',
-    quick: gradeRows.length ? '간편입력 · 상세 미완료' : '간편입력',
-    partial: `상세입력 일부 (${validRows.length}/${gradeRows.length}과목)`,
-    missing: '미입력',
-  };
-
-  return {
-    ...semester,
-    source,
-    statusLabel: labels[source],
-    complete: source === 'detailed' || source === 'quick',
-    enteredCourseCount: validRows.length,
-    totalCourseCount: gradeRows.length,
-    effectiveRows,
-  };
 }
 
 function uniqueSemesterLabels(records = []) {
@@ -173,15 +120,18 @@ function buildInterest(item, currentAverage, targetAverage) {
   };
 }
 
-export function buildPrintReportModel(state = {}, { remainingRecords = [], now = new Date(), includeCourseAppendix = false } = {}) {
-  const semesterStatuses = SEMESTERS.map((semester) => statusForSemester(state, semester));
-  const effective = semesterStatuses.flatMap((semester) => semester.effectiveRows);
-  const hasQuick = semesterStatuses.some((semester) => semester.source === 'quick');
-  const hasDetailed = semesterStatuses.some((semester) => ['detailed', 'partial'].includes(semester.source));
+export function buildPrintReportModel(state = {}, { remainingRecords = null, now = new Date(), includeCourseAppendix = false } = {}) {
+  const gradeModels = buildStudentGradeModels(state);
+  const semesterStatuses = gradeModels.current.semesters;
+  const effective = gradeModels.current.semesterRecords;
+  const detailedRecords = gradeModels.current.completedSemesters
+    .flatMap((semester) => semester.source === 'detailed' ? semester.validRows : []);
+  const hasQuick = gradeModels.current.hasQuick;
+  const hasDetailed = gradeModels.current.hasDetailed;
   const weighted = state.weighted !== false;
-  const currentAverage = state.calculated ? calculateOverallAverage(effective, weighted) : null;
+  const currentAverage = state.calculated ? gradeModels.current.average : null;
   const targetAverage = validAverageInput(state.targetAverage) ? fixed(state.targetAverage) : null;
-  const detailedCredits = calculateTotalCredits(effective.filter((record) => record.source !== 'quick'));
+  const detailedCredits = calculateTotalCredits(detailedRecords);
   const quickSemesterCount = semesterStatuses.filter((semester) => semester.source === 'quick').length;
   const completedSemesters = semesterStatuses.filter((semester) => semester.complete).map((semester) => semester.label);
   const enteredCourseCount = semesterStatuses.reduce((sum, semester) => sum + semester.enteredCourseCount, 0);
@@ -192,26 +142,23 @@ export function buildPrintReportModel(state = {}, { remainingRecords = [], now =
     label: semester.label,
     source: semester.source,
     statusLabel: semester.statusLabel,
-    average: semester.effectiveRows.length ? calculateOverallAverage(semester.effectiveRows, weighted) : null,
+    average: semester.complete ? semester.average : null,
   }));
 
-  let calculationBasis = '입력된 성적 없음';
+  const calculationBasis = gradeModels.current.calculationBasis;
   let creditSummary = '입력된 상세 과목 없음';
   if (hasDetailed && hasQuick) {
-    calculationBasis = '상세 입력 학점 + 간편 입력 학기 포함 참고 계산';
-    creditSummary = `상세 입력 ${detailedCredits.toFixed(1)}학점 + 간편 입력 ${quickSemesterCount}개 학기`;
+    creditSummary = `상세 입력 ${detailedCredits.toFixed(1)}학점 · 간편 입력 ${quickSemesterCount}개 학기 · 학기별 동일 비중`;
   } else if (hasQuick) {
-    calculationBasis = '학기 평균 기준 단순 계산';
     creditSummary = `학기 평균 기반 계산 (${quickSemesterCount}개 학기)`;
   } else if (hasDetailed) {
-    calculationBasis = weighted ? '실제 입력 교과 학점 가중 평균' : '과목 동일 비중 평균';
-    creditSummary = `실제 입력 교과 학점 합계 ${detailedCredits.toFixed(1)}학점`;
+    creditSummary = `상세 입력 교과 ${detailedCredits.toFixed(1)}학점 · 학기별 동일 비중`;
   }
 
-  const remaining = Array.isArray(remainingRecords) ? remainingRecords : [];
+  const remaining = Array.isArray(remainingRecords) ? remainingRecords : gradeModels.remaining.remainingRecords;
   let goal = null;
   if (state.calculated && state.goalCalculated && currentAverage !== null && targetAverage !== null && remaining.length) {
-    const goalWeighted = !hasQuick;
+    const goalWeighted = false;
     const required = calculateRequiredRemainingAverage(effective, remaining, targetAverage, goalWeighted);
     if (required !== null) {
       const scenarios = required >= 1 && required <= 5
@@ -229,7 +176,8 @@ export function buildPrintReportModel(state = {}, { remainingRecords = [], now =
         requiredAverage: fixed(required),
         achievable: required >= 1 && required <= 5,
         highestReachableAverage: highestReachableAverage(effective, remaining, goalWeighted),
-        calculationBasis: goalWeighted ? '상세 입력 과목의 학점 가중 기준' : '학기 평균 동일 비중 기준',
+        calculationBasis,
+        missingPastSemesters: gradeModels.remaining.missingPastSemesters.map(({ label }) => label),
         scenarios,
       };
     }
@@ -274,7 +222,7 @@ export function buildPrintReportModel(state = {}, { remainingRecords = [], now =
     subjects: {
       available: !hasQuick && effective.length > 0,
       message: hasQuick ? '교과별 분석은 과목별 상세 입력 시 확인할 수 있습니다.' : '입력된 상세 성적이 없습니다.',
-      items: hasQuick ? [] : calculateSubjectGroupAverages(effective, weighted).filter((item) => item.average !== null),
+      items: hasQuick ? [] : calculateSubjectGroupAverages(detailedRecords, weighted).filter((item) => item.average !== null),
     },
     goal,
     interests: {
@@ -443,8 +391,11 @@ export function renderPrintReport(model) {
     : goal?.achievable
       ? scenarioHtml(goal)
       : `<p>현재 설정한 목표에는 도달하기 어렵습니다. 남은 모든 성적을 1등급으로 가정한 최고 도달 가능 내신은 <strong>${fmt(goal?.highestReachableAverage)}</strong>입니다.</p>`;
+  const missingPastNotice = goal?.missingPastSemesters?.length
+    ? `<p class="print-note">${escapeHtml(goal.missingPastSemesters.join(', '))} 성적이 비어 있어 현재 평균에서 제외했습니다. 이전 학기 성적을 확인해 주세요.</p>`
+    : '';
   const goalHtml = goal
-    ? `<div class="print-summary print-goal-summary"><div class="print-key-metric"><span>목표 내신</span><strong>${fmt(goal.targetAverage)}</strong></div><div class="print-key-metric"><span>필요한 남은 학기 평균</span><strong>${goal.noRemaining || !goal.achievable ? '-' : fmt(goal.requiredAverage)}</strong></div></div><p class="print-meta-row"><span>완료 학기: ${listText(goal.completedSemesters)}</span><span>남은 학기: ${listText(goal.remainingSemesters)}</span><span>계산 기준: ${escapeHtml(goal.calculationBasis)}</span></p>${goalResultHtml}`
+    ? `<div class="print-summary print-goal-summary"><div class="print-key-metric"><span>목표 내신</span><strong>${fmt(goal.targetAverage)}</strong></div><div class="print-key-metric"><span>필요한 남은 학기 평균</span><strong>${goal.noRemaining || !goal.achievable ? '-' : fmt(goal.requiredAverage)}</strong></div></div><p class="print-meta-row"><span>완료 학기: ${listText(goal.completedSemesters)}</span><span>남은 학기: ${listText(goal.remainingSemesters)}</span><span>계산 기준: ${escapeHtml(goal.calculationBasis)}</span></p>${missingPastNotice}${goalResultHtml}`
     : '<p>계산된 목표 내신 시뮬레이션이 없습니다.</p>';
 
   const appendix = model.courseAppendix.included
