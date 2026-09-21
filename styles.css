@@ -4252,3 +4252,167 @@ h3:not(.hero-grid h2),
     font-size: 16px !important;
   }
 }
+
+/* Anonymous student feedback and protected teacher inbox. */
+.student-feedback-button {
+  position: fixed;
+  right: clamp(14px, 2vw, 26px);
+  bottom: 18px;
+  z-index: 8;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid var(--lavender-300);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--lavender-500);
+  font-weight: 800;
+  box-shadow: 0 10px 28px rgba(63, 79, 149, .2);
+}
+
+.student-feedback-dialog {
+  width: min(560px, calc(100% - 24px));
+  max-height: min(88vh, 720px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--lavender-200);
+  border-radius: 20px;
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(37, 42, 84, .28);
+}
+
+.student-feedback-dialog::backdrop {
+  background: rgba(31, 36, 67, .42);
+  backdrop-filter: blur(2px);
+}
+
+.student-feedback-form {
+  display: grid;
+  gap: 14px;
+  padding: clamp(18px, 4vw, 26px);
+}
+
+.student-feedback-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.student-feedback-heading h2 { margin-bottom: 5px; }
+.student-feedback-heading p:not(.eyebrow) { margin: 0; color: var(--muted); line-height: 1.55; }
+.student-feedback-form > label { display: grid; gap: 6px; color: var(--muted); font-size: .86rem; font-weight: 800; }
+.student-feedback-form textarea.input { min-height: 130px; resize: vertical; line-height: 1.55; }
+.student-feedback-privacy { margin: 0; padding: 10px 12px; border-radius: 11px; background: var(--teal-50); color: var(--teal-700); font-size: .8rem; font-weight: 750; }
+.student-feedback-status { min-height: 1.4em; margin: 0; color: var(--muted); font-size: .82rem; font-weight: 750; }
+.student-feedback-status[data-type="success"] { color: var(--green); }
+.student-feedback-status[data-type="error"] { color: var(--danger); }
+.student-feedback-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.student-feedback-actions button { min-width: 110px; }
+
+.teacher-main-tabs {
+  display: flex;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .9);
+}
+
+.teacher-main-tabs button {
+  min-height: 44px;
+  padding: 8px 15px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.teacher-main-tabs button.is-active { color: #fff; background: linear-gradient(120deg, var(--lavender-500), var(--indigo-500)); }
+.teacher-feedback-tab-badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--teal-500); color: #fff; font-size: .7rem; }
+.teacher-feedback-tab-badge[hidden],
+.teacher-panel[data-teacher-main-view][hidden],
+.teacher-feedback-panel[hidden],
+#feedback-admin-dashboard[hidden],
+#feedback-admin-login[hidden] { display: none !important; }
+
+.teacher-feedback-title,
+.teacher-feedback-actions,
+.teacher-feedback-card header,
+.teacher-feedback-card-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.teacher-feedback-title p { margin-bottom: 0; }
+.teacher-feedback-actions { flex-wrap: wrap; }
+.teacher-feedback-login { display: grid; grid-template-columns: minmax(220px, 420px) auto; align-items: end; gap: 10px; margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-soft); }
+.teacher-feedback-login label { display: grid; gap: 5px; color: var(--muted); font-size: .84rem; font-weight: 800; }
+.teacher-feedback-login p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: .78rem; }
+.teacher-feedback-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 18px; }
+.teacher-feedback-summary article { padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcff; }
+.teacher-feedback-summary span { color: var(--muted); font-size: .78rem; font-weight: 750; }
+.teacher-feedback-summary strong { display: block; margin-top: 4px; color: var(--lavender-500); font-size: 1.35rem; }
+.teacher-feedback-filters { display: grid; grid-template-columns: repeat(3, minmax(130px, .7fr)) minmax(200px, 1.2fr); gap: 9px; margin-top: 13px; }
+.teacher-feedback-filters label { display: grid; gap: 4px; color: var(--muted); font-size: .78rem; font-weight: 800; }
+.teacher-feedback-list { display: grid; gap: 10px; margin-top: 10px; }
+.teacher-feedback-card { display: grid; gap: 11px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
+.teacher-feedback-card.is-new { border-color: var(--lavender-300); box-shadow: inset 4px 0 0 var(--lavender-500); }
+.teacher-feedback-card header > div { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.teacher-feedback-card header select { width: auto; min-width: 112px; }
+.teacher-feedback-category { padding: 5px 8px; border-radius: 999px; background: var(--lavender-100); color: var(--lavender-500); font-size: .74rem; font-weight: 800; }
+.teacher-feedback-card time { color: var(--muted); font-size: .75rem; }
+.teacher-feedback-message { margin: 0; color: var(--ink); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.teacher-feedback-meta,
+.teacher-feedback-tech dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.teacher-feedback-meta div,
+.teacher-feedback-tech dl div { min-width: 0; padding: 8px 9px; border-radius: 10px; background: var(--neutral-50); }
+.teacher-feedback-meta dt,
+.teacher-feedback-tech dt { color: var(--muted); font-size: .7rem; font-weight: 750; }
+.teacher-feedback-meta dd,
+.teacher-feedback-tech dd { margin: 3px 0 0; font-size: .8rem; overflow-wrap: anywhere; }
+.teacher-feedback-tech { border-top: 1px solid var(--line); padding-top: 8px; }
+.teacher-feedback-tech summary { color: var(--muted); font-size: .78rem; font-weight: 800; cursor: pointer; }
+.teacher-feedback-tech dl { margin-top: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.teacher-feedback-note { display: grid; gap: 5px; color: var(--muted); font-size: .78rem; font-weight: 800; }
+.teacher-feedback-note textarea { resize: vertical; line-height: 1.5; }
+.teacher-feedback-card-actions { justify-content: flex-end; }
+#feedback-list-status[data-type="error"] { color: var(--danger); }
+
+@media (max-width: 767px) {
+  .student-feedback-button {
+    position: static;
+    display: block;
+    width: fit-content;
+    margin: 18px auto 24px;
+  }
+  .student-feedback-heading { align-items: stretch; }
+  .student-feedback-heading .quiet-button { flex: none; }
+  .student-feedback-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .student-feedback-actions button { min-width: 0; }
+  .teacher-main-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .teacher-main-tabs button { padding-inline: 8px; }
+  .teacher-feedback-title { align-items: stretch; flex-direction: column; }
+  .teacher-feedback-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .teacher-feedback-login { grid-template-columns: 1fr; }
+  .teacher-feedback-login p { grid-column: auto; }
+  .teacher-feedback-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .teacher-feedback-filters { grid-template-columns: 1fr 1fr; }
+  .teacher-feedback-search { grid-column: 1 / -1; }
+  .teacher-feedback-card header { align-items: stretch; flex-direction: column; }
+  .teacher-feedback-card header select { width: 100%; }
+  .teacher-feedback-meta,
+  .teacher-feedback-tech dl { grid-template-columns: 1fr; }
+  .teacher-feedback-card-actions .quiet-button { width: 100%; }
+}
+
+@media print {
+  .student-feedback-button,
+  .student-feedback-dialog,
+  .teacher-main-tabs,
+  .teacher-feedback-panel { display: none !important; }
+}

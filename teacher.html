@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>선생님용 과목 관리 · 내신 시뮬레이터</title>
-  <link rel="stylesheet" href="./styles.css?v=20260918-shared-position1" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-feedback-admin2" />
 </head>
 <body>
   <main class="teacher-shell">
@@ -12,14 +12,25 @@
       <div><p class="eyebrow">배정고 학업 설계 도구</p><h1>선생님용 과목 관리</h1><p class="muted">입학생 연도와 학기별로 과목을 확인하고, 학생 화면에 표시할 개설 과목을 관리합니다.</p></div>
       <a class="secondary-button teacher-back" href="./index.html">학생 페이지로 돌아가기</a>
     </header>
-    <section class="teacher-panel teacher-toolbar">
+    <nav class="teacher-main-tabs" aria-label="관리자 기능"><button type="button" class="is-active" data-teacher-main-tab="courses" aria-selected="true">과목 관리</button><button type="button" data-teacher-main-tab="feedback" aria-selected="false">학생 의견 <span class="teacher-feedback-tab-badge" data-feedback-new-badge hidden></span></button></nav>
+    <section class="teacher-panel teacher-toolbar" data-teacher-main-view="courses">
       <div class="teacher-year-filter"><label>입학생 연도<select id="filter-year" class="input"></select></label></div>
       <div class="teacher-status-filter" role="group" aria-label="개설 상태 필터"><button class="quiet-button is-selected" data-status-filter="all">전체</button><button class="quiet-button" data-status-filter="active">개설</button><button class="quiet-button" data-status-filter="inactive">미개설</button></div>
       <div class="teacher-toolbar-actions"><button id="add-course" class="primary-button">+ 과목 추가</button><button id="reset-catalog" class="quiet-button">기본 목록 복원</button></div>
     </section>
-    <section class="teacher-panel teacher-browser-panel">
+    <section class="teacher-panel teacher-browser-panel" data-teacher-main-view="courses">
       <div class="teacher-list-heading"><div><p class="eyebrow">과목 탐색</p><h2>학년·학기별 과목</h2><p id="course-count" class="muted"></p></div><p class="teacher-hint">학기를 누르면 해당 과목만 펼쳐집니다.</p></div>
       <div id="course-browser" class="teacher-browser"></div>
+    </section>
+    <section class="teacher-panel teacher-feedback-panel" data-teacher-main-view="feedback" hidden>
+      <div class="teacher-feedback-title"><div><p class="eyebrow">학생 의견함</p><h2>학생 의견</h2><p class="muted">익명으로 접수된 의견의 처리 상태와 관리자 메모를 관리합니다.</p></div><div class="teacher-feedback-actions"><button type="button" class="quiet-button" id="feedback-refresh" hidden>새로고침</button><button type="button" class="quiet-button" id="feedback-logout" hidden>의견함 로그아웃</button></div></div>
+      <form id="feedback-admin-login" class="teacher-feedback-login"><label>관리자 비밀번호<input class="input" name="password" type="password" autocomplete="current-password" required /></label><button type="submit" class="primary-button">학생 의견 열기</button><p>비밀번호는 의견 목록 조회와 수정 권한 확인에만 사용합니다.</p></form>
+      <div id="feedback-admin-dashboard" hidden>
+        <div class="teacher-feedback-summary" aria-label="의견 처리 현황"><article><span>신규</span><strong data-feedback-count="신규">0</strong></article><article><span>확인중</span><strong data-feedback-count="확인중">0</strong></article><article><span>반영완료</span><strong data-feedback-count="반영완료">0</strong></article><article><span>보류</span><strong data-feedback-count="보류">0</strong></article></div>
+        <div class="teacher-feedback-filters"><label>의견 종류<select id="feedback-filter-category" class="input"><option value="">전체</option><option>오류가 있어요</option><option>사용하기 불편해요</option><option>기능 제안</option><option>입결 데이터 관련</option><option>기타</option></select></label><label>처리상태<select id="feedback-filter-status" class="input"><option value="">전체</option><option>신규</option><option>확인중</option><option>반영완료</option><option>보류</option></select></label><label>학년<select id="feedback-filter-grade" class="input"><option value="">전체</option><option>1학년</option><option>2학년</option><option>3학년</option><option>미선택</option></select></label><label class="teacher-feedback-search">내용 검색<input id="feedback-filter-query" class="input" type="search" placeholder="의견 내용 키워드" /></label></div>
+        <p id="feedback-list-status" class="muted" role="status" aria-live="polite"></p>
+        <div id="feedback-list" class="teacher-feedback-list"></div>
+      </div>
     </section>
     <section id="course-editor" class="teacher-editor" hidden aria-label="과목 편집" role="dialog" aria-modal="true">
       <div class="teacher-editor-card"><div class="teacher-list-heading"><div><p class="eyebrow">과목 정보</p><h2 id="editor-title">과목 추가</h2></div><button id="cancel-edit" class="quiet-button" type="button">닫기</button></div>
@@ -28,6 +39,7 @@
     </section>
     <p id="teacher-toast" class="teacher-toast" role="status" aria-live="polite"></p>
   </main>
-  <script type="module" src="./src/teacher-app.mjs?v=20260914-teacher-ui3"></script>
+  <script type="module" src="./src/teacher-app.mjs?v=20260921-feedback-admin2"></script>
+  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-feedback-admin2"></script>
 </body>
 </html>

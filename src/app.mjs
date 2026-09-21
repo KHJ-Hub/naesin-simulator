@@ -51,7 +51,8 @@ import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260919-readiness1';
+import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-student-feedback2';
+import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-student-feedback2';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
@@ -1368,4 +1369,5 @@ document.querySelector('.student-form').addEventListener('input', (event) => {
 applyPublicFeatureVisibility();
 ensureAdmissionViewModeControls();
 $('#app-version').textContent = `v${APP_VERSION} · ${APP_BUILD_DATE}`;
+setupStudentFeedback();
 render();
