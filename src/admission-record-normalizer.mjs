@@ -1,5 +1,6 @@
 import { ADMISSION_ELIGIBILITY_TYPES, classifyAdmissionEligibility } from './admission-eligibility.mjs';
 import { DEFAULT_SCHOOL_REGION, isSchoolRegionEligible, normalizeRegionalEligibility } from './admission-regional-eligibility.mjs';
+import { normalizeAdmissionMajorName } from './admission-major-taxonomy.mjs?v=20260921-taxonomy-audit1';
 
 /** 전국 입시결과 파일이 공유하는 정규 스키마와 검증 규칙이다. */
 export const ADMISSION_CATEGORIES = Object.freeze({
@@ -64,9 +65,7 @@ export function normalizeAcademicField(value) {
   return ACADEMIC_FIELD_ALIASES[normalized] ?? ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
 }
 
-/** 공식 계열값이 없을 때 모집단위명만으로 명확한 경우에 한해 넓은 계열을 보완한다. */
-export function inferAcademicFieldFromDepartment(department) {
-  const name = String(department ?? '').replace(/\s/g, '');
+function classifyAcademicFieldFromNormalizedName(name) {
   if (!name) return ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
 
   // 대학·계열명이 분명한 광역 모집단위는 세부 키워드보다 먼저 판별한다.
@@ -77,14 +76,33 @@ export function inferAcademicFieldFromDepartment(department) {
   if (/(예술|아트|디자인|그래픽|미술|회화|조형|음악|성악|작곡|국악|관현악|무용|무예|무도|연극|영화|공연|체육|스포츠|태권도|축구|골프|애니메이션|웹툰|도예|공예|사진|뷰티|미용|방송영상|영상제작|영상학|엔터테인먼트|운동|피트니스|FineArts)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.ARTS;
 
   // 지원 분야가 넓거나 직업·서비스 중심인 모집단위는 인문/자연으로 억지 분류하지 않는다.
-  if (/(자유전공|자율전공|무전공|통합모집|통합모집단위|군사|국방|안보|경호|조리|제과|제빵|외식|항공서비스|운항서비스|성인학습|자유대학|인터칼리지|아너스|G커리어|Bakery&Beverage)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.OTHER;
+  if (/(자유전공|자율전공|무전공|통합모집|통합모집단위|자율융합계열|자율미래인재학부|자율설계학부|군사|국방|안보|밀리터리|방위산업|경호|항공보안|조리|제과|제빵|외식|장례문화산업|항공서비스|운항서비스|성인학습|자유대학|인터칼리지|아너스|G커리어|Bakery&Beverage)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.OTHER;
 
   if (/(?:^|[^전])공학/.test(name)
-    || /(컴퓨터|컴퓨팅|소프트웨어|인공지능|데이터과학|데이터사이언스|데이터정보|빅데이터|정보보호|정보보안|정보통신|정보융합|사이버보안|디지털보안|융합보안|해킹보안|스마트보안|지능형보안|지능정보|지능・데이터|지능형네트워크|지능형클라우드|사물인터넷|수리과학|수학|통계|물리|화학|생명|생물|바이오|간호|의예|의학|의과학|의료|약학|약과학|치의|한의|보건|헬스케어|재활|작업치료|임상병리|방사선|치위생|응급구조|안경광학|건축|건설|환경|식품|영양|농학|농산업|농업|산림|원예|축산|동물|식물|식량자원|해양|수산|지구과학|지구시스템|지질|대기과학|천문|우주과학|스마트팜|스마트그린자원|기계|자동차|모빌리티|나노|소재|반도체|전기|전자|로봇|드론|무인항공|에너지|배터리|이차전지|디스플레이|정보기술|정보시스템|ICT|IT|SW|AI|소방|방재|재난|안전|도시계획|스마트도시|스마트시티|스마트팩토리|스마트시스템과학|조경|철도|항공정비|항공운항|항해|해상운송|헬리콥터|과학컴퓨팅|과학기술|자연과학|융합과학|프런티어과학|문화재보존과학|목재|기후변화|녹색기술|탄소중립|양자|화장품과학|화장품학|푸드테크|와인사이언스|MSDE)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.NATURAL;
+    || /(컴퓨터|컴퓨팅|소프트웨어|인공지능|데이터과학|데이터사이언스|데이터정보|빅데이터|정보보호|정보보안|정보통신|정보융합|사이버보안|디지털보안|융합보안|해킹보안|스마트보안|지능형보안|지능정보|지능·데이터|지능형네트워크|지능형클라우드|사물인터넷|수리과학|수학|통계|물리|화학|생명|생물|바이오|간호|의예|의학|의과학|의료|약학|약과학|치의|한의|보건|건강관리|헬스케어|재활|작업치료|임상병리|방사선|치위생|응급구조|안경광학|건축|건설|환경|식품|영양|생활과학|농학|농산업|농업|산림|원예|축산|동물|식물|식량자원|말산업|해양|수산|지구과학|지구시스템|지질|지적학과|대기과학|천문|우주과학|스마트팜|스마트그린|기계|자동차|모빌리티|나노|소재|반도체|전기|전자|로봇|드론|무인항공|가상현실|에너지|배터리|이차전지|디스플레이|정보기술|정보시스템|ICT|IT|SW|AI|소방|방재|재난|안전|도시계획|스마트도시|스마트시티|스마트팩토리|스마트시스템과학|조경|철도|항공정비|항공운항|항해|해상운송|헬리콥터|과학컴퓨팅|과학기술|자연과학|융합과학|프런티어과학|문화재보존과학|목재|기후변화|녹색기술|탄소중립|양자|화장품과학|화장품학|푸드테크|와인사이언스|MSDE)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.NATURAL;
 
-  if (/(국어|문예|문학|영어|영미|독어|독일|불어|프랑스|중어|중국|일어|일본|러시아|노어|스페인|포르투갈|이탈리아|네덜란드|루마니아|그리스|불가리아|세르비아|스칸디나비아|몽골|베트남|말레이|인도어|아랍|중동|태국|튀르키예|페르시아|폴란드|헝가리|체코|언어|사학|역사|고고|철학|미학|유학・동양학|종교|대순종|신학|기독교|불교|원불교|성서|법학|법무|행정|공공|정책|정치|외교|경제|경영|비즈니스|상경|회계|세무|무역|통상|금융|보험|물류|유통|마케팅|관광|부동산|사회|복지|심리|상담|아동|유아|교육|사범|문헌정보|미디어|언론|신문방송|광고|홍보|국제|글로벌|지역학|한국학|동북아|동아시아|아시아학|아프리카|중앙아시아|인류학|문화유산|문화콘텐츠|인문문화|인문융합|인문콘텐츠|문화산업대학\(문화\)|커뮤니케이션콘텐츠|창업|벤처|리더십|소비자|경찰|청소년|지리학|지적재산권|휴먼서비스|K-콘텐츠|ELLT|리버럴아츠|Language|Business|Trade)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.HUMANITIES;
+  if (/(국어|문예|문학|영어|영미|독어|독일|불어|프랑스|중어|중국|일어|일본|러시아|노어|스페인|포르투갈|이탈리아|네덜란드|루마니아|그리스|불가리아|세르비아|스칸디나비아|몽골|베트남|말레이|인도어|아랍|중동|태국|튀르키예|페르시아|폴란드|헝가리|체코|언어|사학|역사|고고|철학|미학|유학·동양학|종교|대순종|신학|기독교|불교|원불교|성서|법학|법무|행정|공공|정책|정치|외교|경제|경영|비즈니스|상경|회계|세무|무역|통상|금융|보험|물류|유통|마케팅|관광|부동산|사회|복지|심리|상담|아동|유아|교육|사범|인재개발|문헌정보|미디어|언론|신문방송|광고|홍보|국제|글로벌|지역학|한국학|동북아|동아시아|아시아학|아프리카|중앙아시아|인류학|문화유산|문화콘텐츠|인문문화|인문융합|인문콘텐츠|문화산업대학\(문화\)|커뮤니케이션콘텐츠|창업|벤처|리더십|소비자|경찰|청소년|지리학|지적재산권|휴먼서비스|K-콘텐츠|ELLT|리버럴아츠|Language|Business|Trade)/i.test(name)) return ADMISSION_ACADEMIC_FIELDS.HUMANITIES;
 
   return ADMISSION_ACADEMIC_FIELDS.UNKNOWN;
+}
+
+/** 공식 계열값이 없을 때 모집단위명만으로 명확한 경우에 한해 넓은 계열을 보완한다. */
+export function analyzeAcademicFieldFromDepartment(department) {
+  const rawName = String(department ?? '').replace(/\s/g, '');
+  const normalizedName = normalizeAdmissionMajorName(department).replace(/\s/g, '');
+  const rawField = classifyAcademicFieldFromNormalizedName(rawName);
+  const academicField = classifyAcademicFieldFromNormalizedName(normalizedName);
+  return Object.freeze({
+    academicField,
+    normalizedName,
+    resolution: academicField === ADMISSION_ACADEMIC_FIELDS.UNKNOWN
+      ? 'unclassified'
+      : rawField === ADMISSION_ACADEMIC_FIELDS.UNKNOWN ? 'normalization' : 'taxonomy',
+  });
+}
+
+export function inferAcademicFieldFromDepartment(department) {
+  return analyzeAcademicFieldFromDepartment(department).academicField;
 }
 
 export function normalizeAdmissionCategory(value) {

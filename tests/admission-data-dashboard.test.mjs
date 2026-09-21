@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
+  ADMISSION_ZERO_RESULT_REASONS,
   buildAdmissionDataDashboard,
+  classifyZeroResultUniversity,
   filterAdmissionDashboardUniversities,
   filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
@@ -102,9 +104,26 @@ test('경고 우선순위 필터는 중요과 확인 필요를 구분하고 기�
   const all = filterAdmissionDashboardWarnings(dashboard.warnings, 'actionable');
   const important = filterAdmissionDashboardWarnings(dashboard.warnings, 'important');
   const review = filterAdmissionDashboardWarnings(dashboard.warnings, 'review');
+  const info = filterAdmissionDashboardWarnings(dashboard.warnings, 'info');
   assert.equal(all.length, important.length + review.length);
   assert.ok(important.every((item) => item.severity === 'important'));
   assert.ok(review.every((item) => item.severity === 'review'));
+  assert.ok(info.every((item) => item.severity === 'info'));
+});
+
+test('입결 0건은 감사 결과에 따라 미공개·수집범위·소스확인·매핑의심을 구분한다', () => {
+  assert.equal(classifyZeroResultUniversity({
+    auditState: 'completed', subjectAdmissionStatus: 'not-published', comprehensiveAdmissionStatus: 'no-comprehensive-admission',
+  }).reasonCode, ADMISSION_ZERO_RESULT_REASONS.OFFICIAL_NOT_PUBLISHED);
+  assert.equal(classifyZeroResultUniversity({
+    auditState: 'completed', subjectAdmissionStatus: 'no-subject-admission', comprehensiveAdmissionStatus: 'no-comprehensive-admission',
+  }).reasonCode, ADMISSION_ZERO_RESULT_REASONS.OUTSIDE_CURRENT_SCOPE);
+  assert.equal(classifyZeroResultUniversity({
+    auditState: 'completed-with-parser-warnings', failureReason: 'conflict', subjectAdmissionStatus: 'not-published', comprehensiveAdmissionStatus: 'no-comprehensive-admission',
+  }).reasonCode, ADMISSION_ZERO_RESULT_REASONS.SOURCE_REVIEW_NEEDED);
+  assert.equal(classifyZeroResultUniversity({
+    auditState: 'completed', subjectAdmissionStatus: 'confirmed-cut', comprehensiveAdmissionStatus: 'no-comprehensive-admission',
+  }).reasonCode, ADMISSION_ZERO_RESULT_REASONS.MAPPING_OR_LOADER_SUSPECTED);
 });
 
 test('average-only 레코드의 cut 혼용 흔적을 평균과 별개로 경고한다', () => {

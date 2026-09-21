@@ -32,11 +32,24 @@ const EXPLICIT_GROUP_ALIASES = Object.freeze({
   컴퓨터: 'computer-software', 소프트웨어: 'computer-software',
 });
 
-export function normalizeMajorTaxonomyText(value) {
+/**
+ * 모집단위 원문은 보존하고, 분류·검색에서만 안전한 표기 차이를 정리한다.
+ * 괄호 안의 전공명은 유지하며 주·야간 같은 운영 표기만 제거한다.
+ */
+export function normalizeAdmissionMajorName(value) {
   return String(value ?? '')
     .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[ㆍ・]/g, '·')
+    .replace(/\(\s*(?:주|야|주간|야간)\s*\)/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function normalizeMajorTaxonomyText(value) {
+  return normalizeAdmissionMajorName(value)
     .toLocaleLowerCase('ko-KR')
-    .replace(/[\s·ㆍ・,()\[\]{}\-_/]/g, '');
+    .replace(/[\s·,()\[\]{}\-_/&]/g, '');
 }
 
 function explicitMajorGroup(item = {}) {

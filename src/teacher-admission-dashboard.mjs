@@ -5,6 +5,7 @@ import {
   loadAdmissionResultsByRegion,
 } from './admission-results-loader.mjs?v=20260921-service-settings1';
 import { UNIVERSITIES } from './data/universities.mjs?v=20260921-service-settings1';
+import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260921-taxonomy-audit1';
 import {
   ADMISSION_DASHBOARD_REGION_ORDER,
   ADMISSION_DASHBOARD_STATUSES,
@@ -14,7 +15,7 @@ import {
   filterAdmissionDashboardUniversities,
   filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
-} from './admission-data-dashboard-core.mjs?v=20260921-service-settings1';
+} from './admission-data-dashboard-core.mjs?v=20260921-taxonomy-audit1';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
@@ -62,8 +63,10 @@ function renderSummary() {
   $('#admission-dashboard-quality-summary').innerHTML = [
     summaryCard('중요', `${summary.quality.importantCount.toLocaleString('ko-KR')}건`, '우선 확인할 오류'),
     summaryCard('확인 필요', `${summary.quality.reviewCount.toLocaleString('ko-KR')}건`, '관리자 검토 대상'),
-    summaryCard('taxonomy 자동 분류', `${summary.quality.academicFieldInfo.inferredByTaxonomy.toLocaleString('ko-KR')}건`, '원본은 비어 있으나 화면 분석에서 정상 분류'),
+    summaryCard('taxonomy 안전 분류', `${summary.quality.academicFieldInfo.inferredByTaxonomy.toLocaleString('ko-KR')}건`, '원본은 비어 있으나 모집단위명으로 명확히 분류'),
+    summaryCard('표기 정규화 분류', `${summary.quality.academicFieldInfo.inferredByNormalization.toLocaleString('ko-KR')}건`, '안전한 표기 정리만으로 분류'),
     summaryCard('계열 분류 불가', `${summary.quality.academicFieldInfo.unclassified.toLocaleString('ko-KR')}건`, '확인 필요에 포함'),
+    summaryCard('입결 0건 대학', `${summary.quality.zeroResultInfo.total.toLocaleString('ko-KR')}곳`, `${summary.quality.infoCount.toLocaleString('ko-KR')}건은 확인된 정보로 분리`),
   ].join('');
 }
 
@@ -118,7 +121,7 @@ function renderWarnings() {
   const filtered = filterAdmissionDashboardWarnings(dashboard.warnings, warningSeverity);
   const visible = filtered.slice(0, warningLimit);
   $('#admission-dashboard-warning-count').textContent = `${filtered.length.toLocaleString('ko-KR')}건 중 ${visible.length.toLocaleString('ko-KR')}건 표시`;
-  warningList.innerHTML = visible.length ? visible.map((item) => `<article class="is-${escapeHtml(item.severity)}"><div class="admission-dashboard-warning-labels"><span class="admission-dashboard-warning-severity">${escapeHtml(ADMISSION_DASHBOARD_WARNING_SEVERITY_LABELS[item.severity] ?? '확인 필요')}</span><span class="admission-dashboard-warning-type">${escapeHtml(item.type)}</span></div><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><p>${escapeHtml(item.description)}</p></div></article>`).join('') : '<p class="empty-state">현재 조건에 해당하는 데이터 품질 경고가 없습니다.</p>';
+  warningList.innerHTML = visible.length ? visible.map((item) => `<article class="is-${escapeHtml(item.severity)}"><div class="admission-dashboard-warning-labels"><span class="admission-dashboard-warning-severity">${escapeHtml(ADMISSION_DASHBOARD_WARNING_SEVERITY_LABELS[item.severity] ?? '확인 필요')}</span><span class="admission-dashboard-warning-type">${escapeHtml(item.type)}</span>${item.reasonLabel ? `<span class="admission-dashboard-warning-reason">${escapeHtml(item.reasonLabel)}</span>` : ''}</div><div><strong>${escapeHtml(item.university)}</strong><span>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</span><p>${escapeHtml(item.description)}</p></div></article>`).join('') : '<p class="empty-state">현재 조건에 해당하는 데이터 품질 경고가 없습니다.</p>';
   const more = $('#admission-dashboard-more-warnings');
   more.hidden = visible.length >= filtered.length;
   more.textContent = `경고 더 보기 (${Math.min(WARNING_PAGE_SIZE, filtered.length - visible.length)}건)`;
@@ -147,7 +150,7 @@ async function loadDashboard({ force = false } = {}) {
   try {
     const dataset = await loadAdmissionDashboardDataset({ regionKeys: admissionResultRegions, loadRegion: loadAdmissionResultsByRegion });
     failures = dataset.failures;
-    dashboard = buildAdmissionDataDashboard(dataset.records, UNIVERSITIES);
+    dashboard = buildAdmissionDataDashboard(dataset.records, UNIVERSITIES, { universityAudits: UNIVERSITY_AUDIT_2026 });
     universityLimit = UNIVERSITY_PAGE_SIZE;
     warningLimit = WARNING_PAGE_SIZE;
     warningSeverity = 'actionable';

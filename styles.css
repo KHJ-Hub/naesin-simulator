@@ -4429,10 +4429,13 @@ h3:not(.hero-grid h2),
 .admission-dashboard-warnings article { display: grid; grid-template-columns: minmax(105px, .35fr) minmax(0, 2fr); gap: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .admission-dashboard-warning-labels { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; }
 .admission-dashboard-warning-labels .admission-dashboard-warning-severity,
-.admission-dashboard-warning-labels .admission-dashboard-warning-type { display: inline-flex; width: fit-content; margin: 0; padding: 5px 8px; border-radius: 999px; font-size: .7rem; font-weight: 800; }
+.admission-dashboard-warning-labels .admission-dashboard-warning-type,
+.admission-dashboard-warning-labels .admission-dashboard-warning-reason { display: inline-flex; width: fit-content; margin: 0; padding: 5px 8px; border-radius: 999px; font-size: .7rem; font-weight: 800; }
 .admission-dashboard-warning-labels .admission-dashboard-warning-severity { background: var(--danger-soft); color: var(--danger); }
 .admission-dashboard-warning-labels .admission-dashboard-warning-type { background: var(--neutral-50); color: var(--muted); }
+.admission-dashboard-warning-labels .admission-dashboard-warning-reason { background: var(--lavender-100); color: var(--lavender-500); }
 .admission-dashboard-warnings article.is-review .admission-dashboard-warning-severity { background: var(--teal-50); color: var(--teal-700); }
+.admission-dashboard-warnings article.is-info .admission-dashboard-warning-severity { background: var(--lavender-50); color: var(--indigo-500); }
 .admission-dashboard-warnings strong,
 .admission-dashboard-warnings span,
 .admission-dashboard-warnings p { overflow-wrap: anywhere; }

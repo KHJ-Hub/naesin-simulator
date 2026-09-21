@@ -52,7 +52,7 @@
         <section aria-labelledby="admission-dashboard-warnings-title">
           <div class="teacher-list-heading"><div><p class="eyebrow">읽기 전용 점검</p><h3 id="admission-dashboard-warnings-title">데이터 품질 경고</h3><p class="muted">경고는 자동 수정하지 않으며, taxonomy로 정상 분류된 원본 계열 누락은 정보 통계로만 표시합니다.</p></div></div>
           <div id="admission-dashboard-quality-summary" class="admission-dashboard-status-summary admission-dashboard-quality-summary"></div>
-          <div class="admission-dashboard-warning-toolbar"><label>경고 우선순위<select id="admission-dashboard-filter-warning-severity" class="input"><option value="actionable">중요 + 확인 필요</option><option value="important">중요</option><option value="review">확인 필요</option></select></label></div>
+          <div class="admission-dashboard-warning-toolbar"><label>경고 우선순위<select id="admission-dashboard-filter-warning-severity" class="input"><option value="actionable">중요 + 확인 필요</option><option value="important">중요</option><option value="review">확인 필요</option><option value="info">정보</option><option value="all">전체</option></select></label></div>
           <p id="admission-dashboard-warning-count" class="muted"></p>
           <div id="admission-dashboard-warnings" class="admission-dashboard-warnings"></div>
           <button type="button" class="quiet-button admission-dashboard-more" id="admission-dashboard-more-warnings" hidden>경고 더 보기</button>
@@ -103,7 +103,7 @@
     <p id="teacher-app-version" class="app-version" aria-label="앱 버전"></p>
   </main>
   <script type="module" src="./src/teacher-app.mjs?v=20260921-entry-year1"></script>
-  <script type="module" src="./src/teacher-admission-dashboard.mjs?v=20260921-service-settings1"></script>
+  <script type="module" src="./src/teacher-admission-dashboard.mjs?v=20260921-taxonomy-audit1"></script>
   <script type="module" src="./src/teacher-feedback.mjs?v=20260921-service-settings1"></script>
   <script type="module" src="./src/teacher-service-settings.mjs?v=20260921-service-settings1"></script>
 </body>
