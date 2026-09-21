@@ -4453,6 +4453,42 @@ h3:not(.hero-grid h2),
 .admission-dashboard-warnings div > span { display: block; margin-top: 3px; color: var(--muted); font-size: .74rem; }
 .admission-dashboard-warnings p { margin: 6px 0 0; color: var(--ink); font-size: .8rem; line-height: 1.5; }
 
+.service-settings-panel { display: grid; gap: 26px; }
+.service-settings-section { display: grid; gap: 12px; min-width: 0; }
+.service-settings-section + .service-settings-section { padding-top: 24px; border-top: 1px solid var(--line); }
+.service-settings-panel h3 { margin: 0; color: var(--title-strong); }
+.service-info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.service-info-grid article { min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcff; }
+.service-info-grid span { display: block; color: var(--muted); font-size: .75rem; font-weight: 750; }
+.service-info-grid strong { display: block; margin-top: 5px; color: var(--indigo-500); font-size: 1rem; line-height: 1.4; overflow-wrap: anywhere; }
+.service-info-grid small { display: block; margin-top: 5px; color: var(--muted); font-size: .69rem; line-height: 1.45; overflow-wrap: anywhere; }
+.service-feature-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.service-feature-list article { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.service-feature-list article > div { min-width: 0; }
+.service-feature-list strong,
+.service-feature-list small { display: block; overflow-wrap: anywhere; }
+.service-feature-list small { margin-top: 4px; color: var(--muted); font-size: .7rem; line-height: 1.4; }
+.service-feature-status { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; font-size: .72rem; font-weight: 850; }
+.service-feature-status.is-enabled { background: var(--teal-50); color: var(--teal-700); }
+.service-feature-status.is-disabled { background: var(--neutral-50); color: var(--muted); }
+.service-settings-form { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(220px, .75fr); gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-soft); }
+.service-settings-form > label { display: grid; gap: 6px; color: var(--muted); font-size: .8rem; font-weight: 800; }
+.service-settings-toggle { grid-column: 1 / -1; grid-template-columns: auto 1fr; align-items: center; min-height: 48px; padding: 10px 12px; border-radius: 12px; background: #fff; }
+.service-settings-toggle input { width: 20px; height: 20px; accent-color: var(--lavender-500); }
+.service-settings-toggle strong,
+.service-settings-toggle small { display: block; }
+.service-settings-toggle strong { color: var(--ink); }
+.service-settings-toggle small,
+.service-settings-message small { margin-top: 3px; color: var(--muted); font-size: .7rem; font-weight: 650; line-height: 1.45; }
+.service-settings-message { grid-column: 1 / -1; }
+.service-settings-message textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+.service-settings-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.service-settings-actions button { min-height: 44px; }
+.service-settings-dirty { margin: 0; color: var(--muted); font-size: .76rem; font-weight: 800; }
+.service-settings-dirty[data-dirty="true"] { color: var(--lavender-500); }
+#service-settings-data-loading[data-type="error"] { color: var(--danger); }
+.teacher-toast[data-type="error"] { color: var(--danger); }
+
 @media (max-width: 767px) {
   .student-feedback-button {
     position: static;
@@ -4464,7 +4500,7 @@ h3:not(.hero-grid h2),
   .student-feedback-heading .quiet-button { flex: none; }
   .student-feedback-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .student-feedback-actions button { min-width: 0; }
-  .teacher-main-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .teacher-main-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .teacher-main-tabs button { min-width: 0; min-height: 52px; padding-inline: 5px; font-size: .76rem; line-height: 1.35; }
   .teacher-feedback-title { align-items: stretch; flex-direction: column; }
   .teacher-feedback-actions { display: grid; grid-template-columns: 1fr 1fr; }
@@ -4495,6 +4531,15 @@ h3:not(.hero-grid h2),
   .admission-dashboard-record dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admission-dashboard-warnings article { grid-template-columns: 1fr; gap: 8px; }
   .admission-dashboard-more { width: 100%; min-height: 44px; }
+  .service-info-grid,
+  .service-feature-list,
+  .service-settings-form { grid-template-columns: 1fr; }
+  .service-settings-toggle,
+  .service-settings-message,
+  .service-settings-actions { grid-column: auto; }
+  .service-feature-list article { align-items: flex-start; }
+  .service-settings-actions { display: grid; grid-template-columns: 1fr; }
+  .service-settings-actions button { width: 100%; }
 }
 
 @media print {
@@ -4502,5 +4547,6 @@ h3:not(.hero-grid h2),
   .student-feedback-dialog,
   .teacher-main-tabs,
   .teacher-feedback-panel,
-  .admission-dashboard-panel { display: none !important; }
+  .admission-dashboard-panel,
+  .service-settings-panel { display: none !important; }
 }

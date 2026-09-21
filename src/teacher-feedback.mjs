@@ -1,5 +1,5 @@
-import { APP_VERSION } from './app-version.mjs?v=20260921-admin-admissions2';
-import { FEEDBACK_ADMIN_SESSION_KEY } from './feedback-config.mjs?v=20260921-admin-admissions2';
+import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
+import { FEEDBACK_ADMIN_SESSION_KEY } from './feedback-config.mjs?v=20260921-service-settings1';
 import {
   FEEDBACK_STATUSES,
   feedbackStatusCounts,
@@ -7,7 +7,7 @@ import {
   listFeedback,
   loginFeedbackAdmin,
   updateFeedback,
-} from './feedback-core.mjs?v=20260921-admin-admissions2';
+} from './feedback-core.mjs?v=20260921-service-settings1';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));

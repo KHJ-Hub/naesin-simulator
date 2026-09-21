@@ -1,13 +1,13 @@
-import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-admin-admissions2';
+import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import {
   FEEDBACK_LAST_SUBMIT_SESSION_KEY,
   FEEDBACK_SUBMIT_COOLDOWN_MS,
-} from './feedback-config.mjs?v=20260921-admin-admissions2';
+} from './feedback-config.mjs?v=20260921-service-settings1';
 import {
   createAnonymousFeedbackPayload,
   feedbackCooldownRemaining,
   submitAnonymousFeedback,
-} from './feedback-core.mjs?v=20260921-admin-admissions2';
+} from './feedback-core.mjs?v=20260921-service-settings1';
 
 function lastFeedbackSubmission() {
   try { return sessionStorage.getItem(FEEDBACK_LAST_SUBMIT_SESSION_KEY); } catch { return null; }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>선생님용 과목 관리 · 내신 시뮬레이터</title>
-  <link rel="stylesheet" href="./styles.css?v=20260921-admin-admissions2" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-service-settings1" />
 </head>
 <body>
   <main class="teacher-shell">
@@ -12,7 +12,7 @@
       <div><p class="eyebrow">배정고 학업 설계 도구</p><h1>선생님용 과목 관리</h1><p class="muted">입학생 연도와 학기별로 과목을 확인하고, 학생 화면에 표시할 개설 과목을 관리합니다.</p></div>
       <a class="secondary-button teacher-back" href="./index.html">학생 페이지로 돌아가기</a>
     </header>
-    <nav class="teacher-main-tabs" aria-label="관리자 기능"><button type="button" class="is-active" data-teacher-main-tab="courses" aria-selected="true">과목 관리</button><button type="button" data-teacher-main-tab="admissions" aria-selected="false">입결 데이터 현황</button><button type="button" data-teacher-main-tab="feedback" aria-selected="false">학생 의견 <span class="teacher-feedback-tab-badge" data-feedback-new-badge hidden></span></button></nav>
+    <nav class="teacher-main-tabs" aria-label="관리자 기능"><button type="button" class="is-active" data-teacher-main-tab="courses" aria-selected="true">과목 관리</button><button type="button" data-teacher-main-tab="admissions" aria-selected="false">입결 데이터 현황</button><button type="button" data-teacher-main-tab="feedback" aria-selected="false">학생 의견 <span class="teacher-feedback-tab-badge" data-feedback-new-badge hidden></span></button><button type="button" data-teacher-main-tab="service-settings" aria-selected="false">서비스 설정</button></nav>
     <section class="teacher-panel teacher-toolbar" data-teacher-main-view="courses">
       <div class="teacher-year-filter"><label>입학생 연도<select id="filter-year" class="input"></select></label></div>
       <div class="teacher-status-filter" role="group" aria-label="개설 상태 필터"><button class="quiet-button is-selected" data-status-filter="all">전체</button><button class="quiet-button" data-status-filter="active">개설</button><button class="quiet-button" data-status-filter="inactive">미개설</button></div>
@@ -69,6 +69,31 @@
         <div id="feedback-list" class="teacher-feedback-list"></div>
       </div>
     </section>
+    <section class="teacher-panel service-settings-panel" data-teacher-main-view="service-settings" hidden>
+      <div class="teacher-feedback-title"><div><p class="eyebrow">서비스 운영 관리</p><h2>서비스 설정</h2><p class="muted">서비스 상태를 확인하고, 이 브라우저에서 사용하는 공통 운영 설정을 관리합니다.</p></div></div>
+      <section class="service-settings-section" aria-labelledby="service-basic-info-title">
+        <div class="teacher-list-heading"><div><p class="eyebrow">읽기 전용</p><h3 id="service-basic-info-title">서비스 정보</h3><p class="muted">배포된 앱과 현재 입결 데이터의 기준 정보를 보여줍니다.</p></div></div>
+        <div id="service-basic-info" class="service-info-grid"></div>
+      </section>
+      <section class="service-settings-section" aria-labelledby="service-features-title">
+        <div class="teacher-list-heading"><div><p class="eyebrow">기능 상태</p><h3 id="service-features-title">현재 제공 기능</h3><p class="muted">코드 설정이 필요한 기능은 이 화면에서 임의로 바꿀 수 없습니다.</p></div></div>
+        <div id="service-feature-states" class="service-feature-list"></div>
+      </section>
+      <section class="service-settings-section" aria-labelledby="service-operations-title">
+        <div class="teacher-list-heading"><div><p class="eyebrow">브라우저 공통 설정</p><h3 id="service-operations-title">운영 설정</h3><p class="muted">학생 개인 데이터와 분리해 이 브라우저에만 저장합니다.</p></div><p id="service-settings-dirty" class="service-settings-dirty" role="status"></p></div>
+        <form id="service-settings-form" class="service-settings-form">
+          <label class="service-settings-toggle"><input type="checkbox" name="noticeEnabled" /><span><strong>운영 공지 사용</strong><small>공지 데이터 구조만 준비하며 학생 화면 표시는 다음 단계에서 연결됩니다.</small></span></label>
+          <label>운영 공지 중요도<select class="input" name="noticeLevel"><option value="normal">일반</option><option value="info">안내</option><option value="important">중요</option></select></label>
+          <label class="service-settings-message">운영 공지 문구<textarea class="input" name="noticeMessage" rows="4" placeholder="학생에게 안내할 운영 공지 문구"></textarea><small>최대 300자 · 이름, 학번, 성적 등 개인정보는 입력하지 마세요.</small></label>
+          <div class="service-settings-actions"><button type="submit" class="primary-button" id="service-settings-save">변경사항 저장</button><button type="button" class="quiet-button" id="service-settings-reset">기본값으로 되돌리기</button></div>
+        </form>
+      </section>
+      <section class="service-settings-section" aria-labelledby="service-data-status-title">
+        <div class="teacher-list-heading"><div><p class="eyebrow">읽기 전용</p><h3 id="service-data-status-title">데이터 상태</h3><p class="muted">브라우저에서 안전하게 확인할 수 있는 항목만 표시합니다.</p></div></div>
+        <p id="service-settings-data-loading" class="muted" role="status" aria-live="polite"></p>
+        <div id="service-data-states" class="service-info-grid service-data-grid"></div>
+      </section>
+    </section>
     <section id="course-editor" class="teacher-editor" hidden aria-label="과목 편집" role="dialog" aria-modal="true">
       <div class="teacher-editor-card"><div class="teacher-list-heading"><div><p class="eyebrow">과목 정보</p><h2 id="editor-title">과목 추가</h2></div><button id="cancel-edit" class="quiet-button" type="button">닫기</button></div>
         <form id="course-form" class="teacher-form"><input id="course-id" type="hidden" /><label>입학생 연도<input id="course-year" class="input" type="number" min="2022" max="2100" required /></label><label>학년<select id="course-grade" class="input"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></label><label>학기<select id="course-semester" class="input"><option value="1">1학기</option><option value="2">2학기</option></select></label><label class="teacher-wide">과목명<input id="course-name" class="input" maxlength="80" required /></label><label>교과군<input id="course-group" class="input" maxlength="30" required /></label><label>학점<input id="course-credit" class="input" type="number" min="0.5" max="20" step="0.5" required /></label><label>성적 처리 방식<select id="course-grading" class="input"><option value="grade">등급 산출</option><option value="achievement">성취도</option><option value="passfail">P/F</option><option value="both">등급+성취도</option></select></label><label>공통/선택<select id="course-requirement" class="input"><option value="common">공통</option><option value="elective">선택</option><option value="school-designated">학교 지정</option></select></label><label>표시 순서<input id="course-order" class="input" type="number" min="0" step="1" required /></label><label class="teacher-check"><input id="course-active" type="checkbox" checked /> 개설 과목으로 표시</label><label class="teacher-check"><input id="course-enabled" type="checkbox" checked /> 학생 선택 가능</label><div class="teacher-form-actions"><button type="submit" class="primary-button">저장</button><button type="button" id="cancel-edit-bottom" class="quiet-button">취소</button></div></form>
@@ -77,8 +102,9 @@
     <p id="teacher-toast" class="teacher-toast" role="status" aria-live="polite"></p>
     <p id="teacher-app-version" class="app-version" aria-label="앱 버전"></p>
   </main>
-  <script type="module" src="./src/teacher-app.mjs?v=20260921-admin-admissions2"></script>
-  <script type="module" src="./src/teacher-admission-dashboard.mjs?v=20260921-admin-admissions2"></script>
-  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-admin-admissions2"></script>
+  <script type="module" src="./src/teacher-app.mjs?v=20260921-service-settings1"></script>
+  <script type="module" src="./src/teacher-admission-dashboard.mjs?v=20260921-service-settings1"></script>
+  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-service-settings1"></script>
+  <script type="module" src="./src/teacher-service-settings.mjs?v=20260921-service-settings1"></script>
 </body>
 </html>

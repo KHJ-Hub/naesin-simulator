@@ -1,10 +1,10 @@
-import { APP_BUILD_DATE } from './app-version.mjs?v=20260921-admin-admissions2';
+import { APP_BUILD_DATE } from './app-version.mjs?v=20260921-service-settings1';
 import {
   admissionResultRegions,
   clearAdmissionResultsCache,
   loadAdmissionResultsByRegion,
-} from './admission-results-loader.mjs?v=20260921-admin-admissions2';
-import { UNIVERSITIES } from './data/universities.mjs?v=20260921-admin-admissions2';
+} from './admission-results-loader.mjs?v=20260921-service-settings1';
+import { UNIVERSITIES } from './data/universities.mjs?v=20260921-service-settings1';
 import {
   ADMISSION_DASHBOARD_REGION_ORDER,
   ADMISSION_DASHBOARD_STATUSES,
@@ -14,7 +14,7 @@ import {
   filterAdmissionDashboardUniversities,
   filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
-} from './admission-data-dashboard-core.mjs?v=20260921-admin-admissions2';
+} from './admission-data-dashboard-core.mjs?v=20260921-service-settings1';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));

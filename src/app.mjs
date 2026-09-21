@@ -51,8 +51,8 @@ import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20260921-admin-admissions2';
-import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-admin-admissions2';
+import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
+import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
   actual: commonCourses().map((course) => recordFromCourse(course, makeId())),
