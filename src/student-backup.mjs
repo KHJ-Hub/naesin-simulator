@@ -3,6 +3,12 @@ export const STUDENT_BACKUP_SCHEMA_VERSION = 1;
 
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
+/** Imported record identifiers are later used in data attributes, so only keep inert identifiers. */
+export function normalizeBackupRecordId(value, fallback = '') {
+  const identifier = String(value ?? '').trim();
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/.test(identifier) ? identifier : fallback;
+}
+
 function isLegacyStudentBackup(value) {
   if (!isObject(value) || !Array.isArray(value.actual) || !isObject(value.student)) return false;
   const knownKeys = ['targetAverage', 'weighted', 'quickAverages', 'inputModes', 'admissionInterests', 'calculated', 'goalCalculated'];

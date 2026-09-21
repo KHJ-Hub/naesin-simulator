@@ -1,5 +1,17 @@
 export const ADMISSION_INTERESTS_STORAGE_KEY = 'naesin-admission-interests:v1';
 
+/** Only public web links are retained from imported student backup files. */
+export function normalizePublicHttpUrl(value) {
+  const candidate = String(value ?? '').trim().slice(0, 500);
+  if (!candidate) return '';
+  try {
+    const url = new URL(candidate);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 export function admissionInterestKey(item = {}) {
   return [item.referenceYear, item.university, item.department, item.admissionCategory ?? item.category, item.admissionName].map((value) => String(value ?? '').trim()).join('|');
 }
@@ -35,7 +47,7 @@ export function normalizeAdmissionInterest(item = {}) {
       eligibleRegions: Array.isArray(item.regionalEligibility.eligibleRegions) ? [...item.regionalEligibility.eligibleRegions] : [],
       eligibleSchoolRegions: Array.isArray(item.regionalEligibility.eligibleSchoolRegions) ? [...item.regionalEligibility.eligibleSchoolRegions] : [],
       requirementSummary: String(item.regionalEligibility.requirementSummary ?? '').trim().slice(0, 300),
-      sourceUrl: String(item.regionalEligibility.sourceUrl ?? '').trim().slice(0, 500),
+      sourceUrl: normalizePublicHttpUrl(item.regionalEligibility.sourceUrl),
       additionalRequirements: String(item.regionalEligibility.additionalRequirements ?? '').trim().slice(0, 300),
       requiresIndividualVerification: item.regionalEligibility.requiresIndividualVerification === true,
       verified: item.regionalEligibility.verified === true,
@@ -53,7 +65,7 @@ export function normalizeAdmissionInterest(item = {}) {
     dataAvailability: String(item.dataAvailability ?? '').trim().slice(0, 50) || null,
     conversionDataset: String(item.conversionDataset ?? '').trim().slice(0, 100) || null,
     isApproximate: item.isApproximate === true,
-    sourceUrl: String(item.sourceUrl ?? '').trim().slice(0, 500),
+    sourceUrl: normalizePublicHttpUrl(item.sourceUrl),
     source: String(item.source ?? '').trim().slice(0, 200),
     updatedAt: String(item.updatedAt ?? '').trim().slice(0, 20) || null,
     comparisonScore,

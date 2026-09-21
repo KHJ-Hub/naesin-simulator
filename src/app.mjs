@@ -26,7 +26,7 @@ import {
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
 } from './admission-result-view.mjs?v=20260918-ownership1';
-import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260918-interest-session1';
+import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260921-security-audit1';
 import {
   MAX_ADMISSION_INTEREST_COMPARISONS,
   MIN_ADMISSION_INTEREST_COMPARISONS,
@@ -47,7 +47,7 @@ import {
   createAdmissionAccordionState,
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_BY_NAME } from './data/universities.mjs?v=20260919-readiness1';
-import { createStudentBackup, parseStudentBackup } from './student-backup.mjs?v=20260919-student-tone1';
+import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20260921-security-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
@@ -180,7 +180,7 @@ function loadState() {
 function normalizeRecord(record = {}) {
   const configured = courseById(record.courseId);
   if (configured) {
-    const normalized = recordFromCourse(configured, typeof record.id === 'string' && record.id ? record.id : makeId());
+    const normalized = recordFromCourse(configured, normalizeBackupRecordId(record.id, makeId()));
     const grade = Number(record.gradeValue);
     const credit = Number(record.credit);
     return {
@@ -197,7 +197,7 @@ function normalizeRecord(record = {}) {
   const grade = Number(record.gradeValue);
   const credit = Number(record.credit);
   const normalized = {
-    id: typeof record.id === 'string' && record.id ? record.id : makeId(),
+    id: normalizeBackupRecordId(record.id, makeId()),
     semesterId: SEMESTERS.some((semester) => semester.id === record.semesterId) ? record.semesterId : SEMESTERS[0].id,
     subjectName: String(record.subjectName ?? '').slice(0, 80),
     subjectGroup: String(record.subjectGroup ?? '기타').trim().slice(0, 40) || '기타',
@@ -375,7 +375,7 @@ function gradeRowsHtml(semesterId) {
   const list = detailedRows(semesterId);
   if (!list.length) return `<div class="empty-state">${semesterLabel(semesterId)}에 등록된 성적이 없어요. 과목을 추가해 보세요.</div>`;
   return list.map((record) => `
-    <div class="grade-row" data-id="${record.id}">
+    <div class="grade-row" data-id="${escapeHtml(record.id)}">
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
       <div class="grade-fields">

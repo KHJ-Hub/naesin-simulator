@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeAdmissionInterests, toggleAdmissionInterest } from '../src/admission-reference-store.mjs';
+import { normalizeAdmissionInterests, normalizePublicHttpUrl, toggleAdmissionInterest } from '../src/admission-reference-store.mjs';
 
 const interest = { referenceYear: 2026, universityId: 'test-university', university: '검증대학교', department: '국어교육과', admissionName: '일반전형', cut70: 1.89, comparisonScore: 1.82 };
 
@@ -41,4 +41,12 @@ test('같은 관심 대학은 다시 저장하면 해제한다', () => {
 
 test('백업 등에서 중복된 같은 대학·모집단위·전형은 한 건만 유지한다', () => {
   assert.equal(normalizeAdmissionInterests([interest, { ...interest }]).length, 1);
+});
+
+test('백업 관심 대학의 출처 URL은 http/https만 유지한다', () => {
+  assert.equal(normalizePublicHttpUrl('https://example.edu/result'), 'https://example.edu/result');
+  assert.equal(normalizePublicHttpUrl('javascript:alert(1)'), '');
+  assert.equal(normalizePublicHttpUrl('data:text/html,<script>alert(1)</script>'), '');
+  const [saved] = normalizeAdmissionInterests([{ ...interest, sourceUrl: 'javascript:alert(1)' }]);
+  assert.equal(saved.sourceUrl, '');
 });

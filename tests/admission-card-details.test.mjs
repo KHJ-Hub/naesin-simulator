@@ -148,6 +148,13 @@ test('세부정보와 확인된 대학어디가 URL이 모두 없으면 카드 �
   assert.equal(renderAdmissionCardSupplement({ ...baseRecord, universityInfo: { adigaUrl: 'https://example.com/university' } }), '');
 });
 
+test('세부정보 출처 링크는 안전한 웹 URL에만 생성하고 새 탭 보호 속성을 사용한다', () => {
+  const safe = renderAdmissionCardDetails({ ...baseRecord, recruitmentCount: 1, sourceUrl: 'https://example.edu/result' });
+  assert.match(safe, /target="_blank" rel="noopener noreferrer"/);
+  const unsafe = renderAdmissionCardDetails({ ...baseRecord, recruitmentCount: 1, sourceUrl: 'javascript:alert(1)' });
+  assert.doesNotMatch(unsafe, /href="javascript:/);
+});
+
 test('세부정보 버튼 클릭은 결과 컨테이너 위임으로 펼침 상태·화살표·aria-expanded를 함께 바꾼다', () => {
   assert.match(app, /event\.target\.matches\?\.\('\[data-admission-university-accordion\]'\)/);
   assert.match(app, /#admission-reference-result'[\s\S]*?closest\('\[data-admission-card-details-toggle\]'\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?aria-expanded[\s\S]*?body\.hidden = !isExpanded[\s\S]*?isExpanded \? '▼' : '▶'/);

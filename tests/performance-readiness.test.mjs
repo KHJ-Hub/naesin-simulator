@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [app, html, loader, styles, version] = await Promise.all([
+const [app, html, loader, styles, feedbackCore, version] = await Promise.all([
   readFile(new URL('../src/app.mjs', import.meta.url), 'utf8'),
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/admission-results-loader.mjs', import.meta.url), 'utf8'),
   readFile(new URL('../styles.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/feedback-core.mjs', import.meta.url), 'utf8'),
   import('../src/app-version.mjs'),
 ]);
 
@@ -55,7 +56,9 @@ test('루트 CSS와 JS에는 동일 배포 버전 쿼리가 붙는다', () => {
   assert.equal(jsVersion, cssVersion);
 });
 
-test('학생 런타임에는 외부 전송 API나 분석 스크립트가 없다', () => {
+test('학생 런타임의 외부 전송은 익명 의견 API로 한정되고 분석 스크립트는 없다', () => {
   assert.doesNotMatch(app, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|gtag\s*\(|analytics/i);
   assert.doesNotMatch(html, /googletagmanager|google-analytics|segment|mixpanel|hotjar/i);
+  assert.equal((feedbackCore.match(/fetchImpl\(feedbackEndpoint\(endpoint\)/g) ?? []).length, 1);
+  assert.match(feedbackCore, /JSON\.stringify\(\{ action, payload, adminToken \}\)/);
 });

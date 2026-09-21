@@ -6,6 +6,7 @@ import {
   STUDENT_BACKUP_SCHEMA_VERSION,
   STUDENT_BACKUP_TYPE,
   createStudentBackup,
+  normalizeBackupRecordId,
   parseStudentBackup,
 } from '../src/student-backup.mjs';
 
@@ -110,6 +111,13 @@ test('잘못된 JSON·타 앱 JSON·필수 구조 누락·미지원 신버전을
   assert.throws(() => parseStudentBackup(JSON.stringify({ app: 'other', values: [] })), /백업 형식/);
   assert.throws(() => parseStudentBackup(JSON.stringify({ backupType: STUDENT_BACKUP_TYPE, schemaVersion: 1, student: {} })), /성적 데이터/);
   assert.throws(() => parseStudentBackup(JSON.stringify({ backupType: STUDENT_BACKUP_TYPE, schemaVersion: 99, student: {}, actual: [] })), /새로운 버전/);
+});
+
+test('백업에서 가져온 레코드 ID는 DOM 속성에 안전한 형식만 유지한다', () => {
+  assert.equal(normalizeBackupRecordId('course_1-1:math', 'fallback'), 'course_1-1:math');
+  assert.equal(normalizeBackupRecordId('x" onmouseover="alert(1)', 'fallback'), 'fallback');
+  assert.equal(normalizeBackupRecordId('javascript:alert(1)', 'fallback'), 'fallback');
+  assert.equal(normalizeBackupRecordId('a'.repeat(121), 'fallback'), 'fallback');
 });
 
 test('학생 앱은 덮어쓰기 확인 후 상태·입결 UI를 복원하고 전체 화면과 인쇄를 다시 렌더링한다', () => {

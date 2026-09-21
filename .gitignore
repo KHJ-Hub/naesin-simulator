@@ -1,3 +1,22 @@
 node_modules/
 .DS_Store
 *.local
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+secrets.*
+credentials.*
+service-account*.json
+private*.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Student exports and local diagnostics must not be committed
+backup*.json
+student*.json
+*.log
+*.map

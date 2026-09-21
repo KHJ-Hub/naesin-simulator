@@ -118,13 +118,23 @@ function formatDetailValue(detail) {
   return detail.numeric ? Number(detail.value).toFixed(2) : String(detail.value);
 }
 
+function publicHttpUrl(value) {
+  try {
+    const url = new URL(String(value ?? '').trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export function renderAdmissionCardDetails(item = {}) {
   if (!hasMeaningfulDetails(item)) return '';
   const details = getAdmissionCardDetailItems(item);
   const rows = details.map((detail) => {
     const value = escapeHtml(formatDetailValue(detail));
-    const content = detail.href
-      ? `<a href="${escapeHtml(detail.href)}" target="_blank" rel="noreferrer">${value}</a>`
+    const href = publicHttpUrl(detail.href);
+    const content = href
+      ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${value}</a>`
       : `<b>${value}</b>`;
     const tag = detail.metadata ? 'small' : 'span';
     return `<${tag} data-detail-key="${escapeHtml(detail.key)}">${escapeHtml(detail.label)} ${content}</${tag}>`;

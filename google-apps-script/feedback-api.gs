@@ -65,6 +65,12 @@ function feedbackText_(value, maxLength) {
   return String(value == null ? '' : value).replace(/\u0000/g, '').trim().slice(0, maxLength);
 }
 
+// Prevent student text from being interpreted as a spreadsheet formula.
+function feedbackSafeSheetText_(value) {
+  var text = String(value == null ? '' : value);
+  return /^[=+\-@]/.test(text) ? "'" + text : text;
+}
+
 function feedbackConfig_() {
   var properties = PropertiesService.getScriptProperties();
   var sheetId = feedbackText_(properties.getProperty('FEEDBACK_SHEET_ID'), 200);
@@ -161,7 +167,7 @@ function feedbackUpdate_(payload) {
     }
     if (index < 0) throw new Error('not_found');
     sheet.getRange(index, 11, 1, 2).setNumberFormat('@');
-    sheet.getRange(index, 11, 1, 2).setValues([[status, rawNote]]);
+    sheet.getRange(index, 11, 1, 2).setValues([[status, feedbackSafeSheetText_(rawNote)]]);
   } finally {
     lock.releaseLock();
   }
@@ -169,8 +175,9 @@ function feedbackUpdate_(payload) {
 }
 
 function feedbackRecordToRow_(item) {
-  return [item.id, item.submittedAt, item.category, item.message, item.grade, item.appVersion,
-    item.buildDate, item.currentSection, item.viewport, item.userAgent, item.status, item.adminNote];
+  return [item.id, item.submittedAt, item.category, feedbackSafeSheetText_(item.message), item.grade, item.appVersion,
+    item.buildDate, feedbackSafeSheetText_(item.currentSection), item.viewport,
+    feedbackSafeSheetText_(item.userAgent), item.status, feedbackSafeSheetText_(item.adminNote)];
 }
 
 function feedbackRowToRecord_(row) {
