@@ -2,7 +2,7 @@ import {
   FEEDBACK_ADMIN_NOTE_MAX_LENGTH,
   FEEDBACK_GAS_URL,
   FEEDBACK_MESSAGE_MAX_LENGTH,
-} from './feedback-config.mjs?v=20260921-student-feedback2';
+} from './feedback-config.mjs?v=20260921-feedback-inbox2';
 
 export const FEEDBACK_CATEGORIES = Object.freeze([
   '오류가 있어요',
@@ -48,6 +48,15 @@ export function createAnonymousFeedbackPayload(input = {}, technical = {}) {
     userAgent: cleanText(technical.userAgent, 400),
     submittedAt: cleanText(technical.submittedAt, 40) || new Date().toISOString(),
   };
+}
+
+export function feedbackCooldownRemaining(lastSubmittedAt, now = Date.now(), cooldownMs = 30_000) {
+  if (lastSubmittedAt === null || lastSubmittedAt === undefined || String(lastSubmittedAt).trim() === '') return 0;
+  const submittedAt = Number(lastSubmittedAt);
+  const currentTime = Number(now);
+  const duration = Number(cooldownMs);
+  if (!Number.isFinite(submittedAt) || !Number.isFinite(currentTime) || !Number.isFinite(duration) || duration <= 0) return 0;
+  return Math.min(duration, Math.max(0, Math.ceil(duration - (currentTime - submittedAt))));
 }
 
 function feedbackEndpoint(endpoint) {
@@ -122,10 +131,11 @@ export function filterFeedbackRecords(records = [], filters = {}) {
   const status = cleanText(filters.status, 20);
   const grade = cleanText(filters.grade, 10);
   const query = cleanText(filters.query, 120).toLocaleLowerCase('ko-KR');
+  const direction = filters.sort === 'oldest' ? 1 : -1;
   return [...records]
     .filter((item) => !category || item.category === category)
     .filter((item) => !status || item.status === status)
     .filter((item) => !grade || (grade === '미선택' ? !item.grade : item.grade === grade))
     .filter((item) => !query || String(item.message ?? '').toLocaleLowerCase('ko-KR').includes(query))
-    .sort((a, b) => String(b.submittedAt ?? '').localeCompare(String(a.submittedAt ?? '')));
+    .sort((a, b) => direction * String(a.submittedAt ?? '').localeCompare(String(b.submittedAt ?? '')));
 }

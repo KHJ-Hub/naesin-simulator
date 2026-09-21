@@ -1,4 +1,5 @@
-import { FEEDBACK_ADMIN_SESSION_KEY } from './feedback-config.mjs?v=20260921-student-feedback2';
+import { APP_VERSION } from './app-version.mjs?v=20260921-feedback-inbox2';
+import { FEEDBACK_ADMIN_SESSION_KEY } from './feedback-config.mjs?v=20260921-feedback-inbox2';
 import {
   FEEDBACK_STATUSES,
   feedbackStatusCounts,
@@ -6,7 +7,7 @@ import {
   listFeedback,
   loginFeedbackAdmin,
   updateFeedback,
-} from './feedback-core.mjs?v=20260921-student-feedback2';
+} from './feedback-core.mjs?v=20260921-feedback-inbox2';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
@@ -21,7 +22,10 @@ const newBadge = $('[data-feedback-new-badge]');
 let adminToken = sessionStorage.getItem(FEEDBACK_ADMIN_SESSION_KEY) ?? '';
 let records = [];
 let loadedOnce = false;
-const filters = { category: '', status: '', grade: '', query: '' };
+const filters = { category: '', status: '', grade: '', query: '', sort: 'latest' };
+
+const versionElement = $('#teacher-app-version');
+if (versionElement) versionElement.textContent = `v${APP_VERSION}`;
 
 function feedbackToast(message) {
   const toast = $('#teacher-toast');
@@ -66,7 +70,7 @@ function feedbackCard(item) {
 function renderFeedback() {
   renderSummary();
   const visible = filterFeedbackRecords(records, filters);
-  setListStatus(`${visible.length}개 의견 · 최신순`);
+  setListStatus(`${visible.length}개 의견 · ${filters.sort === 'oldest' ? '오래된순' : '최신순'}`);
   listElement.innerHTML = visible.length ? visible.map(feedbackCard).join('') : '<p class="empty-state">현재 조건에 맞는 학생 의견이 없습니다.</p>';
 }
 
@@ -144,7 +148,7 @@ loginForm.addEventListener('submit', async (event) => {
 refreshButton.addEventListener('click', () => loadFeedback({ announce: true }));
 logoutButton.addEventListener('click', () => { clearAdminSession(); feedbackToast('의견함에서 로그아웃했습니다.'); });
 
-['category', 'status', 'grade'].forEach((key) => {
+['category', 'status', 'grade', 'sort'].forEach((key) => {
   $(`#feedback-filter-${key}`).addEventListener('change', (event) => { filters[key] = event.target.value; renderFeedback(); });
 });
 $('#feedback-filter-query').addEventListener('input', (event) => { filters.query = event.target.value; renderFeedback(); });

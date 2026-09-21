@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>선생님용 과목 관리 · 내신 시뮬레이터</title>
-  <link rel="stylesheet" href="./styles.css?v=20260921-version-label1" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-feedback-inbox2" />
 </head>
 <body>
   <main class="teacher-shell">
@@ -27,7 +27,7 @@
       <form id="feedback-admin-login" class="teacher-feedback-login"><label>관리자 비밀번호<input class="input" name="password" type="password" autocomplete="current-password" required /></label><button type="submit" class="primary-button">학생 의견 열기</button><p>비밀번호는 의견 목록 조회와 수정 권한 확인에만 사용합니다.</p></form>
       <div id="feedback-admin-dashboard" hidden>
         <div class="teacher-feedback-summary" aria-label="의견 처리 현황"><article><span>신규</span><strong data-feedback-count="신규">0</strong></article><article><span>확인중</span><strong data-feedback-count="확인중">0</strong></article><article><span>반영완료</span><strong data-feedback-count="반영완료">0</strong></article><article><span>보류</span><strong data-feedback-count="보류">0</strong></article></div>
-        <div class="teacher-feedback-filters"><label>의견 종류<select id="feedback-filter-category" class="input"><option value="">전체</option><option>오류가 있어요</option><option>사용하기 불편해요</option><option>기능 제안</option><option>입결 데이터 관련</option><option>기타</option></select></label><label>처리상태<select id="feedback-filter-status" class="input"><option value="">전체</option><option>신규</option><option>확인중</option><option>반영완료</option><option>보류</option></select></label><label>학년<select id="feedback-filter-grade" class="input"><option value="">전체</option><option>1학년</option><option>2학년</option><option>3학년</option><option>미선택</option></select></label><label class="teacher-feedback-search">내용 검색<input id="feedback-filter-query" class="input" type="search" placeholder="의견 내용 키워드" /></label></div>
+        <div class="teacher-feedback-filters"><label>의견 종류<select id="feedback-filter-category" class="input"><option value="">전체</option><option>오류가 있어요</option><option>사용하기 불편해요</option><option>기능 제안</option><option>입결 데이터 관련</option><option>기타</option></select></label><label>처리상태<select id="feedback-filter-status" class="input"><option value="">전체</option><option>신규</option><option>확인중</option><option>반영완료</option><option>보류</option></select></label><label>학년<select id="feedback-filter-grade" class="input"><option value="">전체</option><option>1학년</option><option>2학년</option><option>3학년</option><option>미선택</option></select></label><label>정렬<select id="feedback-filter-sort" class="input"><option value="latest">최신순</option><option value="oldest">오래된순</option></select></label><label class="teacher-feedback-search">내용 검색<input id="feedback-filter-query" class="input" type="search" placeholder="의견 내용 키워드" /></label></div>
         <p id="feedback-list-status" class="muted" role="status" aria-live="polite"></p>
         <div id="feedback-list" class="teacher-feedback-list"></div>
       </div>
@@ -38,8 +38,9 @@
       </div>
     </section>
     <p id="teacher-toast" class="teacher-toast" role="status" aria-live="polite"></p>
+    <p id="teacher-app-version" class="app-version" aria-label="앱 버전"></p>
   </main>
-  <script type="module" src="./src/teacher-app.mjs?v=20260921-version-label1"></script>
-  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-version-label1"></script>
+  <script type="module" src="./src/teacher-app.mjs?v=20260921-feedback-inbox2"></script>
+  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-feedback-inbox2"></script>
 </body>
 </html>

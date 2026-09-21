@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   createAnonymousFeedbackPayload,
+  feedbackCooldownRemaining,
   feedbackStatusCounts,
   filterFeedbackRecords,
   listFeedback,
@@ -57,6 +58,12 @@ test('의견 입력값은 종류·내용·학년·길이를 검증한다', () =>
   assert.equal(validateAnonymousFeedback({ category: '기능 제안', message: ' 의견 ', grade: '' }).message, '의견');
 });
 
+test('같은 세션의 짧은 연속 제출은 개인정보 없이 시간값만으로 제한한다', () => {
+  assert.equal(feedbackCooldownRemaining(1_000, 10_000, 30_000), 21_000);
+  assert.equal(feedbackCooldownRemaining(1_000, 31_000, 30_000), 0);
+  assert.equal(feedbackCooldownRemaining(null, 10_000, 30_000), 0);
+});
+
 test('학생 제출 API는 POST body에 createFeedback만 전송한다', async () => {
   let request;
   const result = await submitAnonymousFeedback({ category: '기타', message: '테스트', grade: '' }, {
@@ -98,6 +105,7 @@ test('의견 요약·필터·검색은 최신순으로 동작한다', () => {
   assert.deepEqual(feedbackStatusCounts(records), { 신규: 2, 확인중: 1, 반영완료: 0, 보류: 0 });
   assert.deepEqual(filterFeedbackRecords(records, { category: '기능 제안', query: '검색' }).map((item) => item.id), ['3', '1']);
   assert.deepEqual(filterFeedbackRecords(records, { grade: '미선택' }).map((item) => item.id), ['2']);
+  assert.deepEqual(filterFeedbackRecords(records, { sort: 'oldest' }).map((item) => item.id), ['1', '2', '3']);
 });
 
 test('학생/관리자 UI와 Apps Script는 익명 제출 및 보호된 관리 경로를 갖는다', async () => {
@@ -112,7 +120,11 @@ test('학생/관리자 UI와 Apps Script는 익명 제출 및 보호된 관리 �
   assert.match(html, /이름, 학번, 성적은 수집하지 않아요/);
   assert.match(studentModule, /createAnonymousFeedbackPayload/);
   assert.match(studentModule, /보내는 중/);
+  assert.match(studentModule, /FEEDBACK_SUBMIT_COOLDOWN_MS/);
+  assert.match(studentModule, /dialog\.addEventListener\('close',[\s\S]*openButton\.focus/);
   assert.match(teacher, /data-teacher-main-tab="feedback"/);
+  assert.match(teacher, /id="feedback-filter-sort"/);
+  assert.match(teacher, /id="teacher-app-version"/);
   assert.match(teacher, /관리자 메모/);
   assert.match(teacherModule, /sessionStorage/);
   assert.match(teacherModule, /updateFeedback/);

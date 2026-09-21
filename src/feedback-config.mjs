@@ -7,3 +7,5 @@ export const FEEDBACK_GAS_URL = '';
 export const FEEDBACK_MESSAGE_MAX_LENGTH = 1200;
 export const FEEDBACK_ADMIN_NOTE_MAX_LENGTH = 800;
 export const FEEDBACK_ADMIN_SESSION_KEY = 'naesin-feedback-admin-session';
+export const FEEDBACK_LAST_SUBMIT_SESSION_KEY = 'naesin-feedback-last-submit';
+export const FEEDBACK_SUBMIT_COOLDOWN_MS = 30_000;

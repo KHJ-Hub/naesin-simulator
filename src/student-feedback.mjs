@@ -1,8 +1,21 @@
-import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-version-label1';
+import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-feedback-inbox2';
+import {
+  FEEDBACK_LAST_SUBMIT_SESSION_KEY,
+  FEEDBACK_SUBMIT_COOLDOWN_MS,
+} from './feedback-config.mjs?v=20260921-feedback-inbox2';
 import {
   createAnonymousFeedbackPayload,
+  feedbackCooldownRemaining,
   submitAnonymousFeedback,
-} from './feedback-core.mjs?v=20260921-student-feedback2';
+} from './feedback-core.mjs?v=20260921-feedback-inbox2';
+
+function lastFeedbackSubmission() {
+  try { return sessionStorage.getItem(FEEDBACK_LAST_SUBMIT_SESSION_KEY); } catch { return null; }
+}
+
+function rememberFeedbackSubmission(timestamp) {
+  try { sessionStorage.setItem(FEEDBACK_LAST_SUBMIT_SESSION_KEY, String(timestamp)); } catch { /* Storage may be unavailable. */ }
+}
 
 function currentSectionLabel() {
   const sections = [...document.querySelectorAll('main section')];
@@ -31,7 +44,6 @@ export function setupStudentFeedback() {
 
   const closeDialog = () => {
     if (dialog.open) dialog.close();
-    openButton.focus();
   };
   openButton.addEventListener('click', () => {
     showFeedbackStatus(status, '');
@@ -40,10 +52,13 @@ export function setupStudentFeedback() {
   });
   closeButtons.forEach((button) => button.addEventListener('click', closeDialog));
   dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDialog(); });
+  dialog.addEventListener('close', () => openButton.focus());
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (submitButton.disabled) return;
     try {
+      const remaining = feedbackCooldownRemaining(lastFeedbackSubmission(), Date.now(), FEEDBACK_SUBMIT_COOLDOWN_MS);
+      if (remaining > 0) throw new Error(`의견을 연속으로 보낼 수 없어요. ${Math.ceil(remaining / 1000)}초 후 다시 시도해 주세요.`);
       const payload = createAnonymousFeedbackPayload({
         category: form.elements.category.value,
         message: form.elements.message.value,
@@ -61,11 +76,12 @@ export function setupStudentFeedback() {
       submitButton.textContent = '보내는 중...';
       showFeedbackStatus(status, '');
       await submitAnonymousFeedback(payload);
+      rememberFeedbackSubmission(Date.now());
       form.reset();
       showFeedbackStatus(status, '의견을 보냈어요. 알려줘서 고마워요!', 'success');
       window.setTimeout(closeDialog, 850);
     } catch (error) {
-      const validationMessage = /선택|입력|1200자/.test(error?.message ?? '') ? error.message : '의견을 보내지 못했어요. 잠시 후 다시 시도해 주세요.';
+      const validationMessage = /선택|입력|1200자|연속|후 다시/.test(error?.message ?? '') ? error.message : '의견을 보내지 못했어요. 잠시 후 다시 시도해 주세요.';
       showFeedbackStatus(status, validationMessage, 'error');
     } finally {
       submitButton.disabled = false;

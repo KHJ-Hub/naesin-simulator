@@ -4357,7 +4357,7 @@ h3:not(.hero-grid h2),
 .teacher-feedback-summary article { padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcff; }
 .teacher-feedback-summary span { color: var(--muted); font-size: .78rem; font-weight: 750; }
 .teacher-feedback-summary strong { display: block; margin-top: 4px; color: var(--lavender-500); font-size: 1.35rem; }
-.teacher-feedback-filters { display: grid; grid-template-columns: repeat(3, minmax(130px, .7fr)) minmax(200px, 1.2fr); gap: 9px; margin-top: 13px; }
+.teacher-feedback-filters { display: grid; grid-template-columns: repeat(4, minmax(120px, .65fr)) minmax(200px, 1.2fr); gap: 9px; margin-top: 13px; }
 .teacher-feedback-filters label { display: grid; gap: 4px; color: var(--muted); font-size: .78rem; font-weight: 800; }
 .teacher-feedback-list { display: grid; gap: 10px; margin-top: 10px; }
 .teacher-feedback-card { display: grid; gap: 11px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
