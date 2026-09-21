@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>선생님용 과목 관리 · 내신 시뮬레이터</title>
-  <link rel="stylesheet" href="./styles.css?v=20260921-feedback-cors1" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-admin-admissions1" />
 </head>
 <body>
   <main class="teacher-shell">
@@ -12,7 +12,7 @@
       <div><p class="eyebrow">배정고 학업 설계 도구</p><h1>선생님용 과목 관리</h1><p class="muted">입학생 연도와 학기별로 과목을 확인하고, 학생 화면에 표시할 개설 과목을 관리합니다.</p></div>
       <a class="secondary-button teacher-back" href="./index.html">학생 페이지로 돌아가기</a>
     </header>
-    <nav class="teacher-main-tabs" aria-label="관리자 기능"><button type="button" class="is-active" data-teacher-main-tab="courses" aria-selected="true">과목 관리</button><button type="button" data-teacher-main-tab="feedback" aria-selected="false">학생 의견 <span class="teacher-feedback-tab-badge" data-feedback-new-badge hidden></span></button></nav>
+    <nav class="teacher-main-tabs" aria-label="관리자 기능"><button type="button" class="is-active" data-teacher-main-tab="courses" aria-selected="true">과목 관리</button><button type="button" data-teacher-main-tab="admissions" aria-selected="false">입결 데이터 현황</button><button type="button" data-teacher-main-tab="feedback" aria-selected="false">학생 의견 <span class="teacher-feedback-tab-badge" data-feedback-new-badge hidden></span></button></nav>
     <section class="teacher-panel teacher-toolbar" data-teacher-main-view="courses">
       <div class="teacher-year-filter"><label>입학생 연도<select id="filter-year" class="input"></select></label></div>
       <div class="teacher-status-filter" role="group" aria-label="개설 상태 필터"><button class="quiet-button is-selected" data-status-filter="all">전체</button><button class="quiet-button" data-status-filter="active">개설</button><button class="quiet-button" data-status-filter="inactive">미개설</button></div>
@@ -21,6 +21,41 @@
     <section class="teacher-panel teacher-browser-panel" data-teacher-main-view="courses">
       <div class="teacher-list-heading"><div><p class="eyebrow">과목 탐색</p><h2>학년·학기별 과목</h2><p id="course-count" class="muted"></p></div><p class="teacher-hint">학기를 누르면 해당 과목만 펼쳐집니다.</p></div>
       <div id="course-browser" class="teacher-browser"></div>
+    </section>
+    <section class="teacher-panel admission-dashboard-panel" data-teacher-main-view="admissions" hidden>
+      <div class="teacher-feedback-title"><div><p class="eyebrow">전국 입결 데이터 관리</p><h2>입결 데이터 현황</h2><p class="muted">대학을 평가하거나 서열화하지 않고, 현재 데이터의 확보 범위와 확인이 필요한 항목을 살펴봅니다.</p></div><button type="button" class="quiet-button" id="admission-dashboard-reload">데이터 다시 불러오기</button></div>
+      <p id="admission-dashboard-status" class="muted" role="status" aria-live="polite">탭을 열면 지역별 입결 데이터를 불러옵니다.</p>
+      <div id="admission-dashboard-error" class="admission-dashboard-error" role="alert" hidden></div>
+      <div id="admission-dashboard-content" hidden>
+        <section aria-labelledby="admission-dashboard-summary-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">전체 요약</p><h3 id="admission-dashboard-summary-title">데이터 구성</h3></div></div>
+          <div id="admission-dashboard-summary" class="admission-dashboard-summary"></div>
+          <div id="admission-dashboard-status-summary" class="admission-dashboard-status-summary"></div>
+        </section>
+        <section aria-labelledby="admission-dashboard-regions-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">지역별 현황</p><h3 id="admission-dashboard-regions-title">지역별 확보 범위</h3></div></div>
+          <div id="admission-dashboard-regions" class="admission-dashboard-regions"></div>
+        </section>
+        <section aria-labelledby="admission-dashboard-universities-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">대학별 현황</p><h3 id="admission-dashboard-universities-title">대학 검색·필터</h3></div><p class="teacher-hint">대학을 펼치면 모집단위별 원본 상태를 읽기 전용으로 확인할 수 있습니다.</p></div>
+          <div class="admission-dashboard-filters">
+            <label>지역<select id="admission-dashboard-filter-region" class="input"><option value="">전체</option></select></label>
+            <label>설립유형<select id="admission-dashboard-filter-ownership" class="input"><option value="">전체</option><option value="national">국립</option><option value="public">공립</option><option value="private">사립</option></select></label>
+            <label>전형구분<select id="admission-dashboard-filter-category" class="input"><option value="">전체</option><option value="학생부교과">학생부교과</option><option value="학생부종합">학생부종합</option></select></label>
+            <label>데이터 상태<select id="admission-dashboard-filter-status" class="input"><option value="">전체</option></select></label>
+            <label class="admission-dashboard-search">대학명 검색<input id="admission-dashboard-filter-query" class="input" type="search" placeholder="대학명" /></label>
+          </div>
+          <p id="admission-dashboard-university-count" class="muted"></p>
+          <div id="admission-dashboard-universities" class="admission-dashboard-universities"></div>
+          <button type="button" class="quiet-button admission-dashboard-more" id="admission-dashboard-more-universities" hidden>대학 더 보기</button>
+        </section>
+        <section aria-labelledby="admission-dashboard-warnings-title">
+          <div class="teacher-list-heading"><div><p class="eyebrow">읽기 전용 점검</p><h3 id="admission-dashboard-warnings-title">데이터 품질 경고</h3><p class="muted">경고는 자동 수정하지 않으며, 확인이 필요한 데이터만 표시합니다.</p></div></div>
+          <p id="admission-dashboard-warning-count" class="muted"></p>
+          <div id="admission-dashboard-warnings" class="admission-dashboard-warnings"></div>
+          <button type="button" class="quiet-button admission-dashboard-more" id="admission-dashboard-more-warnings" hidden>경고 더 보기</button>
+        </section>
+      </div>
     </section>
     <section class="teacher-panel teacher-feedback-panel" data-teacher-main-view="feedback" hidden>
       <div class="teacher-feedback-title"><div><p class="eyebrow">학생 의견함</p><h2>학생 의견</h2><p class="muted">익명으로 접수된 의견의 처리 상태와 관리자 메모를 관리합니다.</p></div><div class="teacher-feedback-actions"><button type="button" class="quiet-button" id="feedback-refresh" hidden>새로고침</button><button type="button" class="quiet-button" id="feedback-logout" hidden>의견함 로그아웃</button></div></div>
@@ -40,7 +75,8 @@
     <p id="teacher-toast" class="teacher-toast" role="status" aria-live="polite"></p>
     <p id="teacher-app-version" class="app-version" aria-label="앱 버전"></p>
   </main>
-  <script type="module" src="./src/teacher-app.mjs?v=20260921-feedback-cors1"></script>
-  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-feedback-cors1"></script>
+  <script type="module" src="./src/teacher-app.mjs?v=20260921-admin-admissions1"></script>
+  <script type="module" src="./src/teacher-admission-dashboard.mjs?v=20260921-admin-admissions1"></script>
+  <script type="module" src="./src/teacher-feedback.mjs?v=20260921-admin-admissions1"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@ import {
   FEEDBACK_ADMIN_NOTE_MAX_LENGTH,
   FEEDBACK_GAS_URL,
   FEEDBACK_MESSAGE_MAX_LENGTH,
-} from './feedback-config.mjs?v=20260921-feedback-cors1';
+} from './feedback-config.mjs?v=20260921-admin-admissions1';
 
 export const FEEDBACK_CATEGORIES = Object.freeze([
   '오류가 있어요',

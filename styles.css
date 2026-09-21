@@ -4383,6 +4383,67 @@ h3:not(.hero-grid h2),
 .teacher-feedback-card-actions { justify-content: flex-end; }
 #feedback-list-status[data-type="error"] { color: var(--danger); }
 
+.admission-dashboard-panel { display: grid; gap: 22px; }
+.admission-dashboard-error[hidden],
+.admission-dashboard-more[hidden] { display: none !important; }
+.admission-dashboard-panel #admission-dashboard-content { display: grid; gap: 28px; }
+.admission-dashboard-panel #admission-dashboard-content[hidden] { display: none !important; }
+.admission-dashboard-panel h3 { margin: 0; color: var(--title-strong); }
+.admission-dashboard-error { padding: 11px 13px; border: 1px solid #e3c3c9; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: .82rem; line-height: 1.55; }
+.admission-dashboard-summary,
+.admission-dashboard-status-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.admission-dashboard-status-summary { grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: 9px; }
+.admission-dashboard-summary article,
+.admission-dashboard-status-summary article { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcff; }
+.admission-dashboard-summary span,
+.admission-dashboard-status-summary span { display: block; color: var(--muted); font-size: .75rem; font-weight: 750; }
+.admission-dashboard-summary strong,
+.admission-dashboard-status-summary strong { display: block; margin-top: 4px; color: var(--lavender-500); font-size: 1.25rem; overflow-wrap: anywhere; }
+.admission-dashboard-summary small { display: block; margin-top: 4px; color: var(--muted); font-size: .68rem; line-height: 1.4; }
+.admission-dashboard-status-summary strong { color: var(--indigo-500); font-size: 1.05rem; }
+.admission-dashboard-regions { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; }
+.admission-dashboard-region-head,
+.admission-dashboard-regions article { display: grid; grid-template-columns: minmax(90px, 1.15fr) repeat(5, minmax(68px, .7fr)); gap: 8px; align-items: center; padding: 10px 12px; }
+.admission-dashboard-region-head { background: var(--lavender-100); color: var(--lavender-500); font-size: .75rem; font-weight: 800; }
+.admission-dashboard-regions article { border-top: 1px solid var(--line); background: #fff; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.admission-dashboard-regions article:nth-child(odd) { background: var(--neutral-50); }
+.admission-dashboard-regions article span { color: var(--muted); }
+.admission-dashboard-regions .needs-check,
+.admission-dashboard-university .needs-check { color: var(--danger); font-weight: 800; }
+.admission-dashboard-filters { display: grid; grid-template-columns: repeat(4, minmax(120px, .7fr)) minmax(190px, 1.15fr); gap: 9px; margin-top: 12px; }
+.admission-dashboard-filters label { display: grid; gap: 4px; color: var(--muted); font-size: .78rem; font-weight: 800; }
+.admission-dashboard-universities,
+.admission-dashboard-warnings { display: grid; gap: 9px; margin-top: 10px; }
+.admission-dashboard-university { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.admission-dashboard-university > summary { display: grid; grid-template-columns: minmax(180px, 1.1fr) minmax(260px, 1fr) minmax(220px, 1.15fr); gap: 12px; align-items: center; padding: 13px 15px; cursor: pointer; list-style-position: inside; }
+.admission-dashboard-university[open] > summary { border-bottom: 1px solid var(--line); background: var(--lavender-50); }
+.admission-dashboard-university-name { min-width: 0; }
+.admission-dashboard-university-name strong,
+.admission-dashboard-university-name span { display: block; overflow-wrap: anywhere; }
+.admission-dashboard-university-name span { margin-top: 3px; color: var(--muted); font-size: .75rem; }
+.admission-dashboard-university-counts,
+.admission-dashboard-status-chips { display: flex; flex-wrap: wrap; gap: 5px 9px; color: var(--muted); font-size: .75rem; }
+.admission-dashboard-university-counts strong { color: var(--lavender-500); }
+.admission-dashboard-status-chips span { padding: 4px 7px; border-radius: 999px; background: var(--neutral-50); color: var(--muted); font-size: .68rem; font-weight: 750; }
+.admission-dashboard-records { display: grid; gap: 8px; padding: 12px; }
+.admission-dashboard-record { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(420px, 2fr); gap: 12px; align-items: center; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
+.admission-dashboard-record > div strong,
+.admission-dashboard-record > div span { display: block; overflow-wrap: anywhere; }
+.admission-dashboard-record > div span { margin-top: 3px; color: var(--muted); font-size: .75rem; }
+.admission-dashboard-record dl { display: grid; grid-template-columns: repeat(6, minmax(65px, 1fr)); gap: 6px; margin: 0; }
+.admission-dashboard-record dl div { min-width: 0; padding: 6px; border-radius: 8px; background: var(--neutral-50); }
+.admission-dashboard-record dt { color: var(--muted); font-size: .65rem; font-weight: 750; }
+.admission-dashboard-record dd { margin: 3px 0 0; font-size: .75rem; overflow-wrap: anywhere; }
+.admission-dashboard-record-more { justify-self: center; }
+.admission-dashboard-more { display: block; min-width: 180px; margin: 14px auto 0; }
+.admission-dashboard-warnings article { display: grid; grid-template-columns: minmax(105px, .35fr) minmax(0, 2fr); gap: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.admission-dashboard-warning-type { align-self: start; width: fit-content; padding: 5px 8px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: .7rem; font-weight: 800; }
+.admission-dashboard-warnings strong,
+.admission-dashboard-warnings span,
+.admission-dashboard-warnings p { overflow-wrap: anywhere; }
+.admission-dashboard-warnings div > span { display: block; margin-top: 3px; color: var(--muted); font-size: .74rem; }
+.admission-dashboard-warnings p { margin: 6px 0 0; color: var(--ink); font-size: .8rem; line-height: 1.5; }
+
 @media (max-width: 767px) {
   .student-feedback-button {
     position: static;
@@ -4394,8 +4455,8 @@ h3:not(.hero-grid h2),
   .student-feedback-heading .quiet-button { flex: none; }
   .student-feedback-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .student-feedback-actions button { min-width: 0; }
-  .teacher-main-tabs { display: grid; grid-template-columns: 1fr 1fr; }
-  .teacher-main-tabs button { padding-inline: 8px; }
+  .teacher-main-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .teacher-main-tabs button { min-width: 0; min-height: 52px; padding-inline: 5px; font-size: .76rem; line-height: 1.35; }
   .teacher-feedback-title { align-items: stretch; flex-direction: column; }
   .teacher-feedback-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .teacher-feedback-login { grid-template-columns: 1fr; }
@@ -4408,11 +4469,27 @@ h3:not(.hero-grid h2),
   .teacher-feedback-meta,
   .teacher-feedback-tech dl { grid-template-columns: 1fr; }
   .teacher-feedback-card-actions .quiet-button { width: 100%; }
+  .admission-dashboard-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admission-dashboard-status-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admission-dashboard-filters { grid-template-columns: 1fr 1fr; }
+  .admission-dashboard-search { grid-column: 1 / -1; }
+  .admission-dashboard-region-head { display: none; }
+  .admission-dashboard-regions { display: grid; gap: 8px; overflow: visible; border: 0; }
+  .admission-dashboard-regions article,
+  .admission-dashboard-regions article:nth-child(odd) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+  .admission-dashboard-regions article strong { grid-column: 1 / -1; color: var(--lavender-500); }
+  .admission-dashboard-regions article span::before { content: attr(data-label) ' '; color: var(--muted); font-size: .68rem; font-weight: 750; }
+  .admission-dashboard-university > summary { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+  .admission-dashboard-record { grid-template-columns: 1fr; }
+  .admission-dashboard-record dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admission-dashboard-warnings article { grid-template-columns: 1fr; gap: 8px; }
+  .admission-dashboard-more { width: 100%; min-height: 44px; }
 }
 
 @media print {
   .student-feedback-button,
   .student-feedback-dialog,
   .teacher-main-tabs,
-  .teacher-feedback-panel { display: none !important; }
+  .teacher-feedback-panel,
+  .admission-dashboard-panel { display: none !important; }
 }
