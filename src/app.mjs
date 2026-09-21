@@ -49,7 +49,7 @@ import {
 import { UNIVERSITY_BY_NAME } from './data/universities.mjs?v=20260919-readiness1';
 import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20260921-security-audit1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
-import { buildGradePositionModel } from './grade-position.mjs?v=20260918-shared-position1';
+import { buildGradePositionModel } from './grade-position.mjs?v=20260921-position-meaning1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -568,10 +568,7 @@ function gradeScaleBandsHtml(scale) {
   return `<div class="grade-position-bands" data-scale="${scale.scale}" style="--grade-band-columns:${columns}">${segments}</div>`;
 }
 function gradePositionComparisonHtml(model) {
-  const axis = model.commonAxisPercentages.map((percentage) => `<span data-boundary="${percentage}" style="--grade-boundary:${percentage}%">${percentage}%</span>`).join('');
-  const grade5Description = model.grade5Scale.cumulativePercentages.map((percentage, index) => `${index + 1}등급 ${percentage}%`).join(', ');
-  const grade9Description = model.grade9Scale.cumulativePercentages.map((percentage, index) => `${index + 1}등급 ${percentage}%`).join(', ');
-  return `<div class="grade-position-comparison" role="img" aria-label="공통 누적 위치 ${model.commonPosition}%. 5등급제 현재 ${fmt(model.grade5)}등급, 경계 ${grade5Description}. 9등급제 환산 약 ${fmt(model.grade9)}등급, 경계 ${grade9Description}"><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong><small>누적비율</small></div><div class="grade-position-plot" style="--grade-position:${model.commonPosition}%"><i class="grade-position-shared-marker" aria-hidden="true"><b>내 위치</b></i>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}<div class="grade-position-common-axis" aria-hidden="true">${axis}</div></div></div>`;
+  return `<div class="grade-position-comparison" role="img" aria-label="현재 5등급제 평균 ${fmt(model.grade5)}등급과 9등급제 환산 참고 약 ${fmt(model.grade9)}등급의 등급 환산상 대략적인 위치를 보여줘요. 실제 석차 백분위가 아니에요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot" style="--grade-position:${model.markerPosition}%"><i class="grade-position-shared-marker" aria-hidden="true"><b>환산 위치</b></i>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>등급 환산 기준 위치</span><span>낮은 등급</span></p>`;
 }
 function renderGradePosition() {
   const container = $('#grade-position');
@@ -581,7 +578,7 @@ function renderGradePosition() {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 현재 등급 위치를 확인할 수 있어요.</div>';
     return;
   }
-  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradePositionComparisonHtml(model)}<p class="grade-position-note">현재 내신을 기준으로 5등급제와 9등급제 위치를 참고용으로 보여줘요.<br />교육청 환산 기준 참고값이고, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
+  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradePositionComparisonHtml(model)}<p class="grade-position-note"><strong>실제 석차 백분위가 아닌 등급 환산 기준의 대략적인 위치예요.</strong><br />교육청 환산 기준 참고값이고, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
 }
 function renderSubjectSummary() {
   if (usesQuickAverage()) {

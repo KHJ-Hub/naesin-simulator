@@ -3751,7 +3751,7 @@ h3:not(.hero-grid h2),
 
 .grade-position-row-labels {
   display: grid;
-  grid-template-rows: 42px 42px 18px;
+  grid-template-rows: 42px 42px;
   gap: 10px;
   align-items: center;
   padding-top: 28px;
@@ -3761,12 +3761,11 @@ h3:not(.hero-grid h2),
 }
 
 .grade-position-row-labels strong { color: var(--ink); font-size: .74rem; }
-.grade-position-row-labels small { font-size: .62rem; font-weight: 700; }
 
 .grade-position-plot {
   position: relative;
   display: grid;
-  grid-template-rows: 42px 42px 18px;
+  grid-template-rows: 42px 42px;
   gap: 10px;
   min-width: 0;
   padding-top: 28px;
@@ -3821,49 +3820,30 @@ h3:not(.hero-grid h2),
 
 .grade-position-bands[data-scale="9"] .grade-position-band small { display: none; }
 
-.grade-position-common-axis {
-  position: relative;
-  height: 18px;
-  color: var(--muted);
-  font-size: .62rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.grade-position-common-axis::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: var(--line);
-  content: '';
-}
-
-.grade-position-common-axis span {
-  position: absolute;
-  top: 7px;
-  left: var(--grade-boundary);
-  white-space: nowrap;
-  transform: translateX(-50%);
-}
-
-.grade-position-common-axis span:first-child,
-.grade-position-common-axis span:nth-last-child(2),
-.grade-position-common-axis span:last-child { transform: translateX(-100%); }
-
 .grade-position-shared-marker {
   position: absolute;
   z-index: 2;
   top: 24px;
   left: clamp(8px, var(--grade-position), calc(100% - 8px));
   width: 4px;
-  height: 102px;
+  height: 94px;
   border-radius: 99px;
   background: #0d747d;
   box-shadow: 0 0 0 3px rgba(255,255,255,.92), 0 2px 8px rgba(13,116,125,.35);
   transform: translateX(-50%);
 }
+
+.grade-position-scale-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 7px 0 0 calc(64px + 20px);
+  color: var(--muted);
+  font-size: .64rem;
+  line-height: 1.3;
+}
+
+.grade-position-scale-caption span:nth-child(2) { color: var(--teal-700); font-weight: 800; text-align: center; }
 
 .grade-position-shared-marker b {
   position: absolute;
@@ -3898,9 +3878,9 @@ h3:not(.hero-grid h2),
   .grade-position-comparison { grid-template-columns: 48px minmax(0, 1fr); padding-inline: 9px; }
   .grade-position-bands { height: 40px; }
   .grade-position-row-labels,
-  .grade-position-plot { grid-template-rows: 40px 40px 18px; }
-  .grade-position-common-axis span[data-boundary="4"] { display: none; }
-  .grade-position-shared-marker { height: 98px; }
+  .grade-position-plot { grid-template-rows: 40px 40px; }
+  .grade-position-shared-marker { height: 90px; }
+  .grade-position-scale-caption { margin-left: calc(48px + 17px); }
   .grade-position-note br { display: none; }
 }
 
@@ -3909,6 +3889,7 @@ h3:not(.hero-grid h2),
   .grade-position-comparison { grid-template-columns: 43px minmax(0, 1fr); gap: 6px; }
   .grade-position-row-labels strong { font-size: .68rem; }
   .grade-position-shared-marker b { font-size: .62rem; }
+  .grade-position-scale-caption { margin-left: 49px; font-size: .58rem; }
 }
 
 /* Teacher quick consultation: compact session-only workflow using the shared design system. */

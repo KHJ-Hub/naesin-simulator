@@ -13,9 +13,11 @@ export const GRADE_POSITION_SCALES = Object.freeze({
   }),
 });
 
-export const GRADE_POSITION_COMMON_AXIS = Object.freeze([4, 10, 23, 34, 60, 77, 90, 100]);
-
-function positionInGradeDistribution(value, scale) {
+/**
+ * 차트 안에서 마커를 배치하기 위한 0~100 시각 좌표다.
+ * 등급 구간 중심 사이를 보간하며 실제 석차 백분위나 학생의 누적분포 추정값이 아니다.
+ */
+function visualMarkerPosition(value, scale) {
   const number = Number(value);
   if (!Number.isFinite(number) || number < 1 || number > scale.scale) return null;
   const centers = scale.cumulativePercentages.map((upper, index) => {
@@ -34,12 +36,11 @@ export function buildGradePositionModel(currentGrade) {
   if (!Number.isFinite(grade5) || grade5 < 1 || grade5 > 5) return null;
   const conversion = convertGrade5ToGrade9(grade5);
   if (!conversion) return null;
-  const commonPosition = positionInGradeDistribution(grade5, GRADE_POSITION_SCALES.grade5);
+  const markerPosition = visualMarkerPosition(grade5, GRADE_POSITION_SCALES.grade5);
   return {
     grade5,
     grade9: conversion.convertedValue,
-    commonPosition,
-    commonAxisPercentages: GRADE_POSITION_COMMON_AXIS,
+    markerPosition,
     grade5Scale: GRADE_POSITION_SCALES.grade5,
     grade9Scale: GRADE_POSITION_SCALES.grade9,
     conversionDataset: conversion.conversionDataset,
