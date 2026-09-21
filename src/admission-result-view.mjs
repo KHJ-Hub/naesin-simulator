@@ -8,12 +8,12 @@ import {
   getAvailableUniversities,
   normalizeAdmissionRegion,
   searchAvailableDepartments,
-} from './admission-filter-options.mjs?v=20260922-open-major1';
+} from './admission-filter-options.mjs?v=20260922-official-field1';
 import {
   ADMISSION_CATEGORIES,
   isComparableAdmissionRecord,
   isStudentRecordComprehensive,
-} from './admission-record-normalizer.mjs?v=20260922-open-major1';
+} from './admission-record-normalizer.mjs?v=20260922-official-field1';
 
 export const ADMISSION_RESULT_PAGE_SIZE = 20;
 export const ADMISSION_VIEW_MODES = Object.freeze({

@@ -3,7 +3,7 @@ import {
   normalizeAcademicField,
   normalizeAdmissionRecord,
   validAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260922-open-major1';
+} from './admission-record-normalizer.mjs?v=20260922-official-field1';
 import { ADMISSION_ELIGIBILITY_TYPES, isStudentVisibleAdmissionForSchool } from './admission-eligibility.mjs';
 import { UNIVERSITIES, UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs';
 import { normalizeUniversityOwnership } from './data/university-ownership-2026.mjs';
@@ -44,7 +44,6 @@ export const ADMISSION_ACADEMIC_FIELD_FILTERS = Object.freeze([
   ADMISSION_ACADEMIC_FIELDS.NATURAL,
   ADMISSION_ACADEMIC_FIELDS.ARTS,
   ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR,
-  'other-unknown',
 ]);
 
 export const ADMISSION_OWNERSHIP_TYPES = Object.freeze(['national', 'public', 'private']);

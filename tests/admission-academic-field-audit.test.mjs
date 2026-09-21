@@ -9,6 +9,11 @@ import {
 } from '../src/admission-record-normalizer.mjs';
 import { UNIVERSITY_AUDIT_2026 } from '../src/data/university-audit-2026.mjs';
 import { UNIVERSITIES } from '../src/data/universities.mjs';
+import {
+  getAdmissionAcademicFieldVerificationSummary,
+  resolveAdmissionAcademicFieldVerification,
+} from '../src/admission-academic-field-verification.mjs';
+import { ADMISSION_ACADEMIC_FIELD_VERIFICATIONS_2026 } from '../src/data/admission-academic-field-verifications-2026.mjs';
 
 test('모집단위 표기 정규화는 원문 의미를 보존하고 운영 표기만 정리한다', () => {
   assert.equal(normalizeAdmissionMajorName('  디지털융합학과（야）  '), '디지털융합학과');
@@ -64,22 +69,61 @@ test('계열 추론은 입결 raw record를 수정하지 않는다', () => {
   assert.equal(raw.department, '지적학과');
 });
 
+test('모집단위별 공식 검증값은 원본·taxonomy보다 우선하고 근거를 추적한다', () => {
+  const raw = Object.freeze({
+    referenceYear: 2026,
+    universityId: 'adiga-0000235',
+    university: '동명대학교',
+    department: '군사학과',
+    academicField: 'other',
+  });
+  const verification = resolveAdmissionAcademicFieldVerification(raw);
+  const evidence = ADMISSION_ACADEMIC_FIELD_VERIFICATIONS_2026.find((item) => item.universityId === raw.universityId && item.department === raw.department);
+  const normalized = normalizeAdmissionRecord(raw);
+  assert.equal(verification.academicField, 'humanities');
+  assert.equal(evidence.sourceType, 'adiga-official');
+  assert.match(evidence.sourceUrl, /^https:\/\/www\.adiga\.kr\//);
+  assert.equal(normalized.academicField, 'humanities');
+  assert.equal(normalized.academicFieldClassificationSource, 'official-verification');
+  assert.equal(raw.academicField, 'other');
+});
+
+test('공식 자료로도 단일 계열을 확정할 수 없는 모집단위는 UNKNOWN으로 유지한다', () => {
+  const normalized = normalizeAdmissionRecord({
+    referenceYear: 2026,
+    universityId: 'adiga-0000160',
+    university: '위덕대학교',
+    department: '라이프융합학과',
+    academicField: 'unknown',
+  });
+  assert.equal(normalized.academicField, 'unknown');
+  assert.equal(normalized.academicFieldClassificationSource, 'official-review-unresolved');
+  assert.equal(getAdmissionAcademicFieldVerificationSummary().unresolvedDepartmentCount, 1);
+});
+
 test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 대학 원인을 감사 상태와 분리한다', () => {
   const dashboard = buildAdmissionDataDashboard(admissionResultsByYear[2026], UNIVERSITIES, {
     universityAudits: UNIVERSITY_AUDIT_2026,
   });
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByNormalization, 5);
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByExplicitField, 312);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByTaxonomy, 15464);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByTaxonomy, 15162);
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredAsOpenMajor, 234);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 244);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.officiallyVerified, 545);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.officiallyReviewedUnresolved, 1);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 1);
+  assert.deepEqual(dashboard.summary.quality.academicFieldInfo.uniqueDepartments, {
+    officiallyVerified: 209,
+    dataOrTaxonomyClassified: 5409,
+    unclassified: 1,
+  });
   assert.deepEqual(dashboard.summary.quality.academicFieldInfo.counts, {
-    humanities: 5813,
-    natural: 8700,
-    arts: 966,
-    'open-major': 234,
-    other: 302,
-    unknown: 244,
+    humanities: 6033,
+    natural: 8966,
+    arts: 1004,
+    'open-major': 255,
+    other: 0,
+    unknown: 1,
   });
   assert.deepEqual(dashboard.summary.quality.zeroResultInfo.byReason, {
     'source-review-needed': 1,
@@ -87,6 +131,9 @@ test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 �
     'official-not-published': 13,
   });
   assert.equal(dashboard.summary.quality.zeroResultInfo.total, 20);
-  assert.equal(dashboard.summary.quality.actionableCount, 245);
+  assert.equal(dashboard.summary.quality.actionableCount, 2);
   assert.equal(dashboard.warnings.filter((item) => item.type === '입결 0건' && item.severity === 'info').length, 19);
+  assert.deepEqual(dashboard.warnings.filter((item) => item.type === '계열 분류 불가').map((item) => [item.university, item.department]), [
+    ['위덕대학교', '라이프융합학과'],
+  ]);
 });

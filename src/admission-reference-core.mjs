@@ -5,7 +5,7 @@ import {
   isComparableAdmissionRecord,
   isStudentRecordComprehensive,
   validAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260922-open-major1';
+} from './admission-record-normalizer.mjs?v=20260922-official-field1';
 import { isDefaultStudentVisibleAdmission } from './admission-eligibility.mjs';
 import { filterAdmissionRecords } from './admission-filter-options.mjs';
 

@@ -1,6 +1,7 @@
 import { ADMISSION_ELIGIBILITY_TYPES, classifyAdmissionEligibility } from './admission-eligibility.mjs';
 import { DEFAULT_SCHOOL_REGION, isSchoolRegionEligible, normalizeRegionalEligibility } from './admission-regional-eligibility.mjs';
-import { normalizeAdmissionMajorName } from './admission-major-taxonomy.mjs?v=20260922-open-major1';
+import { normalizeAdmissionMajorName } from './admission-major-taxonomy.mjs?v=20260922-official-field1';
+import { resolveAdmissionAcademicFieldVerification } from './admission-academic-field-verification.mjs?v=20260922-official-field1';
 
 /** 전국 입시결과 파일이 공유하는 정규 스키마와 검증 규칙이다. */
 export const ADMISSION_CATEGORIES = Object.freeze({
@@ -213,6 +214,20 @@ export function normalizeAdmissionRecord(record = {}) {
     regionalEligibilityConfirmed,
     schoolRegion: record.schoolRegion ?? DEFAULT_SCHOOL_REGION,
   });
+  const officialAcademicField = resolveAdmissionAcademicFieldVerification(record);
+  const departmentInference = analyzeAcademicFieldFromDepartment(record.department);
+  const sourceAcademicField = record.academicField != null || record.field != null
+    ? normalizeAcademicField(record.academicField ?? record.field)
+    : null;
+  const fallbackAcademicField = sourceAcademicField ?? departmentInference.academicField;
+  const academicField = officialAcademicField?.academicField ?? fallbackAcademicField;
+  const academicFieldClassificationSource = officialAcademicField?.academicField
+    ? 'official-verification'
+    : officialAcademicField?.status === 'official-reviewed-unresolved'
+      ? 'official-review-unresolved'
+      : sourceAcademicField != null && sourceAcademicField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN
+        ? 'source'
+        : departmentInference.resolution;
 
   return {
     ...record,
@@ -240,9 +255,9 @@ export function normalizeAdmissionRecord(record = {}) {
       : null,
     studentDefaultVisible: record.studentDefaultVisible === true || (record.studentDefaultVisible == null && eligibility.studentDefaultVisible),
     field: textOrNull(record.field),
-    academicField: record.academicField != null || record.field != null
-      ? normalizeAcademicField(record.academicField ?? record.field)
-      : inferAcademicFieldFromDepartment(record.department),
+    academicField,
+    academicFieldClassificationSource,
+    academicFieldVerificationStatus: officialAcademicField?.status ?? null,
     majorSearchGroup: textOrNull(record.majorSearchGroup),
     normalizedMajorKeyword: textOrNull(record.normalizedMajorKeyword),
     sourceUrl: textOrNull(record.sourceUrl),

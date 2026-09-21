@@ -5,7 +5,7 @@ import {
   analyzeAcademicFieldFromDepartment,
   normalizeAcademicField,
   normalizeAdmissionRecord,
-} from './admission-record-normalizer.mjs?v=20260922-open-major1';
+} from './admission-record-normalizer.mjs?v=20260922-official-field1';
 import { normalizeAdmissionRegion } from './admission-filter-options.mjs';
 
 export const ADMISSION_DASHBOARD_STATUSES = Object.freeze(Object.values(ADMISSION_DATA_AVAILABILITY));
@@ -229,7 +229,9 @@ function recordWarnings(raw, item, universityById, universityByName) {
 function deduplicateWarnings(warnings = []) {
   const seen = new Set();
   return warnings.filter((item) => {
-    const targetKey = item.recordId || [item.universityId, item.university, item.department, item.admissionName].join('\u0001');
+    const targetKey = item.type === '계열 분류 불가'
+      ? [item.universityId, item.university, item.department].join('\u0001')
+      : item.recordId || [item.universityId, item.university, item.department, item.admissionName].join('\u0001');
     const key = [item.severity, item.type, targetKey, item.description].join('\u0001');
     if (seen.has(key)) return false;
     seen.add(key);
@@ -265,6 +267,8 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
   const normalizedRecords = [];
   const collectedWarnings = [];
   const academicFieldInfo = {
+    officiallyVerified: 0,
+    officiallyReviewedUnresolved: 0,
     sourceProvided: 0,
     inferredByNormalization: 0,
     inferredByExplicitField: 0,
@@ -272,8 +276,16 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
     inferredAsOpenMajor: 0,
     unclassified: 0,
     unclassifiedByReason: {},
+    uniqueDepartments: {
+      officiallyVerified: 0,
+      dataOrTaxonomyClassified: 0,
+      unclassified: 0,
+    },
     counts: Object.fromEntries(Object.values(ADMISSION_ACADEMIC_FIELDS).map((field) => [field, 0])),
   };
+  const officialDepartmentKeys = new Set();
+  const classifiedDepartmentKeys = new Set();
+  const unclassifiedDepartmentKeys = new Set();
 
   records.forEach((raw, index) => {
     const normalized = normalizeAdmissionRecord(raw);
@@ -294,19 +306,32 @@ export function buildAdmissionDataDashboard(records = [], universities = [], { u
     };
     normalizedRecords.push(item);
     academicFieldInfo.counts[item.academicField] = (academicFieldInfo.counts[item.academicField] ?? 0) + 1;
+    const departmentKey = [item.universityId ?? item.university, item.department].join('\u0001');
     const hasValidSourceAcademicField = Boolean(sourceAcademicField) && normalizedSourceAcademicField !== 'unknown';
-    if (hasValidSourceAcademicField && item.academicField !== 'unknown') academicFieldInfo.sourceProvided += 1;
+    if (item.academicFieldClassificationSource === 'official-verification') {
+      academicFieldInfo.officiallyVerified += 1;
+      officialDepartmentKeys.add(departmentKey);
+    } else if (hasValidSourceAcademicField && item.academicField !== 'unknown') academicFieldInfo.sourceProvided += 1;
     else if (item.academicField === ADMISSION_ACADEMIC_FIELDS.OPEN_MAJOR) academicFieldInfo.inferredAsOpenMajor += 1;
     else if (item.academicField !== 'unknown' && inference.resolution === 'normalization') academicFieldInfo.inferredByNormalization += 1;
     else if (item.academicField !== 'unknown' && inference.resolution === 'explicit-field') academicFieldInfo.inferredByExplicitField += 1;
     else if (item.academicField !== 'unknown') academicFieldInfo.inferredByTaxonomy += 1;
     else {
       academicFieldInfo.unclassified += 1;
+      if (item.academicFieldClassificationSource === 'official-review-unresolved') {
+        academicFieldInfo.officiallyReviewedUnresolved += 1;
+      }
+      unclassifiedDepartmentKeys.add(departmentKey);
       const reason = unclassifiedAcademicFieldReason(item.department).reasonCode;
       academicFieldInfo.unclassifiedByReason[reason] = (academicFieldInfo.unclassifiedByReason[reason] ?? 0) + 1;
     }
+    if (item.academicField !== ADMISSION_ACADEMIC_FIELDS.UNKNOWN
+      && item.academicFieldClassificationSource !== 'official-verification') classifiedDepartmentKeys.add(departmentKey);
     collectedWarnings.push(...recordWarnings(raw, item, universityById, universityByName));
   });
+  academicFieldInfo.uniqueDepartments.officiallyVerified = officialDepartmentKeys.size;
+  academicFieldInfo.uniqueDepartments.dataOrTaxonomyClassified = classifiedDepartmentKeys.size;
+  academicFieldInfo.uniqueDepartments.unclassified = unclassifiedDepartmentKeys.size;
 
   const recordsByUniversity = new Map();
   normalizedRecords.forEach((record) => {

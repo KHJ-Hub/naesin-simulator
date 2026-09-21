@@ -5,7 +5,7 @@ import {
   loadAdmissionResultsByRegion,
 } from './admission-results-loader.mjs?v=20260921-service-settings1';
 import { UNIVERSITIES } from './data/universities.mjs?v=20260921-service-settings1';
-import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260922-open-major1';
+import { UNIVERSITY_AUDIT_2026 } from './data/university-audit-2026.mjs?v=20260922-official-field1';
 import {
   ADMISSION_DASHBOARD_REGION_ORDER,
   ADMISSION_DASHBOARD_STATUSES,
@@ -15,12 +15,22 @@ import {
   filterAdmissionDashboardUniversities,
   filterAdmissionDashboardWarnings,
   loadAdmissionDashboardDataset,
-} from './admission-data-dashboard-core.mjs?v=20260922-open-major1';
+} from './admission-data-dashboard-core.mjs?v=20260922-official-field1';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
 const ownershipLabel = (value) => ({ national: '국립', public: '공립', private: '사립' }[value] ?? '미확인');
 const categoryLabel = (value) => value || '미분류';
+const academicFieldLabel = (value) => ({ humanities: '인문', natural: '자연', arts: '예체능', 'open-major': '자유전공/무전공', other: '기타', unknown: '미분류' }[value] ?? '미분류');
+const academicFieldSourceLabel = (value) => ({
+  'official-verification': '공식 검증 완료',
+  'official-review-unresolved': '분류 확인 필요',
+  source: '원본 데이터 분류',
+  normalization: 'taxonomy 분류',
+  'explicit-field': 'taxonomy 분류',
+  taxonomy: 'taxonomy 분류',
+  'open-major': 'taxonomy 분류',
+}[value] ?? '분류 확인 필요');
 const valueLabel = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '-';
 const UNIVERSITY_PAGE_SIZE = 20;
 const WARNING_PAGE_SIZE = 30;
@@ -69,11 +79,9 @@ function renderSummary() {
     summaryCard('자유전공/무전공', `${summary.quality.academicFieldInfo.counts['open-major'].toLocaleString('ko-KR')}건`, '정상 분류된 계열 미정 모집단위'),
     summaryCard('기타', `${summary.quality.academicFieldInfo.counts.other.toLocaleString('ko-KR')}건`),
     summaryCard('미분류', `${summary.quality.academicFieldInfo.counts.unknown.toLocaleString('ko-KR')}건`, '확인 필요에 포함'),
-    summaryCard('계열명 명시 분류', `${summary.quality.academicFieldInfo.inferredByExplicitField.toLocaleString('ko-KR')}건`, '모집단위명에 적힌 인문·자연·예체능 기준'),
-    summaryCard('자유전공 안전 분류', `${summary.quality.academicFieldInfo.inferredAsOpenMajor.toLocaleString('ko-KR')}건`, '계열 미정 성격이 이름에 명확한 경우'),
-    summaryCard('taxonomy 안전 분류', `${summary.quality.academicFieldInfo.inferredByTaxonomy.toLocaleString('ko-KR')}건`, '원본은 비어 있으나 모집단위명으로 명확히 분류'),
-    summaryCard('표기 정규화 분류', `${summary.quality.academicFieldInfo.inferredByNormalization.toLocaleString('ko-KR')}건`, '안전한 표기 정리만으로 분류'),
-    summaryCard('계열 분류 불가', `${summary.quality.academicFieldInfo.unclassified.toLocaleString('ko-KR')}건`, '확인 필요에 포함'),
+    summaryCard('공식 검증 모집단위', `${summary.quality.academicFieldInfo.uniqueDepartments.officiallyVerified.toLocaleString('ko-KR')}개`, '대학어디가·대학 공식 자료 근거'),
+    summaryCard('데이터·taxonomy 분류', `${summary.quality.academicFieldInfo.uniqueDepartments.dataOrTaxonomyClassified.toLocaleString('ko-KR')}개`, '공식 검증 외 안전 분류'),
+    summaryCard('분류 확인 필요', `${summary.quality.academicFieldInfo.uniqueDepartments.unclassified.toLocaleString('ko-KR')}개`, '고유 모집단위 기준'),
     summaryCard('입결 0건 대학', `${summary.quality.zeroResultInfo.total.toLocaleString('ko-KR')}곳`, `${summary.quality.infoCount.toLocaleString('ko-KR')}건은 확인된 정보로 분리`),
   ].join('');
 }
@@ -108,7 +116,7 @@ function renderUniversities() {
 }
 
 function recordCard(record) {
-  return `<article class="admission-dashboard-record"><div><strong>${escapeHtml(record.department || '모집단위 미확인')}</strong><span>${escapeHtml(record.admissionName || '전형명 미확인')}</span></div><dl><div><dt>전형구분</dt><dd>${escapeHtml(categoryLabel(record.admissionCategory))}</dd></div><div><dt>기준연도</dt><dd>${Number.isInteger(Number(record.referenceYear)) ? Number(record.referenceYear) : '-'}</dd></div><div><dt>상태</dt><dd>${escapeHtml(ADMISSION_DASHBOARD_STATUS_LABELS[record.dataAvailability] ?? record.dataAvailability ?? '미확인')}</dd></div><div><dt>70%컷</dt><dd>${valueLabel(record.cut70Original)}</dd></div><div><dt>50%컷</dt><dd>${valueLabel(record.cut50Original)}</dd></div><div><dt>평균</dt><dd>${valueLabel(record.averageGradeOriginal)}</dd></div></dl></article>`;
+  return `<article class="admission-dashboard-record"><div><strong>${escapeHtml(record.department || '모집단위 미확인')}</strong><span>${escapeHtml(record.admissionName || '전형명 미확인')}</span></div><dl><div><dt>전형구분</dt><dd>${escapeHtml(categoryLabel(record.admissionCategory))}</dd></div><div><dt>계열</dt><dd>${escapeHtml(academicFieldLabel(record.academicField))}</dd></div><div><dt>분류 상태</dt><dd>${escapeHtml(academicFieldSourceLabel(record.academicFieldClassificationSource))}</dd></div><div><dt>기준연도</dt><dd>${Number.isInteger(Number(record.referenceYear)) ? Number(record.referenceYear) : '-'}</dd></div><div><dt>상태</dt><dd>${escapeHtml(ADMISSION_DASHBOARD_STATUS_LABELS[record.dataAvailability] ?? record.dataAvailability ?? '미확인')}</dd></div><div><dt>70%컷</dt><dd>${valueLabel(record.cut70Original)}</dd></div><div><dt>50%컷</dt><dd>${valueLabel(record.cut50Original)}</dd></div><div><dt>평균</dt><dd>${valueLabel(record.averageGradeOriginal)}</dd></div></dl></article>`;
 }
 
 function renderUniversityRecords(details) {
