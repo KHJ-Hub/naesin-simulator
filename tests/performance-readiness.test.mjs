@@ -41,8 +41,10 @@ test('동적 UI 이벤트 위임은 컨테이너마다 한 번만 등록된다',
 test('버전은 한 모듈에서 관리되고 화면 하단에 표시된다', () => {
   assert.equal(version.APP_VERSION, '1.3.0');
   assert.equal(version.APP_BUILD_DATE, '2026.09.21');
+  assert.equal(version.appVersionLabel(), 'v1.3.0');
   assert.match(html, /id="app-version"/);
-  assert.match(app, /v\$\{APP_VERSION\} · \$\{APP_BUILD_DATE\}/);
+  assert.match(app, /v\$\{APP_VERSION\}/);
+  assert.doesNotMatch(app, /v\$\{APP_VERSION\} · \$\{APP_BUILD_DATE\}/);
   assert.match(styles, /\.app-version\s*\{/);
 });
 

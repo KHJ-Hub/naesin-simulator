@@ -1,4 +1,4 @@
-import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-student-feedback2';
+import { APP_BUILD_DATE, APP_VERSION } from './app-version.mjs?v=20260921-version-label1';
 import {
   createAnonymousFeedbackPayload,
   submitAnonymousFeedback,
