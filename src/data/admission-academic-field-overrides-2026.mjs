@@ -1068,8 +1068,8 @@ export const ADMISSION_ACADEMIC_FIELD_OVERRIDES_2026 = Object.freeze([
     "adiga-0000160",
     "위덕대학교",
     "라이프융합학과",
-    null,
-    "official-reviewed-unresolved"
+    "open-major",
+    "official-verified"
   ],
   [
     "adiga-0000160",
@@ -1477,16 +1477,16 @@ export const ADMISSION_ACADEMIC_FIELD_VERIFICATION_SUMMARY_2026 = Object.freeze(
   "targetRecordCount": 546,
   "targetUniversityCount": 106,
   "targetDepartmentCount": 210,
-  "verifiedDepartmentCount": 209,
-  "unresolvedDepartmentCount": 1,
+  "verifiedDepartmentCount": 210,
+  "unresolvedDepartmentCount": 0,
   "fieldCounts": {
     "humanities": 89,
     "natural": 96,
     "arts": 13,
-    "open-major": 11
+    "open-major": 12
   },
   "statusCounts": {
-    "verified": 209,
-    "official-category-unmapped": 1
+    "verified": 210,
+    "official-category-unmapped": 0
   }
 });

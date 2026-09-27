@@ -2286,15 +2286,15 @@ export const ADMISSION_ACADEMIC_FIELD_VERIFICATIONS_2026 = Object.freeze([
     "university": "위덕대학교",
     "department": "라이프융합학과",
     "sourceUrl": "https://ipsi.uu.ac.kr/bbs/content.php?co_id=0407&sub_id=32",
-    "academicField": null,
+    "academicField": "open-major",
     "officialDepartment": "라이프융합학과",
     "officialCategory": "광역계열",
     "sourceType": "official-university",
     "sourceTitle": "위덕대학교 라이프융합학과 소개",
     "adigaSourceUrl": "https://www.adiga.kr/ucp/cls/uni/classUnivDetail.do?menuId=PCCLSINF2000&ruCd=0249412&searchSyr=2026&unvCd=0000160",
-    "verifiedAt": "2026-09-22",
-    "note": "대학어디가는 광역계열로 표시하고 공식 학과 안내는 모듈형 교육과정을 설명하지만, 단일 계열 또는 입학 후 타 전공 선택 구조를 확정할 근거가 없어 미분류 유지",
-    "status": "official-reviewed-unresolved"
+    "verifiedAt": "2026-09-27",
+    "note": "대학어디가는 광역계열로 표시하고 공식 학과 안내에서 무전공 입학 후 1학년 2학기부터 학생이 전공을 설계하는 구조를 명시",
+    "status": "official-verified"
   },
   {
     "universityId": "adiga-0000160",
@@ -3158,16 +3158,16 @@ export const ADMISSION_ACADEMIC_FIELD_VERIFICATION_SUMMARY_2026 = Object.freeze(
   "targetRecordCount": 546,
   "targetUniversityCount": 106,
   "targetDepartmentCount": 210,
-  "verifiedDepartmentCount": 209,
-  "unresolvedDepartmentCount": 1,
+  "verifiedDepartmentCount": 210,
+  "unresolvedDepartmentCount": 0,
   "fieldCounts": {
     "humanities": 89,
     "natural": 96,
     "arts": 13,
-    "open-major": 11
+    "open-major": 12
   },
   "statusCounts": {
-    "verified": 209,
-    "official-category-unmapped": 1
+    "verified": 210,
+    "official-category-unmapped": 0
   }
 });

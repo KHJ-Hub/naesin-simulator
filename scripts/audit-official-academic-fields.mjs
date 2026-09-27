@@ -63,9 +63,9 @@ const SUPPLEMENTAL_VERIFICATIONS = new Map([
     note: '공식 학부 안내에서 1년 탐색 후 여러 계열의 전공을 선택하거나 설계하는 구조를 확인',
   }],
   ['위덕대학교\u0001라이프융합학과', {
-    academicField: null, sourceType: 'official-university',
+    academicField: 'open-major', sourceType: 'official-university',
     sourceTitle: '위덕대학교 라이프융합학과 소개', sourceUrl: 'https://ipsi.uu.ac.kr/bbs/content.php?co_id=0407&sub_id=32',
-    note: '대학어디가는 광역계열로 표시하고 공식 학과 안내는 모듈형 교육과정을 설명하지만, 단일 계열 또는 입학 후 타 전공 선택 구조를 확정할 근거가 없어 미분류 유지',
+    note: '대학어디가는 광역계열로 표시하고 공식 학과 안내에서 무전공 입학 후 1학년 2학기부터 학생이 전공을 설계하는 구조를 명시',
   }],
 ]);
 

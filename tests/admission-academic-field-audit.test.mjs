@@ -88,7 +88,7 @@ test('모집단위별 공식 검증값은 원본·taxonomy보다 우선하고 �
   assert.equal(raw.academicField, 'other');
 });
 
-test('공식 자료로도 단일 계열을 확정할 수 없는 모집단위는 UNKNOWN으로 유지한다', () => {
+test('공식 자료에서 무전공 입학 후 전공 설계 구조가 확인된 모집단위는 자유전공/무전공으로 분류한다', () => {
   const normalized = normalizeAdmissionRecord({
     referenceYear: 2026,
     universityId: 'adiga-0000160',
@@ -96,9 +96,9 @@ test('공식 자료로도 단일 계열을 확정할 수 없는 모집단위는 
     department: '라이프융합학과',
     academicField: 'unknown',
   });
-  assert.equal(normalized.academicField, 'unknown');
-  assert.equal(normalized.academicFieldClassificationSource, 'official-review-unresolved');
-  assert.equal(getAdmissionAcademicFieldVerificationSummary().unresolvedDepartmentCount, 1);
+  assert.equal(normalized.academicField, 'open-major');
+  assert.equal(normalized.academicFieldClassificationSource, 'official-verification');
+  assert.equal(getAdmissionAcademicFieldVerificationSummary().unresolvedDepartmentCount, 0);
 });
 
 test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 대학 원인을 감사 상태와 분리한다', () => {
@@ -109,21 +109,21 @@ test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 �
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByExplicitField, 312);
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredByTaxonomy, 15162);
   assert.equal(dashboard.summary.quality.academicFieldInfo.inferredAsOpenMajor, 234);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.officiallyVerified, 545);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.officiallyReviewedUnresolved, 1);
-  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 1);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.officiallyVerified, 546);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.officiallyReviewedUnresolved, 0);
+  assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 0);
   assert.deepEqual(dashboard.summary.quality.academicFieldInfo.uniqueDepartments, {
-    officiallyVerified: 209,
+    officiallyVerified: 210,
     dataOrTaxonomyClassified: 5409,
-    unclassified: 1,
+    unclassified: 0,
   });
   assert.deepEqual(dashboard.summary.quality.academicFieldInfo.counts, {
     humanities: 6033,
     natural: 8966,
     arts: 1004,
-    'open-major': 255,
+    'open-major': 256,
     other: 0,
-    unknown: 1,
+    unknown: 0,
   });
   assert.deepEqual(dashboard.summary.quality.zeroResultInfo.byReason, {
     'source-review-needed': 1,
@@ -131,9 +131,7 @@ test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 �
     'official-not-published': 13,
   });
   assert.equal(dashboard.summary.quality.zeroResultInfo.total, 20);
-  assert.equal(dashboard.summary.quality.actionableCount, 2);
+  assert.equal(dashboard.summary.quality.actionableCount, 1);
   assert.equal(dashboard.warnings.filter((item) => item.type === '입결 0건' && item.severity === 'info').length, 19);
-  assert.deepEqual(dashboard.warnings.filter((item) => item.type === '계열 분류 불가').map((item) => [item.university, item.department]), [
-    ['위덕대학교', '라이프융합학과'],
-  ]);
+  assert.deepEqual(dashboard.warnings.filter((item) => item.type === '계열 분류 불가'), []);
 });
