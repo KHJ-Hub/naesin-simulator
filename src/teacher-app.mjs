@@ -1,6 +1,6 @@
-import { ACTIVE_ENTRY_YEAR, UNCONFIRMED_ENTRY_YEARS } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
-import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260928-official-entry-catalog1';
-import { catalogSupportForYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog1';
+import { ACTIVE_ENTRY_YEAR, UNCONFIRMED_ENTRY_YEARS } from './course-catalog.mjs?v=20260928-official-entry-catalog2';
+import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260928-official-entry-catalog2';
+import { catalogSupportForYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog2';
 
 const $ = (selector) => document.querySelector(selector);
 let courses = catalogCourses();

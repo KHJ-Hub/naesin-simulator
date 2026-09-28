@@ -27,6 +27,18 @@ test('2026 입학생 1학년 공통 과목과 반별 지정 과목을 구분한�
   assert.equal(commonCourses().some((item) => item.subjectName === '음악'), false);
   assert.equal(commonCourses(2026, 1).some((item) => item.subjectName === '음악'), true);
 });
+
+test('공식 학생 자율 과목 풀은 상위 학기에서 선택 가능하고 학기별 선택량은 별도 메타데이터로 보존한다', () => {
+  for (const entryYear of [2025, 2026]) {
+    for (const semesterId of ['2-1', '2-2', '3-1', '3-2']) {
+      const courses = coursesForSemester(semesterId, entryYear);
+      assert.ok(courses.some((course) => course.subjectName === '세포와 물질 대사' && course.selectionGroup === 'student-choice-pool'));
+      assert.ok(courses.some((course) => course.subjectName === '경제' && course.selectionGroup === 'student-choice-pool'));
+    }
+  }
+  assert.equal(coursesForSemester('2-1', 2025).some((course) => course.subjectName === '운동과 건강' && course.selectionGroup === 'student-choice-pool'), true);
+  assert.equal(coursesForSemester('2-1', 2026).some((course) => course.subjectName === '운동과 건강'), false);
+});
 test('성취도만 처리하는 과목을 구분한다', () => {
   const lab = coursesForSemester('1-1').find((item) => item.subjectName === '과학탐구실험1');
   assert.equal(lab.fiveLevelEligible, false);
@@ -63,4 +75,9 @@ test('성취도 전용 과목 레코드는 숫자 등급 없이 A/B/C 입력 구
   assert.equal(record.achievement, '');
   assert.equal(record.entryYear, 2026);
   assert.deepEqual(gradingInputs(record.gradingType), { grade: false, achievement: true, passfail: false });
+});
+
+test('선택 과목 레코드는 선택 풀 정보를 보존한다', () => {
+  const course = coursesForSemester('2-1', 2026).find((item) => item.subjectName === '경제');
+  assert.equal(recordFromCourse(course, 'selected-economics').selectionGroup, 'student-choice-pool');
 });

@@ -6,9 +6,9 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-official-entry-catalog1';
-import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
-import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog1';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-official-entry-catalog2';
+import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260928-official-entry-catalog2';
+import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog2';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-official-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
@@ -401,10 +401,12 @@ function gradeRowsHtml(semesterId) {
 function courseSelectionHtml(semesterId) {
   const context = studentCatalogContext();
   if (context.status !== 'supported') return '<p class="muted">이 입학생 연도는 과목별 상세입력을 아직 지원하지 않아요.</p>';
-  const used = new Set(activeDetailedRecords().filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
+  const allDetailed = activeDetailedRecords();
+  const used = new Set(allDetailed.filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
+  const usedChoiceSubjects = new Set(allDetailed.filter((record) => record.requirement === 'elective' && record.subjectName).map((record) => record.subjectName));
   const studentId = String(state.student?.studentId ?? '');
   const classNumber = /^\d{5}$/.test(studentId) ? Number(studentId.slice(1, 3)) : null;
-  const available = selectableCoursesForSemester(semesterId, context.entryYear, { classNumber }).filter((course) => !used.has(course.id));
+  const available = selectableCoursesForSemester(semesterId, context.entryYear, { classNumber }).filter((course) => !used.has(course.id) && !(course.duplicateSelectionWarning && usedChoiceSubjects.has(course.subjectName)));
   const firstGradeNote = semesterId.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택해 주세요.</p>' : '';
   return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
 }
@@ -1057,6 +1059,16 @@ semesterCards.addEventListener('click', (event) => {
     const context = studentCatalogContext();
     const course = context.status === 'supported' ? courseById(picker?.value, context.entryYear) : null;
     if (!course) { showToast('학교 개설 과목에서 선택해 주세요.', 'error'); return; }
+    if (course.selectionGroup === 'student-choice-pool') {
+      const limit = ENTRY_YEAR_CATALOG_METADATA[context.entryYear]?.studentChoiceCredits?.[semesterId] ?? null;
+      const selectedCredits = activeDetailedRecords()
+        .filter((record) => record.semesterId === semesterId && record.selectionGroup === 'student-choice-pool')
+        .reduce((sum, record) => sum + Number(record.credit || 0), 0);
+      if (Number.isFinite(limit) && selectedCredits + Number(course.credit || 0) > limit) {
+        showToast(`이 학기 학생 자율 선택은 최대 ${limit}학점까지 입력할 수 있어요.`, 'error');
+        return;
+      }
+    }
     records().push(recordFromCourse(course, makeId())); state.calculated = false; state.goalCalculated = false; saveState(); render();
     return;
   }

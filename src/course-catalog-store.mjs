@@ -1,4 +1,4 @@
-import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
+import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-official-entry-catalog2';
 
 export const CATALOG_STORAGE_KEY = 'naesin-course-catalog:v1';
 
