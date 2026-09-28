@@ -112,7 +112,7 @@ export function buildCurrentGradeModel(state = {}) {
     calculationBasis = '입력한 학기 평균을 학기별 동일 비중으로 계산';
   } else if (hasDetailed) {
     calculationBasis = weightedWithinSemester
-      ? '학기별 동일 비중 · 학기 안은 학점 가중 평균'
+      ? '학기별 동일 비중 · 과목별 학점 반영'
       : '학기별 동일 비중 · 학기 안은 과목 동일 비중 평균';
   }
 

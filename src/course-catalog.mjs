@@ -92,7 +92,8 @@ const UPPER_CHOICE_POOL = [
 const upperChoices = (entryYear, extraPool = []) => [2, 3].flatMap((grade) => [1, 2].flatMap((semester) => [...UPPER_CHOICE_POOL, ...extraPool].flatMap(([group, category, names, rule = 'five']) => elective(
   entryYear, grade, semester, group, category, names, rule, { selectionGroup: 'student-choice-pool', semesterAssignment: 'curriculum-choice-pool' },
 ))));
-const researchCourses = (entryYear, schedule) => schedule.map(([id, name, grade, semester, credit]) => make(entryYear, id, name, grade, semester, '교양', credit, 'fusion', 'elective', 'five', { selectionGroup: 'research-elective' }));
+/** 학교 R&E 연구 과목은 이수/미이수(P/F)로만 처리하며 내신 평균에는 반영하지 않는다. */
+const researchCourses = (entryYear, schedule) => schedule.map(([id, name, grade, semester, credit]) => make(entryYear, id, name, grade, semester, '교양', credit, 'fusion', 'elective', 'pass', { selectionGroup: 'research-elective' }));
 
 const build2026 = () => {
   const firstClasses = ['1', '2', '3']; const secondClasses = ['4', '5', '6'];

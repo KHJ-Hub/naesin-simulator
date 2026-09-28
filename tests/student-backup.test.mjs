@@ -19,6 +19,7 @@ function completeStudentState() {
       { id: 'korean', courseId: 'common-korean-1', semesterId: '1-1', subjectName: '공통국어1', subjectGroup: '국어', credit: 4, gradingType: 'grade', fiveLevelEligible: true, gradeValue: '2', achievement: '' },
       { id: 'math', courseId: 'common-math-1', semesterId: '1-1', subjectName: '공통수학1', subjectGroup: '수학', credit: 4, gradingType: 'grade', fiveLevelEligible: true, gradeValue: '3', achievement: '' },
       { id: 'music', courseId: 'music-1', semesterId: '1-1', subjectName: '음악', subjectGroup: '예술', credit: 2, gradingType: 'achievement', fiveLevelEligible: false, gradeValue: '', achievement: 'A' },
+      { id: 'research', courseId: 'research-basic', semesterId: '2-1', subjectName: '주제 탐구(R&E) 기초', subjectGroup: '교양', credit: 1, gradingType: 'passfail', achievementScale: 'pass', fiveLevelEligible: false, gradeValue: '', achievement: 'P' },
     ],
     quickAverages: { '1-2': 2.1 },
     inputModes: { '1-1': 'detailed', '1-2': 'quick' },
@@ -56,6 +57,7 @@ test('학생 정보·상세/성취도 성적·목표·관심 대학·입결 UI �
   const restored = parseStudentBackup(JSON.stringify(createStudentBackup(profile, '2026-09-17T00:00:00.000Z')));
   assert.deepEqual(restored.student, profile.student);
   assert.deepEqual(restored.actual, profile.actual);
+  assert.deepEqual(restored.actual.find((record) => record.id === 'research'), profile.actual.find((record) => record.id === 'research'));
   assert.deepEqual(restored.quickAverages, profile.quickAverages);
   assert.deepEqual(restored.inputModes, profile.inputModes);
   assert.equal(restored.targetAverage, profile.targetAverage);

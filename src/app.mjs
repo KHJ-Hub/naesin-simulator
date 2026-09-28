@@ -12,7 +12,7 @@ import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, r
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-official-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
-import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS } from './admission-filter-options.mjs?v=20260922-official-field1';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS, ADMISSION_SUPPORT_TYPE_LABELS } from './admission-filter-options.mjs?v=20260928-support-type1';
 import {
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
@@ -24,7 +24,7 @@ import {
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
-} from './admission-result-view.mjs?v=20260922-official-field1';
+} from './admission-result-view.mjs?v=20260928-support-type1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260921-security-audit1';
 import {
   MAX_ADMISSION_INTEREST_COMPARISONS,
@@ -80,7 +80,7 @@ const $ = (selector) => document.querySelector(selector);
 const fmt = (value) => Number.isFinite(value) ? value.toFixed(2) : '-';
 const schoolSettings = getSchoolSettings(localStorage);
 const admissionFilters = {
-  region: '', ownership: '', university: '', field: '', department: '', admissionName: '',
+  region: '', ownership: '', university: '', field: '', department: '', supportType: '',
   schoolRegion: schoolSettings.schoolRegion,
   schoolGender: schoolSettings.schoolGender,
 };
@@ -335,7 +335,7 @@ function setBackupBaseline({ completed = false } = {}) {
   renderBackupStatus({ completed });
 }
 
-const STUDENT_ADMISSION_FILTER_KEYS = ['region', 'ownership', 'university', 'field', 'department', 'admissionName'];
+const STUDENT_ADMISSION_FILTER_KEYS = ['region', 'ownership', 'university', 'field', 'department', 'supportType'];
 function collectStudentBackupUiState() {
   return {
     admissionViewMode,
@@ -682,7 +682,7 @@ function setAdmissionViewMode(mode) {
   if (normalized === admissionViewMode) return;
   closeDepartmentSuggestions();
   admissionViewMode = normalized;
-  Object.assign(admissionFilters, { region: '', ownership: '', university: '', field: '', department: '', admissionName: '' });
+  Object.assign(admissionFilters, { region: '', ownership: '', university: '', field: '', department: '', supportType: '' });
   resetAdmissionViewPaging();
 }
 function ensureAdmissionViewModeControls() {
@@ -758,14 +758,14 @@ function renderAdmissionFilterOptions() {
     ['ownership', 'admission-ownership', options.ownershipTypes, '전체', ADMISSION_OWNERSHIP_LABELS],
     ['university', 'admission-university', options.universities, '전체 대학'],
     ['field', 'admission-field', options.academicFields, '전체 계열', ADMISSION_ACADEMIC_FIELD_LABELS],
-    ['admissionName', 'admission-name', options.admissionNames, '전체 전형명'],
+    ['supportType', 'admission-support-type', options.supportTypes, '전체', ADMISSION_SUPPORT_TYPE_LABELS],
   ];
   configurations.forEach(([key, elementId, values, placeholder, labels]) => {
     const element = $(`#${elementId}`);
     if (!element) return;
     element.innerHTML = admissionOptions(values, placeholder, labels);
     element.value = admissionFilters[key];
-    element.disabled = !admissionViewMode || (key === 'admissionName' && values.length === 0);
+    element.disabled = !admissionViewMode || (key === 'supportType' && values.length === 0);
   });
   const departmentInput = $('#admission-department');
   departmentInput.value = admissionFilters.department;
@@ -1181,7 +1181,7 @@ $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculat
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
 document.querySelector('#admission-filters').addEventListener('change', async (event) => {
-  const map = { 'admission-region': 'region', 'admission-ownership': 'ownership', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-name': 'admissionName' };
+  const map = { 'admission-region': 'region', 'admission-ownership': 'ownership', 'admission-university': 'university', 'admission-field': 'field', 'admission-department': 'department', 'admission-support-type': 'supportType' };
   const key = map[event.target.id];
   if (!key) return;
   if (key === 'department') {
@@ -1516,7 +1516,7 @@ $('#reset-button').addEventListener('click', () => {
   admissionFilters.university = '';
   admissionFilters.field = '';
   admissionFilters.department = '';
-  admissionFilters.admissionName = '';
+  admissionFilters.supportType = '';
   admissionInterestComparisonOpen = false;
   admissionInterestComparisonSelection.clear();
   closeDepartmentSuggestions();

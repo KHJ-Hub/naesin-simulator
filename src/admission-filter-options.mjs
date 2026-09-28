@@ -53,6 +53,37 @@ export const ADMISSION_OWNERSHIP_LABELS = Object.freeze({
   private: '사립',
 });
 
+/** 학생이 실제 지원 조건을 기준으로 고를 수 있는 자격 유형 묶음이다. */
+export const ADMISSION_SUPPORT_TYPE_OPTIONS = Object.freeze([
+  'general',
+  'school-recommendation',
+  'regional',
+  'rural-opportunity',
+  'special',
+]);
+
+export const ADMISSION_SUPPORT_TYPE_LABELS = Object.freeze({
+  general: '일반',
+  'school-recommendation': '학교장추천',
+  regional: '지역인재',
+  'rural-opportunity': '농어촌·기회균형',
+  special: '기타 특별전형',
+});
+
+/** eligibilityType은 원본 전형명 추정이 아니라 정규화된 canonical 값만 사용한다. */
+export function admissionSupportTypeForEligibility(eligibilityType) {
+  if (eligibilityType === ADMISSION_ELIGIBILITY_TYPES.GENERAL) return 'general';
+  if (eligibilityType === ADMISSION_ELIGIBILITY_TYPES.SCHOOL_RECOMMENDATION) return 'school-recommendation';
+  if (eligibilityType === ADMISSION_ELIGIBILITY_TYPES.REGIONAL) return 'regional';
+  if ([ADMISSION_ELIGIBILITY_TYPES.RURAL, ADMISSION_ELIGIBILITY_TYPES.OPPORTUNITY].includes(eligibilityType)) return 'rural-opportunity';
+  if ([ADMISSION_ELIGIBILITY_TYPES.VOCATIONAL, ADMISSION_ELIGIBILITY_TYPES.SPECIAL].includes(eligibilityType)) return 'special';
+  return null;
+}
+
+export function admissionSupportTypeMatches(item = {}, supportType = '') {
+  return !supportType || admissionSupportTypeForEligibility(item.eligibilityType) === supportType;
+}
+
 const koSort = (left, right) => String(left).localeCompare(String(right), 'ko');
 const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort(koSort);
 const REGION_ALIASES = Object.freeze({
@@ -124,12 +155,22 @@ function normalizedEntry(record) {
 }
 
 function visibleRecords(data, filters = {}) {
+  const explicitSupportType = String(filters.supportType ?? '');
   return data
     .map(normalizedEntry)
     .filter((entry) => entry.valid)
     .map((entry) => entry.item)
     .filter((item) => genderConditionMatches(item, filters.schoolGender))
-    .filter((item) => filters.includeSpecialEligibility === true || isStudentVisibleAdmissionForSchool(item, { schoolRegion: filters.schoolRegion }));
+    .filter((item) => {
+      // 학생용 전체 결과에서는 미분류 전형도 원본 자료를 잃지 않게 유지한다.
+      // 다만 기존 관리자/상담용 원본 전형명 선택지는 종전처럼 미분류를 제외할 수 있다.
+      if (item.eligibilityType === ADMISSION_ELIGIBILITY_TYPES.UNKNOWN) {
+        return filters.hideUnknownEligibility !== true && !explicitSupportType;
+      }
+      if (filters.includeSpecialEligibility === true) return true;
+      if (explicitSupportType && item.eligibilityType !== ADMISSION_ELIGIBILITY_TYPES.REGIONAL) return true;
+      return isStudentVisibleAdmissionForSchool(item, { schoolRegion: filters.schoolRegion });
+    });
 }
 
 function matches(item, filters = {}, ignored = []) {
@@ -141,6 +182,7 @@ function matches(item, filters = {}, ignored = []) {
     && (skip.has('university') || !filters.university || item.university === filters.university)
     && (skip.has('academicField') || !academicField || academicFieldMatches(item, academicField))
     && (skip.has('department') || !filters.department || departmentMatchesSearch(item, filters.department))
+    && (skip.has('supportType') || admissionSupportTypeMatches(item, filters.supportType))
     && (skip.has('admissionName') || !filters.admissionName || item.admissionName === filters.admissionName)
     && (skip.has('admissionType') || !filters.admissionType || item.admissionType === filters.admissionType)
     && (skip.has('admissionCategory') || !filters.admissionCategory || item.admissionCategory === filters.admissionCategory)
@@ -284,8 +326,17 @@ export function isMeaningfulAdmissionNameOption(item = {}) {
 }
 
 export function getAvailableAdmissionNames(data, filters = {}) {
-  const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['admissionName']));
+  const records = visibleRecords(data, { ...filters, hideUnknownEligibility: true })
+    .filter((item) => matches(item, filters, ['admissionName']));
   return uniqueSorted(records.filter(isMeaningfulAdmissionNameOption).map((item) => String(item.admissionName).trim()));
+}
+
+/** 현재 조건에서 선택 가능한 canonical 지원 유형만 반환한다. unknown은 선택지로 만들지 않는다. */
+export function getAvailableAdmissionSupportTypes(data, filters = {}) {
+  const records = visibleRecords(data, { ...filters, includeSpecialEligibility: true, supportType: '' })
+    .filter((item) => matches(item, filters, ['supportType', 'admissionName']));
+  const present = new Set(records.map((item) => admissionSupportTypeForEligibility(item.eligibilityType)).filter(Boolean));
+  return ADMISSION_SUPPORT_TYPE_OPTIONS.filter((type) => present.has(type));
 }
 
 export function getAvailableAdmissionCategories(data, filters = {}) {
@@ -317,6 +368,7 @@ export function reconcileAdmissionFilters(data, filters = {}, universities = UNI
     university: String(filters.university ?? ''),
     field: String(selectedAcademicField(filters)),
     department: String(filters.department ?? ''),
+    supportType: String(filters.supportType ?? ''),
     admissionName: String(filters.admissionName ?? ''),
     admissionCategory: String(filters.admissionCategory ?? filters.category ?? ''),
     includeSpecialEligibility: filters.includeSpecialEligibility === true,
@@ -326,9 +378,10 @@ export function reconcileAdmissionFilters(data, filters = {}, universities = UNI
 
   if (next.region && !getAvailableRegions(data, next, universities).includes(next.region)) next.region = '';
   if (next.ownership && !getAvailableOwnershipTypes(universities).includes(next.ownership)) next.ownership = '';
-  if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', admissionName: '' }, universities).includes(next.university)) next.university = '';
-  if (next.field && !getAvailableAcademicFields(data, { ...next, department: '', admissionName: '' }).includes(next.field)) next.field = '';
-  if (next.department && !searchAvailableDepartments(data, { ...next, department: '', admissionName: '' }, next.department, { limit: 1 }).length) next.department = '';
+  if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', supportType: '', admissionName: '' }, universities).includes(next.university)) next.university = '';
+  if (next.field && !getAvailableAcademicFields(data, { ...next, department: '', supportType: '', admissionName: '' }).includes(next.field)) next.field = '';
+  if (next.department && !searchAvailableDepartments(data, { ...next, department: '', supportType: '', admissionName: '' }, next.department, { limit: 1 }).length) next.department = '';
+  if (next.supportType && !getAvailableAdmissionSupportTypes(data, next).includes(next.supportType)) next.supportType = '';
   if (next.admissionName && !getAvailableAdmissionNames(data, next).includes(next.admissionName)) next.admissionName = '';
   if (next.admissionCategory && !getAvailableAdmissionCategories(data, next).includes(next.admissionCategory)) next.admissionCategory = '';
   return next;

@@ -39,6 +39,15 @@ test('모든 학기 간편입력은 학기별 동일 비중으로 계산한다',
   assert.deepEqual(model.current.semesterRecords.map(({ credit }) => credit), [1, 1]);
 });
 
+test('상세입력 학점 가중 안내는 계산값을 바꾸지 않고 과목별 학점 반영으로 설명한다', () => {
+  const model = buildStudentGradeModels(state({ actual: [
+    course('1-1', 1, 2, 4),
+    course('1-1', 2, 4, 2),
+  ] }));
+  assert.equal(model.current.average, 2.67);
+  assert.equal(model.current.calculationBasis, '학기별 동일 비중 · 과목별 학점 반영');
+});
+
 test('모든 학기 상세입력은 학기 안에서만 학점 가중하고 학기끼리는 동일 비중으로 계산한다', () => {
   const actual = [course('1-1', 1, 1, 4), course('1-1', 2, 3, 2), course('1-2', 3, 4, 3)];
   const weighted = buildStudentGradeModels(state({ actual, weighted: true }));

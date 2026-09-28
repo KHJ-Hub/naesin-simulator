@@ -103,6 +103,23 @@ test('체육·예술 A/B/C 과목은 숫자값이 있어도 현재 내신 평균
   assert.equal(calculateOverallAverage([gradeRecord, achievementRecord], false), 2);
 });
 
+test('2025·2026 R&E 과목은 전수 P/F로 처리하고 숫자·A/B/C 입력 및 내신 평균에서 제외한다', () => {
+  const researchNames = new Set(['주제 탐구(R&E) 기초', '주제 탐구(R&E) 심화', '탐구 프로젝트(R&E) Ⅰ', '탐구 프로젝트(R&E) Ⅱ', '질문 기반 주제 탐구']);
+  const researchCourses = SCHOOL_COURSES.filter((course) => researchNames.has(course.subjectName));
+  assert.equal(researchCourses.filter((course) => course.entryYear === 2025).length, 3);
+  assert.equal(researchCourses.filter((course) => course.entryYear === 2026).length, 5);
+  for (const course of researchCourses) {
+    assert.equal(course.gradingType, 'passfail', `${course.entryYear} ${course.subjectName}`);
+    assert.equal(course.achievementScale, 'pass', `${course.entryYear} ${course.subjectName}`);
+    assert.equal(course.fiveLevelEligible, false, `${course.entryYear} ${course.subjectName}`);
+    assert.deepEqual(gradingInputs(course.gradingType), { grade: false, achievement: false, passfail: true });
+  }
+  const gradeRecord = { subjectName: '공통국어1', semesterId: '1-1', credit: 4, gradingType: 'grade', fiveLevelEligible: true, gradeValue: '2' };
+  const researchRecord = { ...recordFromCourse(researchCourses.find((course) => course.entryYear === 2026 && course.subjectName === '주제 탐구(R&E) 기초'), 'research'), achievement: 'P', gradeValue: '1' };
+  assert.equal(calculateOverallAverage([gradeRecord, researchRecord], true), 2);
+  assert.equal(calculateOverallAverage([gradeRecord, researchRecord], false), 2);
+});
+
 test('선택 과목 레코드는 선택 풀 정보를 보존한다', () => {
   const course = coursesForSemester('2-1', 2026).find((item) => item.subjectName === '경제');
   assert.equal(recordFromCourse(course, 'selected-economics').selectionGroup, 'student-choice-pool');

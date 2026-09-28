@@ -86,5 +86,10 @@ export function describeAdmissionDifference(difference) {
 }
 
 export function filterAdmissionReferences(data, filters = {}) {
-  return filterAdmissionRecords(data, filters);
+  // 이전 참조 API는 기본 화면과 달리 지원자격 미분류 자료를 기본 목록에서 숨겨 왔다.
+  // 학생용 새 지원 유형 필터는 filterAdmissionRecords를 직접 사용해 전체에서 unknown을 보존한다.
+  return filterAdmissionRecords(data, {
+    ...filters,
+    hideUnknownEligibility: filters.includeSpecialEligibility !== true,
+  });
 }

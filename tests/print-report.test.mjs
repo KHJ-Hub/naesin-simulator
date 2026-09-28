@@ -14,6 +14,7 @@ function baseState() {
       { id: 'korean', semesterId: '1-1', subjectName: '공통국어1', subjectGroup: '국어', credit: 4, gradeValue: 2, gradingType: 'grade' },
       { id: 'math', semesterId: '1-1', subjectName: '공통수학1', subjectGroup: '수학', credit: 4, gradeValue: 2, gradingType: 'grade' },
       { id: 'music', semesterId: '1-1', subjectName: '음악', subjectGroup: '기타', credit: 2, achievement: 'A', gradingType: 'achievement', fiveLevelEligible: false },
+      { id: 'research', semesterId: '2-1', subjectName: '주제 탐구(R&E) 기초', subjectGroup: '교양', credit: 1, achievement: 'P', gradingType: 'passfail', achievementScale: 'pass', fiveLevelEligible: false },
     ],
     admissionInterests: [
       {
@@ -159,6 +160,18 @@ test('기본 결과표는 과목별 상세표를 출력하지 않고 null 값을
   assert.match(html, /공개 입결/);
   assert.match(html, /원본 3\.40 · 70% cut/);
   assert.match(html, /현재 내신/);
+});
+
+test('R&E P/F 과목은 인쇄 부록에서 이수 여부로만 표시하고 내신 반영으로 표시하지 않는다', () => {
+  const model = buildPrintReportModel(baseState(), { remainingRecords, includeCourseAppendix: true });
+  const research = model.courseAppendix.rows.find((row) => row.subjectName === '주제 탐구(R&E) 기초');
+  assert.deepEqual(research, {
+    semesterId: '2-1', semesterLabel: '2학년 1학기', subjectName: '주제 탐구(R&E) 기초', subjectGroup: '교양', credit: 1,
+    gradeValue: null, achievement: 'P', includedInGradeAverage: false,
+  });
+  const html = renderPrintReport(model);
+  assert.match(html, /주제 탐구\(R&amp;E\) 기초/);
+  assert.match(html, /<td>P<\/td><td>미반영<\/td>/);
 });
 
 test('관심 대학 표는 학생 상담에 필요한 핵심 열만 출력하고 빈 전형 표는 만들지 않는다', () => {

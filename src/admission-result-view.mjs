@@ -2,13 +2,14 @@ import {
   filterAdmissionRecords,
   getAvailableAcademicFields,
   getAvailableAdmissionNames,
+  getAvailableAdmissionSupportTypes,
   getAvailableDepartments,
   getAvailableRegions,
   getAvailableOwnershipTypes,
   getAvailableUniversities,
   normalizeAdmissionRegion,
   searchAvailableDepartments,
-} from './admission-filter-options.mjs?v=20260922-official-field1';
+} from './admission-filter-options.mjs?v=20260928-support-type1';
 import {
   ADMISSION_CATEGORIES,
   isComparableAdmissionRecord,
@@ -202,7 +203,7 @@ function groupView(entries, limit, options = {}) {
 /** 선택된 최상위 모드 안에서만 종속 필터 선택지를 계산한다. */
 export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, filters = {} } = {}) {
   const admissionCategory = admissionCategoryForViewMode(admissionViewMode);
-  if (!admissionCategory) return Object.freeze({ regions: [], ownershipTypes: [], universities: [], academicFields: [], departments: [], departmentSuggestions: [], admissionNames: [] });
+  if (!admissionCategory) return Object.freeze({ regions: [], ownershipTypes: [], universities: [], academicFields: [], departments: [], departmentSuggestions: [], supportTypes: [], admissionNames: [] });
   const scopedFilters = { ...filters, admissionCategory };
   const visibility = {
     admissionCategory,
@@ -213,7 +214,7 @@ export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, 
   };
   const regions = getAvailableRegions(data, visibility);
   const departmentSuggestions = filters.department
-    ? searchAvailableDepartments(data, { ...scopedFilters, department: '', admissionName: '' }, filters.department, { limit: 30 })
+    ? searchAvailableDepartments(data, { ...scopedFilters, department: '', supportType: '', admissionName: '' }, filters.department, { limit: 30 })
     : [];
   return Object.freeze({
     regions: Object.freeze(regions),
@@ -222,6 +223,7 @@ export function getAdmissionViewFilterOptions(data, { admissionViewMode = null, 
     academicFields: Object.freeze(getAvailableAcademicFields(data, scopedFilters)),
     departments: Object.freeze(filters.university ? getAvailableDepartments(data, scopedFilters) : []),
     departmentSuggestions: Object.freeze(departmentSuggestions),
+    supportTypes: Object.freeze(getAvailableAdmissionSupportTypes(data, scopedFilters)),
     admissionNames: Object.freeze(getAvailableAdmissionNames(data, scopedFilters)),
   });
 }
@@ -233,12 +235,13 @@ export function reconcileAdmissionViewFilters(data, { admissionViewMode = null, 
     university: String(filters.university ?? ''),
     field: String(filters.field ?? filters.academicField ?? ''),
     department: String(filters.department ?? ''),
+    supportType: String(filters.supportType ?? ''),
     admissionName: String(filters.admissionName ?? ''),
     includeSpecialEligibility: filters.includeSpecialEligibility === true,
     schoolRegion: String(filters.schoolRegion ?? ''),
     schoolGender: String(filters.schoolGender ?? ''),
   };
-  if (!normalizeAdmissionViewMode(admissionViewMode)) return { ...next, region: '', ownership: '', university: '', field: '', department: '', admissionName: '' };
+  if (!normalizeAdmissionViewMode(admissionViewMode)) return { ...next, region: '', ownership: '', university: '', field: '', department: '', supportType: '', admissionName: '' };
   let options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
   if (next.region && !options.regions.includes(next.region)) next.region = '';
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
@@ -251,9 +254,12 @@ export function reconcileAdmissionViewFilters(data, { admissionViewMode = null, 
   if (next.department && !searchAvailableDepartments(data, {
     ...next,
     department: '',
+    supportType: '',
     admissionName: '',
     admissionCategory: admissionCategoryForViewMode(admissionViewMode),
   }, next.department, { limit: 1 }).length) next.department = '';
+  options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
+  if (next.supportType && !options.supportTypes.includes(next.supportType)) next.supportType = '';
   options = getAdmissionViewFilterOptions(data, { admissionViewMode, filters: next });
   if (next.admissionName && !options.admissionNames.includes(next.admissionName)) next.admissionName = '';
   return next;

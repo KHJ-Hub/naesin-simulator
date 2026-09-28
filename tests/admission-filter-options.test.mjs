@@ -1,12 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  ADMISSION_SUPPORT_TYPE_LABELS,
+  ADMISSION_SUPPORT_TYPE_OPTIONS,
+  admissionSupportTypeForEligibility,
   ADMISSION_REGION_ORDER,
   departmentSearchMetadata,
   filterAdmissionRecords,
   getAvailableAcademicFields,
   getAvailableAdmissionCategories,
   getAvailableAdmissionNames,
+  getAvailableAdmissionSupportTypes,
   getAvailableDepartments,
   getAvailableRegions,
   getAvailableUniversities,
@@ -242,6 +246,40 @@ test('전형명 선택지는 실제 admissionName만 중복 없이 사용한다'
     result({ admissionName: '별도전형', admissionType: '별도전형' }),
   ];
   assert.deepEqual(getAvailableAdmissionNames(records, { includeSpecialEligibility: true }), ['일반전형']);
+});
+
+test('지원 유형은 canonical eligibility를 기준으로 묶고 unknown은 전체 결과에는 유지하되 선택지에는 만들지 않는다', () => {
+  const records = [
+    result({ admissionName: '전형명에 일반이 없는 원본명', eligibilityType: 'general' }),
+    result({ admissionName: '추천 전형', eligibilityType: 'school-recommendation' }),
+    result({
+      admissionName: '지역 전형',
+      eligibilityType: 'regional',
+      regionalEligibility: {
+        verified: true,
+        eligibleSchoolRegions: ['부산광역시'],
+        sourceUrl: 'https://example.test/regional',
+      },
+    }),
+    result({ admissionName: '농어촌 전형', eligibilityType: 'rural' }),
+    result({ admissionName: '기회균형 전형', eligibilityType: 'opportunity' }),
+    result({ admissionName: '특성화고 전형', eligibilityType: 'vocational' }),
+    result({ admissionName: '특별 전형', eligibilityType: 'special' }),
+    result({ admissionName: '확인 전형', eligibilityType: 'unknown' }),
+  ];
+  assert.deepEqual(ADMISSION_SUPPORT_TYPE_OPTIONS, ['general', 'school-recommendation', 'regional', 'rural-opportunity', 'special']);
+  assert.equal(ADMISSION_SUPPORT_TYPE_LABELS['rural-opportunity'], '농어촌·기회균형');
+  assert.equal(admissionSupportTypeForEligibility('general'), 'general');
+  assert.equal(admissionSupportTypeForEligibility('rural'), 'rural-opportunity');
+  assert.equal(admissionSupportTypeForEligibility('opportunity'), 'rural-opportunity');
+  assert.equal(admissionSupportTypeForEligibility('vocational'), 'special');
+  assert.equal(admissionSupportTypeForEligibility('special'), 'special');
+  assert.equal(admissionSupportTypeForEligibility('unknown'), null);
+  assert.deepEqual(getAvailableAdmissionSupportTypes(records, { includeSpecialEligibility: true }), ADMISSION_SUPPORT_TYPE_OPTIONS);
+  assert.equal(filterAdmissionRecords(records, { supportType: 'general' }).length, 1);
+  assert.equal(filterAdmissionRecords(records, { supportType: 'rural-opportunity' }).length, 2);
+  assert.equal(filterAdmissionRecords(records, { supportType: 'special' }).length, 2);
+  assert.ok(filterAdmissionRecords(records, {}).some((item) => item.admissionName === '확인 전형'));
 });
 
 test('부산대학교 학종은 공식 하위 전형명을 선택지로 제공한다', () => {
