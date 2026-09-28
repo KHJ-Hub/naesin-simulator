@@ -34,6 +34,7 @@ import {
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
 import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260921-entry-year1';
+import { printStudentReport } from './print-ux.mjs?v=20260928-print-pdf1';
 import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
@@ -1524,7 +1525,11 @@ $('#reset-button').addEventListener('click', () => {
   setBackupBaseline();
   showToast('입력한 학생 데이터와 성적을 초기화했어요.');
 });
-$('#print-button').addEventListener('click', () => { renderPrintReport(); window.print(); });
+$('#print-button').addEventListener('click', () => {
+  renderPrintReport();
+  showToast("PDF가 필요하면 인쇄 화면에서 'PDF로 저장'을 선택해 주세요.");
+  window.requestAnimationFrame(() => window.setTimeout(() => printStudentReport({ student: state.student }), 0));
+});
 document.querySelector('.student-form').addEventListener('input', (event) => {
   if (!['student-id', 'student-name'].includes(event.target.id)) return;
   if (event.target.id === 'student-id') {

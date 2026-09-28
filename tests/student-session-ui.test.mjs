@@ -53,10 +53,21 @@ test('초기화는 학생·성적·목표·관심 대학을 포함한 세션 전
 });
 
 test('학생용 주요 버튼과 백업 문구만 유지한다', () => {
-  ['결과표 인쇄', '내 데이터 초기화', '내 데이터 백업', '백업 불러오기']
+  ['결과표 인쇄 · PDF 저장', '내 데이터 초기화', '내 데이터 백업', '백업 불러오기']
     .forEach((label) => assert.match(html, new RegExp(label)));
   assert.doesNotMatch(html, />JSON 내보내기</);
   assert.doesNotMatch(html, />JSON 불러오기</);
+});
+
+test('결과표 인쇄는 PDF 저장 안내와 임시 문서 제목만 사용하고 학생 상태를 저장하지 않는다', () => {
+  assert.match(html, /id="print-button"[^>]*>결과표 인쇄 · PDF 저장<\/button>/);
+  assert.match(app, /printStudentReport/);
+  assert.match(app, /PDF가 필요하면 인쇄 화면에서 'PDF로 저장'을 선택해 주세요\./);
+  const printHandler = app.match(/\$\('#print-button'\)\.addEventListener\('click', \(\) => \{([\s\S]*?)\n\}\);/);
+  assert.ok(printHandler);
+  assert.match(printHandler[1], /renderPrintReport\(\)/);
+  assert.doesNotMatch(printHandler[1], /saveState|refreshBackupDirtyState|setBackupBaseline/);
+  assert.match(styles, /@media \(max-width: 430px\)[\s\S]*?#print-button[\s\S]*?white-space: normal/);
 });
 
 test('공유용 브랜딩은 서비스명과 제작자 보조 문구를 분리한다', () => {

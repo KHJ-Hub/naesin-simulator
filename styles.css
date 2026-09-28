@@ -2657,6 +2657,14 @@ select {
   }
 }
 
+@media (max-width: 430px) {
+  .top-actions > #print-button {
+    padding-inline: 5px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+}
+
 
 /* Responsive hero type scale */
 .hero-grid h2 {

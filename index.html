@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
     <title>배정고 내신 설계 노트</title>
-    <link rel="stylesheet" href="./styles.css?v=20260928-backup-dirty1" />
+    <link rel="stylesheet" href="./styles.css?v=20260928-print-pdf1" />
   </head>
   <body>
     <main class="app-shell">
@@ -13,7 +13,7 @@
         <div class="brand"><span class="brand-icon" id="teacher-entry-trigger" role="button" tabindex="0" aria-label="배정고 내신 설계 노트">✨</span><div><h1>배정고 내신 설계 노트</h1><p class="eyebrow">현정T 제작 · 학생용 내신 시뮬레이터</p></div></div>
         <div class="header-controls">
           <a class="teacher-consult-link" href="./teacher-consult.html" hidden data-teacher-quick-mode-link aria-label="교사용 빠른 상담 모드로 이동">🧑‍🏫 교사용 빠른 상담</a>
-          <div class="top-actions"><button id="print-button" class="secondary-button">결과표 인쇄</button><button id="reset-button" class="quiet-button">내 데이터 초기화</button><span class="backup-action-stack"><button id="export-button" class="secondary-button">내 데이터 백업</button><span id="backup-status" class="backup-status" role="status" aria-live="polite" hidden></span></span><label class="secondary-button file-button">백업 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label></div>
+          <div class="top-actions"><button id="print-button" class="secondary-button" aria-label="결과표 인쇄 또는 PDF 저장">결과표 인쇄 · PDF 저장</button><button id="reset-button" class="quiet-button">내 데이터 초기화</button><span class="backup-action-stack"><button id="export-button" class="secondary-button">내 데이터 백업</button><span id="backup-status" class="backup-status" role="status" aria-live="polite" hidden></span></span><label class="secondary-button file-button">백업 불러오기<input id="import-input" type="file" accept="application/json,.json" hidden /></label></div>
         </div>
       </header>
 
@@ -89,6 +89,6 @@
     </dialog>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20260928-backup-dirty1"></script>
+    <script type="module" src="./src/app.mjs?v=20260928-print-pdf1"></script>
   </body>
 </html>
