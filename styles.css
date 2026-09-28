@@ -3133,6 +3133,54 @@ h3:not(.hero-grid h2),
   white-space: nowrap;
 }
 
+/* Backup status is runtime-only; it never stores student data in the browser. */
+.top-actions > .backup-action-stack {
+  display: grid;
+  min-width: 0;
+  order: 2;
+  grid-template-rows: minmax(46px, auto) auto;
+  gap: 3px;
+}
+
+.backup-action-stack > #export-button {
+  min-width: 0;
+  min-height: 46px !important;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.backup-status {
+  justify-self: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: var(--indigo-600);
+  background: var(--lavender-100);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.backup-status[data-state="dirty"] {
+  color: var(--teal-700);
+  background: var(--teal-100);
+}
+
+@media (max-width: 767px) {
+  .top-actions > .backup-action-stack {
+    grid-template-rows: minmax(44px, auto) auto;
+  }
+
+  .backup-action-stack > #export-button {
+    min-height: 44px !important;
+    padding: 8px 7px;
+    font-size: 13.5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .backup-action-stack > #export-button { font-size: 13px; }
+}
+
 .teacher-consult-link {
   display: inline-flex;
   grid-column: 2;

@@ -124,7 +124,7 @@ test('학생 앱은 덮어쓰기 확인 후 상태·입결 UI를 복원하고 �
   assert.match(app, /현재 입력 내용이 백업 파일의 내용으로 바뀌어요\. 불러올까요\?/);
   assert.match(app, /state = normalizeState\(imported\);/);
   assert.match(app, /restoreStudentBackupUiState\(imported\.admissionUi\);/);
-  assert.match(app, /render\(\); showToast\('백업 데이터를 불러왔어요\.'\)/);
+  assert.match(app, /render\(\);\s*setBackupBaseline\(\);\s*showToast\('백업 데이터를 불러왔어요\.'\)/);
   assert.match(app, /function render\(\)[\s\S]*?renderPrintReport\(\)/);
   assert.match(app, /gradeValue:[\s\S]*?Number\.isInteger\(grade\)[\s\S]*?grade >= 1 && grade <= 5/);
 });
