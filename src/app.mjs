@@ -6,9 +6,9 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260921-entry-year1';
-import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260921-entry-year1';
-import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260921-entry-year1';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-official-entry-catalog1';
+import { gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
+import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog1';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-official-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
@@ -389,8 +389,10 @@ function gradeRowsHtml(semesterId) {
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
       <div class="grade-fields">
-        ${gradingInputs(record.gradingType).grade ? `<label class="grade-input"><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : ''}
-        ${gradingInputs(record.gradingType).achievement || gradingInputs(record.gradingType).passfail ? `<label class="achievement-input"><span>${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} ${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
+        ${record.gradingType === 'unconfirmed' ? '<small class="muted">성적 처리 방식 확인이 필요해요. 이 과목은 학기 평균 간편입력으로 반영해 주세요.</small>' : `
+          ${gradingInputs(record.gradingType).grade ? `<label class="grade-input"><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : ''}
+          ${gradingInputs(record.gradingType).achievement || gradingInputs(record.gradingType).passfail ? `<label class="achievement-input"><span>${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} ${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
+        `}
       </div>
       ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger grade-delete" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
     </div>`).join('');

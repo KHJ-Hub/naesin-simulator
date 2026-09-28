@@ -1,6 +1,6 @@
-import { ACTIVE_ENTRY_YEAR } from './course-catalog.mjs?v=20260914-grading-types3';
-import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260914-teacher-store2';
-import { catalogSupportForYear } from './student-course-catalog.mjs?v=20260921-entry-year1';
+import { ACTIVE_ENTRY_YEAR, UNCONFIRMED_ENTRY_YEARS } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
+import { catalogCourses, upsertCatalogCourse, disableCatalogCourse, resetCatalogOverrides, sortCoursesForDisplay } from './course-catalog-store.mjs?v=20260928-official-entry-catalog1';
+import { catalogSupportForYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog1';
 
 const $ = (selector) => document.querySelector(selector);
 let courses = catalogCourses();
@@ -18,10 +18,10 @@ function semesterKey(grade, semester) { return `${grade}-${semester}`; }
 function yearCourses() { return courses.filter((course) => String(course.entryYear) === filters.year); }
 function matchesStatus(course) { return statusFilter === 'all' || (statusFilter === 'active' ? isActive(course) : !isActive(course)); }
 function renderFilters() {
-  const years = [...new Set([ACTIVE_ENTRY_YEAR, ...courses.map((course) => Number(course.entryYear))])].sort((a, b) => a - b);
+  const years = [...new Set([ACTIVE_ENTRY_YEAR, ...UNCONFIRMED_ENTRY_YEARS, ...courses.map((course) => Number(course.entryYear))])].sort((a, b) => a - b);
   $('#filter-year').innerHTML = years.map((year) => {
     const support = catalogSupportForYear(year, courses);
-    const label = support.studentSupported ? '학생 화면 지원 중' : support.hasCatalogData ? '과목 데이터 있음 · 학생 화면 미지원' : '과목 데이터 없음';
+    const label = UNCONFIRMED_ENTRY_YEARS.includes(year) ? '미확정 · 학생 화면 미사용' : support.studentSupported ? '학생 화면 지원 중' : support.hasCatalogData ? '과목 데이터 있음 · 학생 화면 미지원' : '과목 데이터 없음';
     return `<option value="${year}">${year}학년도 입학생 · ${label}</option>`;
   }).join('');
   $('#filter-year').value = filters.year;
@@ -33,7 +33,7 @@ function courseCard(course) {
   const studentVisibility = support.studentSupported
     ? (active ? '학생 화면 지원 중 · 개설 과목' : '학생 화면 지원 중 · 현재 미개설')
     : '과목 데이터 있음 · 학생 화면 미지원';
-  return `<article class="teacher-course-card ${active ? '' : 'is-inactive'}"><div class="teacher-course-main"><strong>${escapeHtml(course.subjectName)}</strong><div class="teacher-course-meta"><span>${escapeHtml(course.subjectGroup)}</span><span>${course.credit}학점</span><span>${gradingLabel(course.gradingType)}</span><span>${requirementLabel(course.requirement)}</span></div><small>${studentVisibility}</small></div><div class="teacher-course-actions"><span class="status-chip ${active ? '' : 'is-off'}">${active ? '개설 ON' : '개설 OFF'}</span><button class="quiet-button" data-edit="${escapeHtml(course.id)}">수정</button><button class="quiet-button" data-disable="${escapeHtml(course.id)}">${active ? '비활성화' : '활성화'}</button></div></article>`;
+  return `<article class="teacher-course-card ${active ? '' : 'is-inactive'}"><div class="teacher-course-main"><strong>${escapeHtml(course.subjectName)}</strong><div class="teacher-course-meta"><span>${escapeHtml(course.subjectGroup)}</span><span>${course.credit}학점</span><span>${gradingLabel(course.gradingType)}</span><span>${requirementLabel(course.requirement)}</span></div><small>${studentVisibility}</small></div><div class="teacher-course-actions"><span class="status-chip ${active ? '' : 'is-off'}">${active ? '개설 ON' : '개설 OFF'}</span><button class="quiet-button" data-edit="${escapeHtml(course.id)}" data-entry-year="${course.entryYear}">수정</button><button class="quiet-button" data-disable="${escapeHtml(course.id)}" data-entry-year="${course.entryYear}">${active ? '비활성화' : '활성화'}</button></div></article>`;
 }
 function renderBrowser() {
   const all = yearCourses();
@@ -84,10 +84,10 @@ $('#filter-year').addEventListener('change', (event) => { filters.year = event.t
 document.querySelector('.teacher-status-filter').addEventListener('click', (event) => { const button = event.target.closest('[data-status-filter]'); if (!button) return; statusFilter = button.dataset.statusFilter; renderFilters(); renderBrowser(); });
 $('#course-browser').addEventListener('toggle', (event) => { const details = event.target.closest('[data-semester]'); if (!details) return; if (details.open) openSemesters.add(details.dataset.semester); else openSemesters.delete(details.dataset.semester); }, true);
 $('#course-browser').addEventListener('click', (event) => {
-  const editId = event.target.dataset.edit; const disableId = event.target.dataset.disable; const addGrade = event.target.dataset.addGrade;
-  if (editId) { openEditor(courses.find((course) => course.id === editId)); return; }
+  const editId = event.target.dataset.edit; const disableId = event.target.dataset.disable; const addGrade = event.target.dataset.addGrade; const entryYear = Number(event.target.dataset.entryYear);
+  if (editId) { openEditor(courses.find((course) => course.id === editId && Number(course.entryYear) === entryYear)); return; }
   if (addGrade) { const key = semesterKey(addGrade, event.target.dataset.addSemester); openSemesters.add(key); openEditor(null, { grade: addGrade, semester: event.target.dataset.addSemester }); return; }
-  if (disableId) { const course = courses.find((item) => item.id === disableId); courses = course && !isActive(course) ? upsertCatalogCourse({ ...course, active: true, enabled: true }) : disableCatalogCourse(disableId); renderFilters(); renderBrowser(); toast(`${course?.subjectName ?? '과목'} 개설 상태를 변경했습니다.`); }
+  if (disableId) { const course = courses.find((item) => item.id === disableId && Number(item.entryYear) === entryYear); courses = course && !isActive(course) ? upsertCatalogCourse({ ...course, active: true, enabled: true }) : disableCatalogCourse(disableId, entryYear); renderFilters(); renderBrowser(); toast(`${course?.subjectName ?? '과목'} 개설 상태를 변경했습니다.`); }
 });
 $('#add-course').addEventListener('click', () => openEditor());
 $('#course-form').addEventListener('submit', (event) => { event.preventDefault(); const course = formCourse(); if (!course.subjectName || !course.subjectGroup || !course.entryYear || !course.credit) { toast('과목명·교과군·학점·연도를 확인해 주세요.'); return; } openSemesters.add(semesterKey(course.grade, course.semester)); courses = upsertCatalogCourse(course); filters.year = String(course.entryYear); renderFilters(); renderBrowser(); closeEditor(); toast('과목 정보를 저장했습니다.'); });

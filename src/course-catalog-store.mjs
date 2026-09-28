@@ -1,8 +1,9 @@
-import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260914-grading-types3';
+import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
 
 export const CATALOG_STORAGE_KEY = 'naesin-course-catalog:v1';
 
 function cloneCourses(courses) { return courses.map((course) => ({ ...course, classConditions: Array.isArray(course.classConditions) ? [...course.classConditions] : [] })); }
+const courseKey = (course) => `${Number(course?.entryYear)}:${course?.id}`;
 function validCourse(course) {
   return course && typeof course.id === 'string' && course.id && Number.isFinite(Number(course.entryYear)) && Number(course.grade) >= 1 && Number(course.grade) <= 3 && Number(course.semester) >= 1 && Number(course.semester) <= 2 && String(course.subjectName || '').trim() && Number(course.credit) > 0;
 }
@@ -11,8 +12,11 @@ function loadCourses() {
   try {
     const saved = JSON.parse(globalThis.localStorage?.getItem(CATALOG_STORAGE_KEY) || 'null');
     if (!Array.isArray(saved?.courses)) return defaults;
-    const byId = new Map(defaults.map((course) => [course.id, course]));
-    saved.courses.filter(validCourse).forEach((course) => byId.set(course.id, { ...byId.get(course.id), ...course, grade: Number(course.grade), semester: Number(course.semester), credit: Number(course.credit), active: course.active !== false, enabled: course.enabled !== false }));
+    const byId = new Map(defaults.map((course) => [courseKey(course), course]));
+    saved.courses.filter(validCourse).forEach((course) => {
+      const key = courseKey(course);
+      byId.set(key, { ...byId.get(key), ...course, grade: Number(course.grade), semester: Number(course.semester), credit: Number(course.credit), active: course.active !== false, enabled: course.enabled !== false });
+    });
     return [...byId.values()].sort((a, b) => (Number(a.entryYear) - Number(b.entryYear)) || (Number(a.displayOrder ?? 0) - Number(b.displayOrder ?? 0)) || a.subjectName.localeCompare(b.subjectName, 'ko'));
   } catch { return defaults; }
 }
@@ -77,6 +81,6 @@ export function saveCatalog(nextCourses) {
   globalThis.dispatchEvent?.(new CustomEvent('naesin-catalog-updated'));
   return catalogCourses();
 }
-export function upsertCatalogCourse(course) { return saveCatalog([...courses.filter((item) => item.id !== course.id), { ...course, semesterId: `${course.grade}-${course.semester}`, active: course.active !== false, enabled: course.enabled !== false }]); }
-export function disableCatalogCourse(id) { const course = catalogCourseById(id); return course ? saveCatalog(courses.map((item) => item.id === id ? { ...item, active: false, enabled: false } : item)) : catalogCourses(); }
+export function upsertCatalogCourse(course) { const key = courseKey(course); return saveCatalog([...courses.filter((item) => courseKey(item) !== key), { ...course, semesterId: `${course.grade}-${course.semester}`, active: course.active !== false, enabled: course.enabled !== false }]); }
+export function disableCatalogCourse(id, entryYear = null) { const course = catalogCourseById(id, entryYear); return course ? saveCatalog(courses.map((item) => item.id === id && (entryYear === null || Number(item.entryYear) === Number(entryYear)) ? { ...item, active: false, enabled: false } : item)) : catalogCourses(); }
 export function resetCatalogOverrides() { courses = cloneCourses(SCHOOL_COURSES); globalThis.localStorage?.removeItem(CATALOG_STORAGE_KEY); return catalogCourses(); }

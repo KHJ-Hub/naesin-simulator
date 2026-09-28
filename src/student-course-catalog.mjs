@@ -1,4 +1,4 @@
-import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs';
+import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-official-entry-catalog1';
 
 /**
  * 학생 화면에서 학번의 학년을 해석하는 기준 학년도다.
@@ -7,7 +7,7 @@ import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs';
 export const STUDENT_CATALOG_ACADEMIC_YEAR = 2026;
 
 /** 관리자에서 과목을 편집할 수 있는 연도와 학생 화면 지원 연도를 분리한다. */
-export const CONFIGURED_STUDENT_ENTRY_YEARS = Object.freeze([ACTIVE_ENTRY_YEAR]);
+export const CONFIGURED_STUDENT_ENTRY_YEARS = Object.freeze([2025, ACTIVE_ENTRY_YEAR]);
 
 const integerYear = (value) => {
   const year = Number(value);
