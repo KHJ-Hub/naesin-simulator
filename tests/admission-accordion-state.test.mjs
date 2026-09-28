@@ -50,6 +50,13 @@ test('대학은 10개씩, 대학 내부 모집단위는 5개씩 표시한다', (
   assert.equal(ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT, 5);
 });
 
+test('대학 소재지는 대학 metadata의 region을 보조정보로 표시하고 값이 없으면 라벨을 만들지 않는다', () => {
+  assert.match(appSource, /UNIVERSITY_BY_ID\[group\.universityId\] \?\? UNIVERSITY_BY_NAME\[group\.universityName\]/);
+  assert.match(appSource, /const universityRegion = String\(universityMetadata\?\.region \?\? ''\)\.trim\(\)/);
+  assert.match(appSource, /universityRegion \? `<span class="admission-university-location">대학 소재지: \$\{escapeHtml\(universityRegion\)\}<\/span>` : ''/);
+  assert.match(appSource, /<strong>\$\{escapeHtml\(group\.universityName\)\}<\/strong>\$\{universityLocation\}<span>\$\{group\.resultCount\}개 모집단위<\/span>/);
+});
+
 test('모집단위가 정확히 1개인 대학에만 단일 카드 레이아웃 클래스를 적용한다', () => {
   assert.match(appSource, /group\.resultCount === 1 \? ' is-single' : ''/);
   assert.match(appSource, /admission-university-results\$\{resultLayoutClass\}/);

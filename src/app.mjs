@@ -47,7 +47,7 @@ import {
   ADMISSION_UNIVERSITY_INITIAL_RESULT_COUNT,
   createAdmissionAccordionState,
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
-import { UNIVERSITY_BY_NAME } from './data/universities.mjs?v=20260919-readiness1';
+import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs?v=20260919-readiness1';
 import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20260921-security-audit1';
 import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20260928-backup-dirty1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
@@ -833,9 +833,12 @@ function renderAdmissionUniversityAccordion(group, comparison, groupKey) {
   const summary = admissionUniversitySummary(group);
   const closestText = summary.closestDifference == null ? '' : `<span>가장 가까운 차이 ${fmt(summary.closestDifference)}</span>`;
   const similarText = summary.similarCount ? `<span>비슷한 입결 ${summary.similarCount}개</span>` : '';
+  const universityMetadata = UNIVERSITY_BY_ID[group.universityId] ?? UNIVERSITY_BY_NAME[group.universityName];
+  const universityRegion = String(universityMetadata?.region ?? '').trim();
+  const universityLocation = universityRegion ? `<span class="admission-university-location">대학 소재지: ${escapeHtml(universityRegion)}</span>` : '';
   const isOpen = admissionOpenUniversityKeys.has(disclosureKey);
   const resultLayoutClass = group.resultCount === 1 ? ' is-single' : '';
-  return `<details class="admission-university" data-admission-university-accordion data-admission-university-key="${escapeHtml(disclosureKey)}"${isOpen ? ' open' : ''}><summary aria-expanded="${isOpen}"><div class="admission-university-title"><strong>${escapeHtml(group.universityName)}</strong><span>${group.resultCount}개 모집단위</span></div><div class="admission-university-meta">${closestText}${similarText}</div></summary><div class="admission-university-content"><div class="admission-university-results${resultLayoutClass}">${visibleResults.map((entry) => admissionResultCardWithinUniversity(entry, comparison, groupKey)).join('')}</div>${remainingCount ? `<button class="quiet-button admission-university-more" data-admission-university-load-more="${escapeHtml(disclosureKey)}">이 대학 모집단위 더 보기 (${remainingCount}개)</button>` : ''}</div></details>`;
+  return `<details class="admission-university" data-admission-university-accordion data-admission-university-key="${escapeHtml(disclosureKey)}"${isOpen ? ' open' : ''}><summary aria-expanded="${isOpen}"><div class="admission-university-title"><strong>${escapeHtml(group.universityName)}</strong>${universityLocation}<span>${group.resultCount}개 모집단위</span></div><div class="admission-university-meta">${closestText}${similarText}</div></summary><div class="admission-university-content"><div class="admission-university-results${resultLayoutClass}">${visibleResults.map((entry) => admissionResultCardWithinUniversity(entry, comparison, groupKey)).join('')}</div>${remainingCount ? `<button class="quiet-button admission-university-more" data-admission-university-load-more="${escapeHtml(disclosureKey)}">이 대학 모집단위 더 보기 (${remainingCount}개)</button>` : ''}</div></details>`;
 }
 function createAdmissionUniversityGroupView(entries = []) {
   return {
