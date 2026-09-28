@@ -23,6 +23,22 @@ const rules = {
   // 편성표에는 성적 처리 방식이 적히지 않은 신규 과목에만 사용한다. 값을 추정하지 않는다.
   unconfirmed: ['unconfirmed', false, false, 'unconfirmed'],
 };
+const OFFICIAL_ACHIEVEMENT_ONLY_GROUPS = new Set(['체육', '예술']);
+/**
+ * 2022 개정 교육과정의 보통교과 체육·예술 교과(군)는 A/B/C 성취도로 처리한다.
+ * 교양 및 다른 교과군에는 이 규칙을 적용하지 않는다.
+ */
+export function normalizeOfficialCourseGrading(course = {}) {
+  if (!OFFICIAL_CURRICULUM_SOURCES[Number(course.entryYear)] || !OFFICIAL_ACHIEVEMENT_ONLY_GROUPS.has(String(course.subjectGroup ?? '').trim())) return course;
+  return {
+    ...course,
+    gradingType: 'achievement',
+    fiveLevelEligible: false,
+    achievementOnly: true,
+    achievementScale: 'a-c',
+    gradingSource: '2022-revised-curriculum-achievement-a-c',
+  };
+}
 const make = (entryYear, id, subjectName, grade, semester, subjectGroup, credit, curriculumCategory, requirement = 'elective', rule = 'five', extra = {}) => {
   const [gradingType, fiveLevelEligible, achievementOnly, achievementScale] = rules[rule];
   return { id, entryYear, subjectName, grade, semester, semesterId: `${grade}-${semester}`, subjectGroup, credit, curriculumCategory, requirement, gradingType, fiveLevelEligible, achievementOnly, achievementScale, availability: requirement === 'elective' ? 'planned' : 'school-designated', classConditions: [], duplicateSelectionWarning: false, autoGenerate: false, source: OFFICIAL_CURRICULUM_SOURCES[entryYear], ...extra };
@@ -93,15 +109,15 @@ const build2025 = () => {
   return [
     ...FIRST_GRADE_CORE(2025), ...firstGradeClassCourses(2025, firstClasses, secondClasses),
     designated(2025, 'sports-culture', '스포츠 문화', 2, 1, '체육', 1, 'career', 'ac'), designated(2025, 'sports-science', '스포츠 과학', 2, 2, '체육', 1, 'career', 'ac'), designated(2025, 'sports-life-1', '스포츠 생활1', 3, 1, '체육', 3, 'fusion', 'ac'), designated(2025, 'sports-life-2', '스포츠 생활2', 3, 2, '체육', 2, 'fusion', 'ac'),
-    designated(2025, 'music-appreciation', '음악 감상과 비평', 3, 1, '예술', 2, 'career', 'unconfirmed', { gradingSource: 'curriculum-plan-unconfirmed' }), designated(2025, 'music-culture', '음악과 문화', 3, 2, '예술', 2, 'career', 'unconfirmed', { gradingSource: 'curriculum-plan-unconfirmed' }),
+    designated(2025, 'music-appreciation', '음악 감상과 비평', 3, 1, '예술', 2, 'career', 'ac'), designated(2025, 'music-culture', '음악과 문화', 3, 2, '예술', 2, 'career', 'ac'),
     designated(2025, 'ecology', '생태와 환경', 3, 2, '교양', 3, 'general', 'pass'), designated(2025, 'psychology', '인간과 심리', 3, 2, '교양', 3, 'career', 'pass'),
     designated(2025, 'art-create-a', '미술 창작', 2, 1, '예술', 2, 'career', 'ac', { classConditions: firstClasses }), designated(2025, 'music-create-a', '음악 연주와 창작', 2, 1, '예술', 2, 'career', 'ac', { classConditions: secondClasses }), designated(2025, 'music-create-b', '음악 연주와 창작', 2, 2, '예술', 2, 'career', 'ac', { classConditions: firstClasses }), designated(2025, 'art-create-b', '미술 창작', 2, 2, '예술', 2, 'career', 'ac', { classConditions: secondClasses }),
     designated(2025, 'japanese-a', '일본어', 2, 1, '제2외국어', 3, 'general', 'five', { classConditions: firstClasses, selectionGroup: 'second-language' }), designated(2025, 'chinese-a', '중국어', 2, 1, '제2외국어', 3, 'general', 'five', { classConditions: firstClasses, selectionGroup: 'second-language' }), designated(2025, 'japanese-b', '일본어', 2, 2, '제2외국어', 3, 'general', 'five', { classConditions: secondClasses, selectionGroup: 'second-language' }), designated(2025, 'chinese-b', '중국어', 2, 2, '제2외국어', 3, 'general', 'five', { classConditions: secondClasses, selectionGroup: 'second-language' }), designated(2025, 'info-a', '정보', 2, 1, '정보', 3, 'general', 'five', { classConditions: secondClasses }), designated(2025, 'info-b', '정보', 2, 2, '정보', 3, 'general', 'five', { classConditions: firstClasses }),
-    ...upperChoices(2025, [['체육', 'career', ['운동과 건강', '스포츠 경기 체력']]]), ...researchCourses(2025, [['research-basic', '주제 탐구(R&E) 기초', 2, 1, 1], ['research-advanced', '주제 탐구(R&E) 심화', 2, 2, 1], ['research-question', '질문 기반 주제 탐구', 3, 1, 2]]),
+    ...upperChoices(2025, [['체육', 'career', ['운동과 건강', '스포츠 경기 체력'], 'ac']]), ...researchCourses(2025, [['research-basic', '주제 탐구(R&E) 기초', 2, 1, 1], ['research-advanced', '주제 탐구(R&E) 심화', 2, 2, 1], ['research-question', '질문 기반 주제 탐구', 3, 1, 2]]),
   ];
 };
 
-export const SCHOOL_COURSES = [...build2025(), ...build2026()].map((item, displayOrder) => ({ ...item, active: item.active !== false, enabled: item.enabled !== false, displayOrder, duplicateSelectionWarning: item.requirement === 'elective' })).sort((a, b) => a.displayOrder - b.displayOrder);
+export const SCHOOL_COURSES = [...build2025(), ...build2026()].map((item, displayOrder) => normalizeOfficialCourseGrading({ ...item, active: item.active !== false, enabled: item.enabled !== false, displayOrder, duplicateSelectionWarning: item.requirement === 'elective' })).sort((a, b) => a.displayOrder - b.displayOrder);
 
 export const coursesForSemester = (semesterId, entryYear = ACTIVE_ENTRY_YEAR) => SCHOOL_COURSES.filter((course) => course.entryYear === entryYear && course.semesterId === semesterId);
 export const commonCourses = (entryYear = ACTIVE_ENTRY_YEAR, classNumber = null) => SCHOOL_COURSES.filter((course) => course.entryYear === entryYear && course.autoGenerate && (!course.classConditions.length || course.classConditions.includes(String(classNumber))));

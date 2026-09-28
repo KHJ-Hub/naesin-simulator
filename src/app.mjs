@@ -6,9 +6,9 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-official-entry-catalog2';
-import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260928-official-entry-catalog2';
-import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-official-entry-catalog2';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-achievement-pe-arts1';
+import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260928-achievement-pe-arts1';
+import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-achievement-pe-arts1';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-official-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';

@@ -1,8 +1,8 @@
-import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-official-entry-catalog2';
+import { ACTIVE_ENTRY_YEAR, normalizeOfficialCourseGrading, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-achievement-pe-arts1';
 
 export const CATALOG_STORAGE_KEY = 'naesin-course-catalog:v1';
 
-function cloneCourses(courses) { return courses.map((course) => ({ ...course, classConditions: Array.isArray(course.classConditions) ? [...course.classConditions] : [] })); }
+function cloneCourses(courses) { return courses.map((course) => normalizeOfficialCourseGrading({ ...course, classConditions: Array.isArray(course.classConditions) ? [...course.classConditions] : [] })); }
 const courseKey = (course) => `${Number(course?.entryYear)}:${course?.id}`;
 function validCourse(course) {
   return course && typeof course.id === 'string' && course.id && Number.isFinite(Number(course.entryYear)) && Number(course.grade) >= 1 && Number(course.grade) <= 3 && Number(course.semester) >= 1 && Number(course.semester) <= 2 && String(course.subjectName || '').trim() && Number(course.credit) > 0;

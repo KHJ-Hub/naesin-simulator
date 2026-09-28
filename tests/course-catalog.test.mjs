@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ENTRY_YEAR_CATALOG_METADATA, OFFICIAL_CURRICULUM_SOURCES, SCHOOL_COURSES, commonCourses, coursesForSemester, gradingInputs, recordFromCourse } from '../src/course-catalog.mjs';
+import { calculateOverallAverage } from '../src/grade-calculator.mjs';
 
 test('2025·2026 카탈로그는 공식 편성표 출처를 각각 보존하고 2027 학생용 과목은 등록하지 않는다', () => {
   assert.equal(OFFICIAL_CURRICULUM_SOURCES[2025].sourceDate, '2026-09-03');
@@ -75,6 +76,31 @@ test('성취도 전용 과목 레코드는 숫자 등급 없이 A/B/C 입력 구
   assert.equal(record.achievement, '');
   assert.equal(record.entryYear, 2026);
   assert.deepEqual(gradingInputs(record.gradingType), { grade: false, achievement: true, passfail: false });
+});
+
+test('2025·2026 보통교과 체육·예술 교과군은 전수 A/B/C 성취도로 처리한다', () => {
+  const byYear = new Map([[2025, 0], [2026, 0]]);
+  const bodyAndArts = SCHOOL_COURSES.filter((course) => ['체육', '예술'].includes(course.subjectGroup));
+  for (const course of bodyAndArts) {
+    byYear.set(course.entryYear, byYear.get(course.entryYear) + 1);
+    assert.equal(course.gradingType, 'achievement', `${course.entryYear} ${course.semesterId} ${course.subjectName}`);
+    assert.equal(course.achievementScale, 'a-c', `${course.entryYear} ${course.semesterId} ${course.subjectName}`);
+    assert.equal(course.fiveLevelEligible, false, `${course.entryYear} ${course.semesterId} ${course.subjectName}`);
+    assert.equal(course.achievementOnly, true, `${course.entryYear} ${course.semesterId} ${course.subjectName}`);
+  }
+  assert.equal(byYear.get(2025), 24);
+  assert.equal(byYear.get(2026), 14);
+  for (const subjectName of ['체육1', '체육2', '스포츠 생활1', '스포츠 생활2', '스포츠 문화', '스포츠 과학', '운동과 건강', '스포츠 경기 체력', '음악', '음악 연주와 창작', '음악 감상과 비평', '음악과 문화', '미술', '미술 창작']) {
+    assert.ok(bodyAndArts.some((course) => course.subjectName === subjectName), `${subjectName}이 카탈로그에 있어야 해요.`);
+  }
+});
+
+test('체육·예술 A/B/C 과목은 숫자값이 있어도 현재 내신 평균에서 제외한다', () => {
+  const gradeRecord = { subjectName: '공통국어1', semesterId: '1-1', credit: 4, gradingType: 'grade', fiveLevelEligible: true, gradeValue: '2' };
+  const sport = coursesForSemester('2-1', 2025).find((course) => course.subjectName === '운동과 건강');
+  const achievementRecord = { ...recordFromCourse(sport, 'exercise'), achievement: 'A', gradeValue: '1' };
+  assert.equal(calculateOverallAverage([gradeRecord, achievementRecord], true), 2);
+  assert.equal(calculateOverallAverage([gradeRecord, achievementRecord], false), 2);
 });
 
 test('선택 과목 레코드는 선택 풀 정보를 보존한다', () => {

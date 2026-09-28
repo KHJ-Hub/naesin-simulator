@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { achievementCoursesForSemester, catalogCourses, coursesForSemester, commonCourses, isGradeInputCourse, selectableCoursesForSemester, sortCoursesForDisplay } from '../src/course-catalog-store.mjs';
+import { achievementCoursesForSemester, catalogCourseById, catalogCourses, coursesForSemester, commonCourses, isGradeInputCourse, resetCatalogOverrides, selectableCoursesForSemester, sortCoursesForDisplay, upsertCatalogCourse } from '../src/course-catalog-store.mjs';
 
 test('카탈로그 기본 항목은 개설 상태와 표시 순서를 가진다', () => {
   const courses = catalogCourses();
@@ -73,4 +73,17 @@ test('1학년만 교과군 우선순위로 정렬하고 2·3학년 원본 순서
     { grade: 3, subjectGroup: '수학', displayOrder: 2 },
   ]);
   assert.deepEqual(upperGrades.map((course) => course.subjectGroup), ['과학', '국어', '수학']);
+});
+
+test('관리자 저장값도 2025·2026 체육·예술 과목의 A/B/C 성취도 규칙을 되돌리지 못한다', () => {
+  const original = catalogCourseById('2-1-운동과 건강', 2025);
+  try {
+    upsertCatalogCourse({ ...original, gradingType: 'grade', fiveLevelEligible: true, achievementOnly: false, achievementScale: 'none' });
+    const saved = catalogCourseById('2-1-운동과 건강', 2025);
+    assert.equal(saved.gradingType, 'achievement');
+    assert.equal(saved.achievementScale, 'a-c');
+    assert.equal(saved.fiveLevelEligible, false);
+  } finally {
+    resetCatalogOverrides();
+  }
 });

@@ -1,4 +1,4 @@
-import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-official-entry-catalog2';
+import { ACTIVE_ENTRY_YEAR, SCHOOL_COURSES } from './course-catalog.mjs?v=20260928-achievement-pe-arts1';
 
 /**
  * 학생 화면에서 학번의 학년을 해석하는 기준 학년도다.
