@@ -3172,20 +3172,26 @@ h3:not(.hero-grid h2),
   color: var(--lavender-500);
 }
 
+.top-actions > .backup-action-stack > #export-button {
+  gap: 6px;
+}
+
+.backup-button-label {
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .backup-status {
-  position: absolute;
-  top: -7px;
-  right: -4px;
-  z-index: 1;
+  flex: 0 0 auto;
   pointer-events: none;
   white-space: nowrap;
-  padding: 1px 7px;
+  padding: 2px 7px;
   border-radius: 999px;
   color: var(--indigo-600);
   background: var(--lavender-100);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .backup-status[data-state="dirty"] {

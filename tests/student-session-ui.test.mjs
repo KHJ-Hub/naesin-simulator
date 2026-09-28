@@ -20,7 +20,7 @@ test('자동저장과 수동 백업 안내를 안전 안내 카드 한 곳에 �
 });
 
 test('학생 데이터 변경은 백업 상태로만 알리고 저장소에 쓰지 않으며 이탈 시에만 경고한다', () => {
-  assert.match(html, /id="backup-status"[^>]*aria-live="polite"/);
+  assert.match(html, /class="backup-button-label">내 데이터 백업<\/span><span id="backup-status"[^>]*aria-live="polite"/);
   assert.match(app, /createStudentBackupFingerprint/);
   assert.match(app, /function setBackupBaseline/);
   assert.match(app, /window\.addEventListener\('beforeunload', handleStudentBeforeUnload\)/);
@@ -29,7 +29,7 @@ test('학생 데이터 변경은 백업 상태로만 알리고 저장소에 쓰�
   assert.match(app, /백업 파일을 만들지 못했어요\. 다시 시도해 주세요\./);
   assert.match(styles, /\.backup-status\s*\{/);
   assert.match(styles, /\.top-actions > \.backup-action-stack\s*\{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 2;/);
-  assert.match(styles, /\.backup-status\s*\{[\s\S]*?position: absolute;[\s\S]*?top: -7px;/);
+  assert.match(styles, /\.backup-status\s*\{[\s\S]*?flex: 0 0 auto;[\s\S]*?font-size: 11\.5px;/);
   assert.match(styles, /\.top-actions > \.backup-action-stack > #export-button,\s*\.top-actions > \.file-button\s*\{[\s\S]*?height: 46px;[\s\S]*?padding: 8px 10px;[\s\S]*?text-align: center;/);
 });
 
