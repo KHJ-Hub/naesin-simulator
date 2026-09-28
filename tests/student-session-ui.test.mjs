@@ -29,7 +29,8 @@ test('학생 데이터 변경은 백업 상태로만 알리고 저장소에 쓰�
   assert.match(app, /백업 파일을 만들지 못했어요\. 다시 시도해 주세요\./);
   assert.match(styles, /\.backup-status\s*\{/);
   assert.match(styles, /\.top-actions > \.backup-action-stack\s*\{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 2;/);
-  assert.match(styles, /\.backup-status\s*\{[\s\S]*?position: absolute;[\s\S]*?top: 50%;/);
+  assert.match(styles, /\.backup-status\s*\{[\s\S]*?position: absolute;[\s\S]*?top: -7px;/);
+  assert.match(styles, /\.top-actions > \.backup-action-stack > #export-button,\s*\.top-actions > \.file-button\s*\{[\s\S]*?height: 46px;[\s\S]*?padding: 8px 10px;[\s\S]*?text-align: center;/);
 });
 
 test('학생 화면은 학번과 이름만 받고 다중 프로필 조작 UI를 만들지 않는다', () => {
