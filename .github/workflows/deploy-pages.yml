@@ -34,6 +34,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html teacher.html teacher-consult.html styles.css _site/
+          cp favicon.ico favicon-32x32.png favicon-64x64.png apple-touch-icon.png _site/
           cp -R src _site/src
       - uses: actions/upload-pages-artifact@v3
         with:

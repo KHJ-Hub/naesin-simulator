@@ -19,3 +19,8 @@ test('학생·관리자·빠른상담 페이지는 GitHub Pages 하위 경로에
     assert.match(html, /rel="apple-touch-icon" sizes="180x180" href="\.\/apple-touch-icon\.png\?v=20260928-favicon2"/);
   }
 });
+
+test('GitHub Pages 배포 산출물에는 모든 favicon 파일을 포함한다', async () => {
+  const workflow = await readFile(new URL('../.github/workflows/deploy-pages.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /cp favicon\.ico favicon-32x32\.png favicon-64x64\.png apple-touch-icon\.png _site\//);
+});
