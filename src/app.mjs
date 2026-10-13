@@ -637,9 +637,11 @@ function gradeScaleBandsHtml(scale) {
   const segments = Array.from({ length: scale.scale }, (_, index) => `<span class="grade-position-band" aria-label="${index + 1}등급"><b>${index + 1}</b><small>등급</small></span>`).join('');
   const columns = scale.bandPercentages.map((percentage) => `${percentage}fr`).join(' ');
   const bands = `<div class="grade-position-bands" data-scale="${scale.scale}" style="--grade-band-columns:${columns}">${segments}</div>`;
-  const boundaries = [0, ...scale.cumulativePercentages];
+  const boundaries = scale.cumulativePercentages.slice(0, -1);
   const axis = boundaries.map((percentage) => `<span style="--grade-boundary:${percentage}%">${percentage}%</span>`).join('');
-  return `<div class="grade-position-scale-row" data-scale="${scale.scale}">${bands}<div class="grade-position-percent-axis" aria-label="${scale.scale}등급제 구간 누적 기준">${axis}</div></div>`;
+  const axisPosition = scale.scale === 5 ? 'is-top' : 'is-bottom';
+  const percentageAxis = `<div class="grade-position-percent-axis ${axisPosition}" aria-label="${scale.scale}등급제 구간 누적 기준">${axis}</div>`;
+  return `<div class="grade-position-scale-row" data-scale="${scale.scale}">${scale.scale === 5 ? `${percentageAxis}${bands}` : `${bands}${percentageAxis}`}</div>`;
 }
 function gradePositionComparisonHtml(model) {
   return `<div class="grade-position-comparison" role="img" aria-label="현재 5등급제 평균 ${fmt(model.grade5)}등급과 9등급제 환산 참고 약 ${fmt(model.grade9)}등급의 등급 환산상 대략적인 위치를 보여줘요. 실제 석차 백분위가 아니에요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot" style="--grade-position:${model.markerPosition}%"><i class="grade-position-shared-marker" aria-hidden="true"><b>환산 위치</b></i>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>등급 환산 기준 위치</span><span>낮은 등급</span></p>`;

@@ -58,22 +58,25 @@ test('학생 화면은 두 등급 행을 관통하는 공통 마커 하나만 �
   assert.equal(appSource.includes('grade-position-common-axis'), false);
   assert.equal(appSource.includes('grade-position-marker'), false);
   assert.match(appSource, /grade-position-percent-axis/);
-  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 134px/);
-  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-position-shared-marker \{ height: 130px/);
+  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 90px/);
+  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-position-shared-marker \{ height: 86px/);
   assert.match(styles, /@media \(max-width: 380px\)[\s\S]*?\.grade-position-comparison/);
 });
 
-test('학생 화면은 5등급과 9등급의 누적 경계를 각 막대 아래에 따로 표시한다', async () => {
+test('학생 화면은 5등급 경계를 막대 위, 9등급 경계를 막대 아래에 표시한다', async () => {
   const [appSource, styles] = await Promise.all([
     readFile(new URL('../src/app.mjs', import.meta.url), 'utf8'),
     readFile(new URL('../styles.css', import.meta.url), 'utf8'),
   ]);
   const positionSection = appSource.slice(appSource.indexOf('function gradeScaleBandsHtml'), appSource.indexOf('function renderSubjectSummary'));
   assert.doesNotMatch(positionSection, /공통 누적 위치|누적비율|상위\s*\$?\{?[^<]*%/);
-  assert.match(positionSection, /\[0, \.\.\.scale\.cumulativePercentages\]/);
+  assert.match(positionSection, /scale\.cumulativePercentages\.slice\(0, -1\)/);
   assert.match(positionSection, /\$\{scale\.scale\}등급제 구간 누적 기준/);
-  assert.doesNotMatch(positionSection, /scale\.scale !== 5/);
-  assert.match(styles, /grade-position-scale-row\[data-scale="9"\][\s\S]*?nth-child\(even\)/);
+  assert.match(positionSection, /scale\.scale === 5 \? 'is-top' : 'is-bottom'/);
+  assert.match(positionSection, /scale\.scale === 5 \? `\$\{percentageAxis\}\$\{bands\}` : `\$\{bands\}\$\{percentageAxis\}`/);
+  assert.match(styles, /grade-position-percent-axis\.is-top[\s\S]*?margin-bottom/);
+  assert.match(styles, /@media \(max-width: 430px\)[\s\S]*?grade-position-percent-axis\.is-bottom span:nth-child\(even\)/);
+  assert.doesNotMatch(styles.slice(styles.indexOf('.grade-position-percent-axis.is-bottom'), styles.indexOf('@media (max-width: 767px)')), /nth-child\(even\)/);
   assert.match(positionSection, /실제 석차 백분위가 아니에요/);
   assert.match(positionSection, /실제 석차 백분위가 아닌 등급 환산 기준의 대략적인 위치예요/);
   assert.match(positionSection, /현재 5등급제 평균/);
