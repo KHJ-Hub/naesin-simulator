@@ -59,6 +59,9 @@ test('학생 화면은 두 등급 행을 관통하는 공통 마커 하나만 �
   assert.equal(appSource.includes('grade-position-marker'), false);
   assert.match(appSource, /grade-position-percent-axis/);
   assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 90px/);
+  assert.match(appSource, /<b>현재 위치<\/b>/);
+  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?background: #d9482f/);
+  assert.match(styles, /\.grade-position-shared-marker::before[\s\S]*?\.grade-position-shared-marker::after/);
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-position-shared-marker \{ height: 86px/);
   assert.match(styles, /@media \(max-width: 380px\)[\s\S]*?\.grade-position-comparison/);
 });

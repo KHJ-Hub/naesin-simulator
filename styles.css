@@ -3885,27 +3885,28 @@ h3:not(.hero-grid h2),
   color: #fff;
   line-height: 1;
   text-align: center;
+  text-shadow: 0 1px 2px rgba(15, 24, 63, .52);
 }
 
 .grade-position-band:last-child { border-right: 0; }
 .grade-position-band b { font-size: clamp(.75rem, 1.15vw, .9rem); }
 .grade-position-band small { font-size: .58rem; font-weight: 800; }
 
-.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(1) { background: #4936a3; }
-.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(2) { background: #5355bc; }
-.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(3) { background: #3c78bd; }
-.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(4) { background: #1f8799; }
-.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(5) { background: #65b4a7; color: #12383c; }
+.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(1) { background: #45309b; }
+.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(2) { background: #4c4eb0; }
+.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(3) { background: #3372b4; }
+.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(4) { background: #168594; }
+.grade-position-bands[data-scale="5"] .grade-position-band:nth-child(5) { background: #19786f; }
 
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(1) { background: #44309a; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(2) { background: #4c40aa; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(3) { background: #5051b7; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(4) { background: #4867bd; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(5) { background: #397dbb; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(6) { background: #258da8; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(7) { background: #299d9f; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(8) { background: #55b3a7; color: #12383c; }
-.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(9) { background: #83c7b6; color: #12383c; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(1) { background: #412b93; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(2) { background: #493ca4; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(3) { background: #4b4caf; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(4) { background: #435fb2; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(5) { background: #3473b1; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(6) { background: #2385a1; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(7) { background: #168d90; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(8) { background: #177f77; }
+.grade-position-bands[data-scale="9"] .grade-position-band:nth-child(9) { background: #1a7065; }
 .grade-position-bands[data-scale="9"] .grade-position-band {
   flex-direction: column;
   gap: 0;
@@ -3947,13 +3948,30 @@ h3:not(.hero-grid h2),
   z-index: 2;
   top: 46px;
   left: clamp(8px, var(--grade-position), calc(100% - 8px));
-  width: 4px;
+  width: 6px;
   height: 90px;
   border-radius: 99px;
-  background: #0d747d;
-  box-shadow: 0 0 0 3px rgba(255,255,255,.92), 0 2px 8px rgba(13,116,125,.35);
+  background: #d9482f;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.96), 0 0 0 5px rgba(217,72,47,.22), 0 3px 10px rgba(122,39,27,.34);
   transform: translateX(-50%);
 }
+
+.grade-position-shared-marker::before,
+.grade-position-shared-marker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #d9482f;
+  box-shadow: 0 0 0 2px rgba(217,72,47,.32);
+  transform: translate(-50%, -50%);
+}
+
+.grade-position-shared-marker::before { top: 23px; }
+.grade-position-shared-marker::after { bottom: 21px; transform: translate(-50%, 50%); }
 
 .grade-position-scale-caption {
   display: flex;
@@ -3973,12 +3991,13 @@ h3:not(.hero-grid h2),
   bottom: calc(100% + 16px);
   padding: 3px 7px;
   border-radius: 999px;
-  background: #0d747d;
+  background: #d9482f;
   color: #fff;
   font-size: .66rem;
   font-style: normal;
   line-height: 1.3;
   white-space: nowrap;
+  box-shadow: 0 2px 7px rgba(122,39,27,.28);
   transform: translateX(-50%);
 }
 
