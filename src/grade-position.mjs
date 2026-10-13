@@ -15,20 +15,17 @@ export const GRADE_POSITION_SCALES = Object.freeze({
 
 /**
  * 차트 안에서 마커를 배치하기 위한 0~100 시각 좌표다.
- * 등급 구간 중심 사이를 보간하며 실제 석차 백분위나 학생의 누적분포 추정값이 아니다.
+ * 현재 5등급 값이 속한 등급 구간 안에서만 보간하며 실제 석차 백분위나
+ * 학생의 누적분포 추정값이 아니다.
  */
 function visualMarkerPosition(value, scale) {
   const number = Number(value);
   if (!Number.isFinite(number) || number < 1 || number > scale.scale) return null;
-  const centers = scale.cumulativePercentages.map((upper, index) => {
-    const lower = index === 0 ? 0 : scale.cumulativePercentages[index - 1];
-    return (lower + upper) / 2;
-  });
-  const lowerGradeIndex = Math.floor(number) - 1;
-  const upperGradeIndex = Math.min(Math.ceil(number) - 1, centers.length - 1);
-  if (lowerGradeIndex === upperGradeIndex) return centers[lowerGradeIndex];
-  const fraction = number - Math.floor(number);
-  return Number((centers[lowerGradeIndex] + ((centers[upperGradeIndex] - centers[lowerGradeIndex]) * fraction)).toFixed(2));
+  const gradeIndex = Math.min(Math.floor(number), scale.scale) - 1;
+  const lower = gradeIndex === 0 ? 0 : scale.cumulativePercentages[gradeIndex - 1];
+  const upper = scale.cumulativePercentages[gradeIndex];
+  const fraction = number === scale.scale ? 1 : number - Math.floor(number);
+  return Number((lower + ((upper - lower) * fraction)).toFixed(2));
 }
 
 export function buildGradePositionModel(currentGrade) {

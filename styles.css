@@ -3843,7 +3843,7 @@ h3:not(.hero-grid h2),
 
 .grade-position-row-labels {
   display: grid;
-  grid-template-rows: 42px 42px;
+  grid-template-rows: 58px 66px;
   gap: 10px;
   align-items: center;
   padding-top: 28px;
@@ -3857,7 +3857,7 @@ h3:not(.hero-grid h2),
 .grade-position-plot {
   position: relative;
   display: grid;
-  grid-template-rows: 42px 42px;
+  grid-template-rows: 58px 66px;
   gap: 10px;
   min-width: 0;
   padding-top: 28px;
@@ -3912,13 +3912,40 @@ h3:not(.hero-grid h2),
 
 .grade-position-bands[data-scale="9"] .grade-position-band small { display: none; }
 
+.grade-position-scale-row { min-width: 0; }
+
+.grade-position-percent-axis {
+  position: relative;
+  height: 14px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .58rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.grade-position-percent-axis span {
+  position: absolute;
+  z-index: 3;
+  left: var(--grade-boundary);
+  padding-inline: 1px;
+  background: #fbfcff;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.grade-position-percent-axis span:first-child { transform: none; }
+.grade-position-percent-axis span:last-child { transform: translateX(-100%); }
+.grade-position-scale-row[data-scale="9"] .grade-position-percent-axis { height: 22px; }
+.grade-position-scale-row[data-scale="9"] .grade-position-percent-axis span:nth-child(even) { top: 10px; }
+
 .grade-position-shared-marker {
   position: absolute;
   z-index: 2;
   top: 24px;
   left: clamp(8px, var(--grade-position), calc(100% - 8px));
   width: 4px;
-  height: 94px;
+  height: 134px;
   border-radius: 99px;
   background: #0d747d;
   box-shadow: 0 0 0 3px rgba(255,255,255,.92), 0 2px 8px rgba(13,116,125,.35);
@@ -3970,8 +3997,8 @@ h3:not(.hero-grid h2),
   .grade-position-comparison { grid-template-columns: 48px minmax(0, 1fr); padding-inline: 9px; }
   .grade-position-bands { height: 40px; }
   .grade-position-row-labels,
-  .grade-position-plot { grid-template-rows: 40px 40px; }
-  .grade-position-shared-marker { height: 90px; }
+  .grade-position-plot { grid-template-rows: 56px 64px; }
+  .grade-position-shared-marker { height: 130px; }
   .grade-position-scale-caption { margin-left: calc(48px + 17px); }
   .grade-position-note br { display: none; }
 }
@@ -3981,6 +4008,7 @@ h3:not(.hero-grid h2),
   .grade-position-comparison { grid-template-columns: 43px minmax(0, 1fr); gap: 6px; }
   .grade-position-row-labels strong { font-size: .68rem; }
   .grade-position-shared-marker b { font-size: .62rem; }
+  .grade-position-percent-axis { font-size: .52rem; }
   .grade-position-scale-caption { margin-left: 49px; font-size: .58rem; }
 }
 
