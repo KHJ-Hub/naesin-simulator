@@ -60,6 +60,8 @@ test('학생 화면은 두 등급 행을 관통하는 공통 마커 하나만 �
   assert.match(appSource, /grade-position-percent-axis/);
   assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 90px/);
   assert.match(appSource, /<b>현재 위치<\/b>/);
+  assert.match(styles, /\.grade-position-comparison \{[\s\S]*?font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif/);
+  assert.match(styles, /\.grade-position-band b \{[\s\S]*?font-weight: 700;[\s\S]*?letter-spacing: -\.02em/);
   assert.match(styles, /\.grade-position-shared-marker[\s\S]*?width: 4px[\s\S]*?background: #332978/);
   assert.doesNotMatch(styles, /\.grade-position-shared-marker::before/);
   assert.doesNotMatch(styles, /\.grade-position-shared-marker::after/);

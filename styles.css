@@ -3839,6 +3839,7 @@ h3:not(.hero-grid h2),
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fbfcff;
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
 }
 
 .grade-position-row-labels {
@@ -3889,7 +3890,7 @@ h3:not(.hero-grid h2),
 }
 
 .grade-position-band:last-child { border-right: 0; }
-.grade-position-band b { font-size: clamp(.75rem, 1.15vw, .9rem); }
+.grade-position-band b { font-size: clamp(.75rem, 1.15vw, .9rem); font-weight: 700; letter-spacing: -.02em; }
 .grade-position-band small { font-size: .58rem; font-weight: 800; }
 
 .grade-position-bands[data-scale="5"] .grade-position-band:nth-child(1) { background: #cbb9f3; }
