@@ -58,15 +58,15 @@ test('학생 화면은 두 등급 행을 관통하는 공통 마커 하나만 �
   assert.equal(appSource.includes('grade-position-common-axis'), false);
   assert.equal(appSource.includes('grade-position-marker'), false);
   assert.match(appSource, /grade-position-percent-axis/);
-  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 90px/);
+  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 102px/);
   assert.match(appSource, /<b>현재 위치<\/b>/);
   assert.match(styles, /\.grade-position-comparison \{[\s\S]*?font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif/);
   assert.match(styles, /\.grade-position-band b \{[\s\S]*?font-weight: 700;[\s\S]*?letter-spacing: -\.02em/);
-  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?width: 4px[\s\S]*?background: #332978/);
-  assert.doesNotMatch(styles, /\.grade-position-shared-marker::before/);
+  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?width: 3px[\s\S]*?background: #332978/);
+  assert.match(styles, /\.grade-position-shared-marker::before[\s\S]*?width: 22px[\s\S]*?background: rgba\(92, 82, 177, \.13\)/);
   assert.doesNotMatch(styles, /\.grade-position-shared-marker::after/);
   assert.match(styles, /\.grade-position-shared-marker b::after[\s\S]*?border-top-color: #332978/);
-  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-position-shared-marker \{ height: 86px/);
+  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-position-shared-marker \{ height: 94px/);
   assert.match(styles, /@media \(max-width: 380px\)[\s\S]*?\.grade-position-comparison/);
 });
 
@@ -82,11 +82,10 @@ test('학생 화면은 5등급 경계를 막대 위, 9등급 경계를 막대 �
   assert.match(positionSection, /scale\.scale === 5 \? 'is-top' : 'is-bottom'/);
   assert.match(positionSection, /scale\.scale === 5 \? `\$\{percentageAxis\}\$\{bands\}` : `\$\{bands\}\$\{percentageAxis\}`/);
   assert.match(styles, /grade-position-percent-axis\.is-top[\s\S]*?margin-bottom/);
-  assert.match(styles, /\.grade-position-percent-axis \{[\s\S]*?font-size: \.64rem;[\s\S]*?font-weight: 750/);
+  assert.match(styles, /\.grade-position-percent-axis \{[\s\S]*?font-size: \.62rem;[\s\S]*?font-weight: 700/);
   assert.match(styles, /\.grade-position-bands\[data-scale="5"\][\s\S]*?#cbb9f3[\s\S]*?#afe5cc/);
   assert.match(styles, /\.grade-position-bands\[data-scale="9"\][\s\S]*?#cbb9f3[\s\S]*?#afe5cc/);
-  assert.match(styles, /@media \(max-width: 430px\)[\s\S]*?grade-position-percent-axis\.is-bottom span:nth-child\(even\)/);
-  assert.doesNotMatch(styles.slice(styles.indexOf('.grade-position-percent-axis.is-bottom'), styles.indexOf('@media (max-width: 767px)')), /nth-child\(even\)/);
+  assert.doesNotMatch(styles, /grade-position-percent-axis\.is-bottom span:nth-child\(even\)/);
   assert.match(positionSection, /실제 석차 백분위가 아니에요/);
   assert.match(positionSection, /실제 석차 백분위가 아닌 등급 환산 기준의 대략적인 위치예요/);
   assert.match(positionSection, /현재 5등급제 평균/);

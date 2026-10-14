@@ -3798,7 +3798,7 @@ h3:not(.hero-grid h2),
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .grade-position-values > div {
@@ -3832,20 +3832,20 @@ h3:not(.hero-grid h2),
 
 .grade-position-comparison {
   display: grid;
-  grid-template-columns: minmax(52px, 64px) minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: minmax(48px, 56px) minmax(0, 1fr);
+  gap: 6px;
   min-width: 0;
-  padding: 12px;
+  padding: 14px 10px 12px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fbfcff;
+  background: linear-gradient(180deg, #fdfdff 0%, #f8fbff 100%);
   font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
 }
 
 .grade-position-row-labels {
   display: grid;
-  grid-template-rows: 58px 58px;
-  gap: 4px;
+  grid-template-rows: 64px 64px;
+  gap: 2px;
   align-items: center;
   padding-top: 32px;
   color: var(--muted);
@@ -3860,8 +3860,8 @@ h3:not(.hero-grid h2),
 .grade-position-plot {
   position: relative;
   display: grid;
-  grid-template-rows: 58px 58px;
-  gap: 4px;
+  grid-template-rows: 64px 64px;
+  gap: 2px;
   min-width: 0;
   padding-top: 32px;
 }
@@ -3869,9 +3869,9 @@ h3:not(.hero-grid h2),
 .grade-position-bands {
   display: grid;
   grid-template-columns: var(--grade-band-columns);
-  height: 42px;
+  height: 48px;
   overflow: hidden;
-  border: 1px solid rgba(88, 70, 145, .2);
+  border: 1px solid rgba(75, 75, 135, .22);
   border-radius: 10px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
 }
@@ -3890,8 +3890,8 @@ h3:not(.hero-grid h2),
 }
 
 .grade-position-band:last-child { border-right: 0; }
-.grade-position-band b { font-size: clamp(.75rem, 1.15vw, .9rem); font-weight: 700; letter-spacing: -.02em; }
-.grade-position-band small { font-size: .58rem; font-weight: 800; }
+.grade-position-band b { font-size: clamp(.78rem, 1.15vw, .92rem); font-weight: 700; letter-spacing: -.02em; }
+.grade-position-band small { font-size: .6rem; font-weight: 700; }
 
 .grade-position-bands[data-scale="5"] .grade-position-band:nth-child(1) { background: #cbb9f3; }
 .grade-position-bands[data-scale="5"] .grade-position-band:nth-child(2) { background: #b8c4f2; }
@@ -3926,9 +3926,10 @@ h3:not(.hero-grid h2),
   position: relative;
   height: 14px;
   color: #596276;
-  font-size: .64rem;
-  font-weight: 750;
+  font-size: .62rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
   line-height: 1;
 }
 
@@ -3945,16 +3946,44 @@ h3:not(.hero-grid h2),
 .grade-position-percent-axis.is-top { margin-bottom: 2px; }
 .grade-position-percent-axis.is-bottom { margin-top: 2px; }
 
+.grade-position-percent-axis.is-top span::after,
+.grade-position-percent-axis.is-bottom span::before {
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  height: 4px;
+  background: #aab2c3;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.grade-position-percent-axis.is-top span::after { top: calc(100% + 1px); }
+.grade-position-percent-axis.is-bottom span::before { bottom: calc(100% + 1px); }
+
 .grade-position-shared-marker {
   position: absolute;
   z-index: 2;
   top: 46px;
   left: clamp(8px, var(--grade-position), calc(100% - 8px));
-  width: 4px;
-  height: 90px;
+  width: 3px;
+  height: 102px;
   border-radius: 99px;
   background: #332978;
-  box-shadow: 0 0 0 2px rgba(255,255,255,.96), 0 2px 5px rgba(38,31,91,.28);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.94), 0 2px 5px rgba(38,31,91,.24);
+  transform: translateX(-50%);
+}
+
+.grade-position-shared-marker::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 50%;
+  width: 22px;
+  height: 100%;
+  border-inline: 1px solid rgba(76, 66, 153, .14);
+  border-radius: 6px;
+  background: rgba(92, 82, 177, .13);
+  content: "";
   transform: translateX(-50%);
 }
 
@@ -3962,7 +3991,7 @@ h3:not(.hero-grid h2),
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin: 7px 0 0 calc(64px + 20px);
+  margin: 6px 0 0 calc(56px + 16px);
   color: var(--muted);
   font-size: .64rem;
   line-height: 1.3;
@@ -4011,31 +4040,29 @@ h3:not(.hero-grid h2),
 
 @media (max-width: 767px) {
   .flow-column { margin-top: 0; gap: 16px; }
-  .grade-position-values { margin-bottom: 16px; }
+  .grade-position-values { margin-bottom: 13px; }
   .grade-position-values > div { padding: 9px 10px; }
-  .grade-position-comparison { grid-template-columns: 48px minmax(0, 1fr); padding-inline: 9px; }
-  .grade-position-bands { height: 40px; }
+  .grade-position-comparison { grid-template-columns: 44px minmax(0, 1fr); gap: 5px; padding: 13px 8px 11px; }
+  .grade-position-bands { height: 44px; }
   .grade-position-row-labels,
-  .grade-position-plot { grid-template-rows: 56px 56px; }
-  .grade-position-shared-marker { height: 86px; }
-  .grade-position-scale-caption { margin-left: calc(48px + 17px); }
+  .grade-position-plot { grid-template-rows: 60px 60px; gap: 2px; }
+  .grade-position-shared-marker { height: 94px; }
+  .grade-position-scale-caption { margin-left: calc(44px + 13px); }
   .grade-position-note br { display: none; }
 }
 
 @media (max-width: 380px) {
   .grade-position-values { grid-template-columns: 1fr; }
-  .grade-position-comparison { grid-template-columns: 43px minmax(0, 1fr); gap: 6px; }
+  .grade-position-comparison { grid-template-columns: 41px minmax(0, 1fr); gap: 4px; padding-inline: 7px; }
   .grade-position-row-labels strong { font-size: .68rem; }
   .grade-position-shared-marker b { font-size: .62rem; }
-  .grade-position-percent-axis { font-size: .58rem; }
-  .grade-position-scale-caption { margin-left: 49px; font-size: .58rem; }
+  .grade-position-percent-axis { font-size: .54rem; }
+  .grade-position-scale-caption { margin-left: 48px; font-size: .58rem; }
+  .grade-position-bands[data-scale="9"] .grade-position-band:is(:first-child, :nth-child(2), :nth-child(8), :last-child) b { font-size: .68rem; }
 }
 
 @media (max-width: 430px) {
-  .grade-position-plot,
-  .grade-position-row-labels { grid-template-rows: 56px 62px; }
-  .grade-position-percent-axis.is-bottom { height: 20px; }
-  .grade-position-percent-axis.is-bottom span:nth-child(even) { top: 9px; }
+  .grade-position-percent-axis { font-size: .57rem; }
 }
 
 /* Teacher quick consultation: compact session-only workflow using the shared design system. */
