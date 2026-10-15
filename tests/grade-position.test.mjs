@@ -100,6 +100,15 @@ test('학생 화면은 5등급 경계를 막대 위, 9등급 경계를 막대 �
   assert.match(positionSection, /9등급제 환산 참고/);
 });
 
+test('과목별 실제 석차 참고값은 선택 입력이며 누적 비율 막대에만 별도 표시한다', async () => {
+  const appSource = await readFile(new URL('../src/app.mjs', import.meta.url), 'utf8');
+  assert.match(appSource, /data-course-rank="courseRank"/);
+  assert.match(appSource, /data-course-rank="courseRankTotal"/);
+  assert.match(appSource, /course-relative-band-marker/);
+  assert.match(appSource, /과목별 상대 위치 ·/);
+  assert.match(appSource, /학교 전체 석차나 대학의 공식 백분위가 아니에요/);
+});
+
 test('등급 위치 시각화는 인쇄 결과표에 추가하지 않는다', async () => {
   const printSource = await readFile(new URL('../src/print-report.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(printSource, /grade-position|내 위치와 등급 구간 비교|누적 비율 구간/);

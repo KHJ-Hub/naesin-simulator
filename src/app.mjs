@@ -7,7 +7,7 @@ import {
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
 import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-achievement-pe-arts1';
-import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20260928-achievement-pe-arts1';
+import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20261016-course-rank1';
 import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-achievement-pe-arts1';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-official-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
@@ -33,7 +33,7 @@ import {
   reconcileAdmissionInterestComparisonSelection,
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
-import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261016-rank-reference1';
+import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261016-course-rank1';
 import { printStudentReport } from './print-ux.mjs?v=20260928-print-pdf1';
 import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
@@ -49,10 +49,11 @@ import {
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs?v=20260919-readiness1';
 import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20261016-rank-reference1';
-import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20261016-rank-reference1';
+import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20261016-course-rank1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-comparison2';
 import { buildStudentRankReference, normalizeStudentRankReference } from './student-rank-reference.mjs?v=20261016-rank-reference1';
+import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -189,6 +190,8 @@ function studentCatalogContext(student = state?.student) {
   return resolveEntryYear(student, { supportedEntryYears: getSupportedEntryYears(catalogCourses()) });
 }
 function normalizeRecord(record = {}) {
+  const courseRank = String(record.courseRank ?? '').trim().slice(0, 12);
+  const courseRankTotal = String(record.courseRankTotal ?? '').trim().slice(0, 12);
   const configured = courseById(record.courseId, record.entryYear ?? null) ?? courseById(record.courseId);
   if (configured) {
     const normalized = recordFromCourse(configured, normalizeBackupRecordId(record.id, makeId()));
@@ -199,6 +202,8 @@ function normalizeRecord(record = {}) {
       credit: Number.isFinite(credit) && credit > 0 && credit <= 30 ? credit : normalized.credit,
       gradeValue: ['grade', 'both'].includes(normalized.gradingType) && Number.isInteger(grade) && grade >= 1 && grade <= 5 ? String(grade) : '',
       achievement: allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '',
+      courseRank,
+      courseRankTotal,
     };
   }
   const gradingType = ['grade', 'achievement', 'passfail', 'both'].includes(record.gradingType) ? record.gradingType : 'grade';
@@ -221,6 +226,8 @@ function normalizeRecord(record = {}) {
     fiveLevelEligible: ['grade', 'both'].includes(gradingType) && record.fiveLevelEligible !== false,
     achievementOnly: gradingType === 'achievement',
     achievementScale,
+    courseRank,
+    courseRankTotal,
   };
   normalized.achievement = allowedAchievements(normalized).includes(record.achievement) ? record.achievement : '';
   return normalized;
@@ -371,6 +378,7 @@ function hasCurrentStudentInput() {
     || state.targetAverage
     || state.rankReference?.rank
     || state.rankReference?.total
+    || state.actual.some((record) => record.courseRank || record.courseRankTotal)
     || state.admissionInterests.length
     || Object.keys(state.quickAverages ?? {}).length
     || state.actual.some((record) => record.gradeValue || record.achievement || (record.courseId && !defaultCourseIds.has(record.courseId)))
@@ -464,10 +472,19 @@ function gradeRowsHtml(semesterId) {
         ${record.gradingType === 'unconfirmed' ? '<small class="muted">성적 처리 방식 확인이 필요해요. 이 과목은 학기 평균 간편입력으로 반영해 주세요.</small>' : `
           ${gradingInputs(record.gradingType).grade ? `<label class="grade-input"><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : ''}
           ${gradingInputs(record.gradingType).achievement || gradingInputs(record.gradingType).passfail ? `<label class="achievement-input"><span>${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} ${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
+          ${gradingInputs(record.gradingType).grade && record.fiveLevelEligible !== false ? courseRankInputsHtml(record) : ''}
         `}
       </div>
       ${record.requirement === 'common' ? '<span class="locked-course">공통</span>' : `<button class="icon-button danger grade-delete" data-action="delete" aria-label="${escapeHtml(record.subjectName || '과목')} 삭제">삭제</button>`}
     </div>`).join('');
+}
+
+function courseRankInputsHtml(record) {
+  const rank = escapeHtml(record.courseRank ?? '');
+  const total = escapeHtml(record.courseRankTotal ?? '');
+  const validation = validateCourseRankReference(record);
+  const error = validation.status === 'empty' || validation.status === 'valid' ? '' : validation.message;
+  return `<div class="course-rank-reference"><span>과목 석차 <small>선택</small></span><div><label><span class="sr-only">${escapeHtml(record.subjectName)} 실제 석차</span><input data-course-rank="courseRank" type="text" inputmode="numeric" value="${rank}" aria-label="${escapeHtml(record.subjectName)} 실제 석차" /> <b>등</b></label><em>/</em><label><span class="sr-only">${escapeHtml(record.subjectName)} 석차 산출 인원</span><input data-course-rank="courseRankTotal" type="text" inputmode="numeric" value="${total}" aria-label="${escapeHtml(record.subjectName)} 석차 산출 인원" /> <b>명</b></label></div><small class="course-rank-error" role="alert">${escapeHtml(error)}</small></div>`;
 }
 
 function courseSelectionHtml(semesterId) {
@@ -659,7 +676,7 @@ function gradeValuePositionHtml(model) {
   return `<section class="grade-value-position" aria-labelledby="grade-value-position-title"><div class="grade-position-subheading"><strong id="grade-value-position-title">내 위치</strong><span>등급 숫자 사이에서 확인해요</span></div><div class="actual-rank-entry"><p>석차를 알고 있다면 입력해서 실제 위치를 참고할 수 있어요.</p><div class="actual-rank-controls"><label>실제 석차<span><input class="input" data-rank-reference="rank" type="number" inputmode="numeric" min="1" step="1" value="${rank}" aria-describedby="actual-rank-error" />등</span></label><span aria-hidden="true">/</span><label>석차 산출 인원<span><input class="input" data-rank-reference="total" type="number" inputmode="numeric" min="1" step="1" value="${total}" aria-describedby="actual-rank-error" />명</span></label></div><p id="actual-rank-error" class="actual-rank-error" role="alert"></p><div class="actual-rank-result" role="status" aria-live="polite" hidden><span>실제 석차 기준</span><strong></strong><small>입력한 석차와 인원을 기준으로 계산한 상위 비율이에요.</small></div></div>${gradeValueScaleHtml({ scale: 5, value: model.grade5, position: model.grade5LinearPosition, valueLabel: '현재' })}${gradeValueScaleHtml({ scale: 9, value: model.grade9, position: model.grade9LinearPosition, valueLabel: '환산' })}<p>위의 내 위치는 등급 숫자를 기준으로 표시한 위치예요.</p></section>`;
 }
 function gradePositionComparisonHtml(model) {
-  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비율 참고</strong><span>누적 비율 기준</span></div><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생이 실제 석차를 입력한 경우에만 그 상위 비율을 함께 표시해요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot"><div class="actual-rank-band-marker" hidden><span></span><i aria-hidden="true"></i></div>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">아래 막대는 각 등급이 차지하는 누적 비율을 비교한 참고표예요. 실제 개인 석차 백분위를 의미하지 않아요.</p></section>`;
+  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비율 참고</strong><span>누적 비율 기준</span></div><div class="course-relative-summary" role="status" hidden></div><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생이 입력한 과목별 실제 석차가 있으면 참고 위치를 함께 표시해요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot"><div class="actual-rank-band-marker" hidden><span></span><i aria-hidden="true"></i></div><div class="course-relative-band-marker" hidden><span></span><i aria-hidden="true"></i></div>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">아래 막대는 각 등급이 차지하는 누적 비율을 비교한 참고표예요. 실제 개인 석차 백분위를 의미하지 않아요. 과목별 상대 위치는 입력한 과목 석차를 학기 안에서 학점 반영해 계산한 참고값이며 학교 전체 석차나 대학의 공식 백분위가 아니에요.</p></section>`;
 }
 function updateStudentRankReferenceUi() {
   const container = $('#grade-position');
@@ -681,6 +698,23 @@ function updateStudentRankReferenceUi() {
     if (label) label.textContent = reference.status === 'valid' ? `내 실제 위치 ${reference.percentageLabel}` : '';
   }
 }
+function updateCourseRelativePositionUi() {
+  const container = $('#grade-position');
+  if (!container) return;
+  const relative = buildCourseRelativePosition(gradeCalculationState());
+  const summary = container.querySelector('.course-relative-summary');
+  const marker = container.querySelector('.course-relative-band-marker');
+  if (summary) {
+    summary.hidden = !relative;
+    summary.innerHTML = relative ? `<span>과목별 상대 위치 참고값</span><strong>${escapeHtml(relative.percentageLabel)}</strong><small>석차 입력 ${relative.courseCount}과목 · ${relative.credits}학점 반영</small>` : '';
+  }
+  if (marker) {
+    marker.hidden = !relative;
+    marker.style.setProperty('--course-relative-position', relative ? `${relative.percentage}%` : '0%');
+    const label = marker.querySelector('span');
+    if (label) label.textContent = relative ? `과목별 상대 위치 · ${relative.percentageLabel}` : '';
+  }
+}
 function renderGradePosition() {
   const container = $('#grade-position');
   const current = state.calculated ? buildStudentGradeModels(gradeCalculationState()).current.average : null;
@@ -691,6 +725,7 @@ function renderGradePosition() {
   }
   container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradeValuePositionHtml(model)}${gradePositionComparisonHtml(model)}<p class="grade-position-note">9등급제 환산값은 교육청 자료를 기준으로 한 참고값이며, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
   updateStudentRankReferenceUi();
+  updateCourseRelativePositionUi();
 }
 function renderSubjectSummary() {
   if (usesQuickAverage()) {
@@ -1200,6 +1235,20 @@ semesterCards.addEventListener('click', (event) => {
   saveState(); render();
 });
 semesterCards.addEventListener('input', (event) => {
+  const courseRankField = event.target.dataset.courseRank;
+  if (courseRankField === 'courseRank' || courseRankField === 'courseRankTotal') {
+    const row = event.target.closest('[data-id]');
+    const record = row ? records().find((item) => item.id === row.dataset.id) : null;
+    if (!record) return;
+    record[courseRankField] = event.target.value.slice(0, 12);
+    const validation = validateCourseRankReference(record);
+    const error = row.querySelector('.course-rank-error');
+    if (error) error.textContent = validation.status === 'empty' || validation.status === 'valid' ? '' : validation.message;
+    saveState();
+    renderGradePosition();
+    renderPrintReport();
+    return;
+  }
   const semesterId = event.target.dataset.quickAverage;
   if (!semesterId) return;
   const value = Number(event.target.value);

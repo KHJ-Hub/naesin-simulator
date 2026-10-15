@@ -11,8 +11,8 @@ function baseState() {
     targetAverage: '2.50',
     quickAverages: { '1-1': 4, '1-2': 3 },
     actual: [
-      { id: 'korean', semesterId: '1-1', subjectName: '공통국어1', subjectGroup: '국어', credit: 4, gradeValue: 2, gradingType: 'grade' },
-      { id: 'math', semesterId: '1-1', subjectName: '공통수학1', subjectGroup: '수학', credit: 4, gradeValue: 2, gradingType: 'grade' },
+      { id: 'korean', semesterId: '1-1', subjectName: '공통국어1', subjectGroup: '국어', credit: 4, gradeValue: 2, gradingType: 'grade', courseRank: '40', courseRankTotal: '200' },
+      { id: 'math', semesterId: '1-1', subjectName: '공통수학1', subjectGroup: '수학', credit: 4, gradeValue: 2, gradingType: 'grade', courseRank: '70', courseRankTotal: '200' },
       { id: 'music', semesterId: '1-1', subjectName: '음악', subjectGroup: '기타', credit: 2, achievement: 'A', gradingType: 'achievement', fiveLevelEligible: false },
       { id: 'research', semesterId: '2-1', subjectName: '주제 탐구(R&E) 기초', subjectGroup: '교양', credit: 1, achievement: 'P', gradingType: 'passfail', achievementScale: 'pass', fiveLevelEligible: false },
     ],
@@ -44,6 +44,7 @@ function baseState() {
       },
     ],
     rankReference: { rank: '37', total: '200' },
+    inputModes: { '1-1': 'detailed', '1-2': 'quick' },
     profiles: { '20202': { studentName: '다른 학생' } },
   };
 }
@@ -130,6 +131,16 @@ test('유효한 실제 석차는 인쇄에만 간단히 표시하고 미입력 �
   const withoutRank = baseState();
   delete withoutRank.rankReference;
   assert.doesNotMatch(renderPrintReport(buildPrintReportModel(withoutRank, { remainingRecords })), /실제 석차 참고/);
+});
+
+test('유효한 과목별 석차 참고값만 인쇄하고 입력이 없으면 해당 줄을 생략한다', () => {
+  const model = buildPrintReportModel(baseState(), { remainingRecords });
+  assert.equal(model.current.courseRelativePosition.courseCount, 2);
+  assert.equal(model.current.courseRelativePosition.percentageLabel, '27.5%');
+  assert.match(renderPrintReport(model), /과목별 상대 위치 참고:<\/strong><span>27\.5% \(석차 입력 2과목 · 8학점 반영\)/);
+  const withoutCourseRanks = baseState();
+  withoutCourseRanks.actual = withoutCourseRanks.actual.map(({ courseRank, courseRankTotal, ...record }) => record);
+  assert.doesNotMatch(renderPrintReport(buildPrintReportModel(withoutCourseRanks, { remainingRecords })), /과목별 상대 위치 참고:/);
 });
 
 test('인쇄 안내문은 세로 공간을 줄이는 단일 요약 그리드로 묶는다', () => {
