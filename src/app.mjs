@@ -51,7 +51,7 @@ import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs?v=
 import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20260921-security-audit1';
 import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20260928-backup-dirty1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
-import { buildGradePositionModel } from './grade-position.mjs?v=20261015-grade-bands1';
+import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-comparison2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -643,8 +643,16 @@ function gradeScaleBandsHtml(scale) {
   const percentageAxis = `<div class="grade-position-percent-axis ${axisPosition}" aria-label="${scale.scale}등급제 구간 누적 기준">${axis}</div>`;
   return `<div class="grade-position-scale-row" data-scale="${scale.scale}">${scale.scale === 5 ? `${percentageAxis}${bands}` : `${bands}${percentageAxis}`}</div>`;
 }
+function gradeValueScaleHtml({ scale, value, position, valueLabel }) {
+  const ticks = Array.from({ length: scale }, (_, index) => `<span>${index + 1}</span>`).join('');
+  const safePosition = Math.max(0, Math.min(100, Number(position) || 0));
+  return `<div class="grade-value-scale" data-scale="${scale}"><div class="grade-value-scale-heading"><strong>${scale}등급제</strong><span>등급 숫자 기준</span></div><div class="grade-value-scale-chart" style="--grade-value-position:${safePosition}%"><span class="grade-value-marker-label">${valueLabel} ${fmt(value)}</span><i class="grade-value-marker" aria-hidden="true"></i><div class="grade-value-track" aria-hidden="true"></div><div class="grade-value-ticks" aria-hidden="true">${ticks}</div></div></div>`;
+}
+function gradeValuePositionHtml(model) {
+  return `<section class="grade-value-position" aria-labelledby="grade-value-position-title"><div class="grade-position-subheading"><strong id="grade-value-position-title">내 위치</strong><span>등급 숫자 사이에서 확인해요</span></div>${gradeValueScaleHtml({ scale: 5, value: model.grade5, position: model.grade5LinearPosition, valueLabel: '현재' })}${gradeValueScaleHtml({ scale: 9, value: model.grade9, position: model.grade9LinearPosition, valueLabel: '환산' })}<p>위의 내 위치는 등급 숫자를 기준으로 표시한 위치예요.</p></section>`;
+}
 function gradePositionComparisonHtml(model) {
-  return `<div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생 개인의 실제 석차 백분위를 나타내지 않아요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot">${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p>`;
+  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비율 참고</strong><span>누적 비율 기준</span></div><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생 개인의 실제 석차 백분위를 나타내지 않아요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot">${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">아래 막대는 각 등급이 차지하는 누적 비율을 비교한 참고표예요. 실제 개인 석차 백분위를 의미하지 않아요.</p></section>`;
 }
 function renderGradePosition() {
   const container = $('#grade-position');
@@ -654,7 +662,7 @@ function renderGradePosition() {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 등급 구간과 환산 참고값을 확인할 수 있어요.</div>';
     return;
   }
-  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradePositionComparisonHtml(model)}<p class="grade-position-note"><strong>각 등급이 차지하는 누적 비율을 비교한 참고표예요. 현재 내신의 실제 석차 백분위를 의미하지 않아요.</strong><br />9등급제 환산값은 교육청 자료를 기준으로 한 참고값이며, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
+  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradeValuePositionHtml(model)}${gradePositionComparisonHtml(model)}<p class="grade-position-note">9등급제 환산값은 교육청 자료를 기준으로 한 참고값이며, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
 }
 function renderSubjectSummary() {
   if (usesQuickAverage()) {

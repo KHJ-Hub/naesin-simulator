@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?v=20260928-favicon2" />
     <link rel="icon" type="image/png" sizes="64x64" href="./favicon-64x64.png?v=20260928-favicon2" />
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260928-favicon2" />
-    <link rel="stylesheet" href="./styles.css?v=20261015-grade-bands1" />
+    <link rel="stylesheet" href="./styles.css?v=20261016-grade-comparison2" />
   </head>
   <body>
     <main class="app-shell">
@@ -45,7 +45,7 @@
         <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 3</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
         <div class="flow-column">
           <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">나의 흐름</p><h2>학기별 변화</h2></div></div><div id="semester-summary" class="bar-list"></div></section>
-          <section class="panel grade-position-panel" aria-labelledby="grade-position-title"><div class="panel-heading compact"><div><p class="eyebrow">5등급제 · 9등급제</p><h2 id="grade-position-title">등급 구간 비교</h2></div></div><div id="grade-position" aria-live="polite"></div></section>
+          <section class="panel grade-position-panel" aria-labelledby="grade-position-title"><div class="panel-heading compact"><div><p class="eyebrow">5등급제 · 9등급제</p><h2 id="grade-position-title">내 위치와 등급 구간 비교</h2></div></div><div id="grade-position" aria-live="polite"></div></section>
         </div>
       </section>
 
@@ -93,6 +93,6 @@
     </dialog>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20261015-grade-bands1"></script>
+    <script type="module" src="./src/app.mjs?v=20261016-grade-comparison2"></script>
   </body>
 </html>

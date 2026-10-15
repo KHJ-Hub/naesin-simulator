@@ -13,6 +13,14 @@ export const GRADE_POSITION_SCALES = Object.freeze({
   }),
 });
 
+export function gradeValueLinearPosition(value, scale) {
+  const numericValue = Number(value);
+  const numericScale = Number(scale);
+  if (!Number.isFinite(numericValue) || !Number.isInteger(numericScale) || numericScale < 2) return null;
+  if (numericValue < 1 || numericValue > numericScale) return null;
+  return ((numericValue - 1) / (numericScale - 1)) * 100;
+}
+
 export function buildGradePositionModel(currentGrade) {
   const grade5 = Number(currentGrade);
   if (!Number.isFinite(grade5) || grade5 < 1 || grade5 > 5) return null;
@@ -21,6 +29,8 @@ export function buildGradePositionModel(currentGrade) {
   return {
     grade5,
     grade9: conversion.convertedValue,
+    grade5LinearPosition: gradeValueLinearPosition(grade5, 5),
+    grade9LinearPosition: gradeValueLinearPosition(conversion.convertedValue, 9),
     grade5Scale: GRADE_POSITION_SCALES.grade5,
     grade9Scale: GRADE_POSITION_SCALES.grade9,
     conversionDataset: conversion.conversionDataset,
