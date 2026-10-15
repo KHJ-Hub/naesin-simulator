@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { buildGradePositionModel, GRADE_POSITION_SCALES } from '../src/grade-position.mjs';
 
-test('현재 내신으로 두 등급 체계가 공유하는 시각적 마커 위치를 한 번만 만든다', () => {
+test('현재 내신과 환산값의 시각적 마커 위치를 각 등급 체계에서 따로 만든다', () => {
   const model = buildGradePositionModel(2);
   assert.equal(model.grade5, 2);
   assert.equal(model.grade9, 3.3);
-  assert.equal(model.markerPosition, 10);
-  assert.equal('grade5Position' in model, false);
-  assert.equal('grade9Position' in model, false);
+  assert.equal(model.grade5Position, 10);
+  assert.equal(model.grade9Position, 14.6);
+  assert.equal('markerPosition' in model, false);
   assert.equal('commonAxisPercentages' in model, false);
   assert.deepEqual(model.grade5Scale.cumulativePercentages, [10, 34, 66, 90, 100]);
   assert.deepEqual(model.grade9Scale.cumulativePercentages, [4, 11, 23, 40, 60, 77, 89, 96, 100]);
@@ -27,47 +27,59 @@ test('5등급 구간은 실제 분포 폭 10·24·32·24·10을 유지한다', (
 });
 
 test('5등급 평균은 현재 등급 구간 안에서 piecewise 보간한다', () => {
-  assert.equal(buildGradePositionModel(2).markerPosition, 10);
-  assert.equal(buildGradePositionModel(2.5).markerPosition, 22);
-  assert.equal(buildGradePositionModel(2.99).markerPosition, 33.76);
-  assert.equal(buildGradePositionModel(3).markerPosition, 34);
-  assert.equal(buildGradePositionModel(3.5).markerPosition, 50);
+  assert.equal(buildGradePositionModel(2).grade5Position, 10);
+  assert.equal(buildGradePositionModel(2.5).grade5Position, 22);
+  assert.equal(buildGradePositionModel(2.99).grade5Position, 33.76);
+  assert.equal(buildGradePositionModel(3).grade5Position, 34);
+  assert.equal(buildGradePositionModel(3.5).grade5Position, 50);
 });
 
-test('시각적 마커 위치는 5등급 평균이 커질수록 역전 없이 이동한다', () => {
-  let previous = -Infinity;
+test('두 시각적 마커 위치는 5등급 평균이 커질수록 각각 역전 없이 이동한다', () => {
+  let previousGrade5 = -Infinity;
+  let previousGrade9 = -Infinity;
   for (let grade = 1; grade <= 5; grade += 0.01) {
-    const position = buildGradePositionModel(Number(grade.toFixed(2))).markerPosition;
-    assert.ok(position >= previous);
-    previous = position;
+    const model = buildGradePositionModel(Number(grade.toFixed(2)));
+    assert.ok(model.grade5Position >= previousGrade5);
+    assert.ok(model.grade9Position >= previousGrade9);
+    previousGrade5 = model.grade5Position;
+    previousGrade9 = model.grade9Position;
   }
 });
 
 test('1.35의 기존 환산값은 유지하고 마커는 1등급 구간 안에 둔다', () => {
   const model = buildGradePositionModel(1.35);
   assert.equal(model.grade9, 2.11);
-  assert.equal(model.markerPosition, 3.5);
+  assert.equal(model.grade5Position, 3.5);
+  assert.equal(model.grade9Position, 4.77);
 });
 
-test('학생 화면은 두 등급 행을 관통하는 공통 마커 하나만 렌더링한다', async () => {
+test('4.60과 환산 7.70은 각 등급 구간 안의 서로 다른 위치에 표시한다', () => {
+  const model = buildGradePositionModel(4.6);
+  assert.equal(model.grade9, 7.7);
+  assert.equal(model.grade5Position, 80.4);
+  assert.equal(model.grade9Position, 85.4);
+  assert.notEqual(model.grade5Position, model.grade9Position);
+});
+
+test('학생 화면은 공통 마커 없이 각 등급 행에 독립 마커를 렌더링한다', async () => {
   const [appSource, styles] = await Promise.all([
     readFile(new URL('../src/app.mjs', import.meta.url), 'utf8'),
     readFile(new URL('../styles.css', import.meta.url), 'utf8'),
   ]);
-  assert.equal((appSource.match(/grade-position-shared-marker/g) || []).length, 1);
+  assert.equal(appSource.includes('grade-position-shared-marker'), false);
   assert.equal(appSource.includes('grade-position-common-axis'), false);
-  assert.equal(appSource.includes('grade-position-marker'), false);
+  assert.match(appSource, /grade-position-row-marker/);
+  assert.match(appSource, /현재 \$\{fmt\(model\.grade5\)\}/);
+  assert.match(appSource, /환산 \$\{fmt\(model\.grade9\)\}/);
   assert.match(appSource, /grade-position-percent-axis/);
-  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 102px/);
-  assert.match(appSource, /<b>현재 위치<\/b>/);
+  assert.doesNotMatch(styles, /\.grade-position-shared-marker/);
+  assert.match(styles, /\.grade-position-row-marker[\s\S]*?width: 2px[\s\S]*?background: #40358a/);
+  assert.match(styles, /\.grade-position-marker-label b[\s\S]*?background: #40358a/);
   assert.match(styles, /\.grade-position-comparison \{[\s\S]*?font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif/);
   assert.match(styles, /\.grade-position-bands\[data-scale="5"\][\s\S]*?font-size: clamp\(\.82rem, 1\.2vw, \.95rem\);[\s\S]*?font-weight: 650/);
   assert.match(styles, /\.grade-position-bands\[data-scale="9"\][\s\S]*?font-size: clamp\(\.82rem, 1\.15vw, \.94rem\);[\s\S]*?font-weight: 600;[\s\S]*?font-variant-numeric: tabular-nums/);
-  assert.match(styles, /\.grade-position-shared-marker[\s\S]*?width: 3px[\s\S]*?background: #332978/);
-  assert.match(styles, /\.grade-position-shared-marker::before[\s\S]*?width: 22px[\s\S]*?background: rgba\(92, 82, 177, \.13\)/);
-  assert.doesNotMatch(styles, /\.grade-position-shared-marker::after/);
-  assert.match(styles, /\.grade-position-shared-marker b::after[\s\S]*?border-top-color: #332978/);
-  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-position-shared-marker \{ height: 94px/);
+  assert.match(styles, /\.grade-position-scale-row\[data-scale="5"\][\s\S]*?border-top-color: #40358a/);
+  assert.match(styles, /\.grade-position-scale-row\[data-scale="9"\][\s\S]*?border-bottom-color: #40358a/);
   assert.match(styles, /@media \(max-width: 380px\)[\s\S]*?\.grade-position-comparison/);
 });
 
@@ -81,7 +93,7 @@ test('학생 화면은 5등급 경계를 막대 위, 9등급 경계를 막대 �
   assert.match(positionSection, /scale\.cumulativePercentages\.slice\(0, -1\)/);
   assert.match(positionSection, /\$\{scale\.scale\}등급제 구간 누적 기준/);
   assert.match(positionSection, /scale\.scale === 5 \? 'is-top' : 'is-bottom'/);
-  assert.match(positionSection, /scale\.scale === 5 \? `\$\{percentageAxis\}\$\{bands\}` : `\$\{bands\}\$\{percentageAxis\}`/);
+  assert.match(positionSection, /scale\.scale === 5 \? `\$\{percentageAxis\}\$\{markerLabel\}\$\{bands\}` : `\$\{bands\}\$\{markerLabel\}\$\{percentageAxis\}`/);
   assert.match(styles, /grade-position-percent-axis\.is-top[\s\S]*?margin-bottom/);
   assert.match(styles, /\.grade-position-percent-axis \{[\s\S]*?font-size: \.64rem;[\s\S]*?font-weight: 600/);
   assert.match(styles, /\.grade-position-bands\[data-scale="5"\][\s\S]*?#cbb9f3[\s\S]*?#afe5cc/);

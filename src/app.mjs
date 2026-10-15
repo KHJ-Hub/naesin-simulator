@@ -51,7 +51,7 @@ import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs?v=
 import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20260921-security-audit1';
 import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20260928-backup-dirty1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
-import { buildGradePositionModel } from './grade-position.mjs?v=20261013-position-bands1';
+import { buildGradePositionModel } from './grade-position.mjs?v=20261015-position-markers1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -633,18 +633,19 @@ function renderSemesterSummary() {
     return `<div class="bar-item"><div><span>${semester.label}</span></div><div class="bar-track"><i class="bar-fill" style="width:${width}%"></i></div><strong>${fmt(average)}</strong></div>`;
   }).join('');
 }
-function gradeScaleBandsHtml(scale) {
+function gradeScaleBandsHtml(scale, marker) {
   const segments = Array.from({ length: scale.scale }, (_, index) => `<span class="grade-position-band" aria-label="${index + 1}등급"><b>${index + 1}</b><small>등급</small></span>`).join('');
   const columns = scale.bandPercentages.map((percentage) => `${percentage}fr`).join(' ');
-  const bands = `<div class="grade-position-bands" data-scale="${scale.scale}" style="--grade-band-columns:${columns}">${segments}</div>`;
+  const bands = `<div class="grade-position-band-wrap" style="--grade-row-position:${marker.position}%"><div class="grade-position-bands" data-scale="${scale.scale}" style="--grade-band-columns:${columns}">${segments}</div><i class="grade-position-row-marker" aria-hidden="true"></i></div>`;
   const boundaries = scale.cumulativePercentages.slice(0, -1);
   const axis = boundaries.map((percentage) => `<span style="--grade-boundary:${percentage}%">${percentage}%</span>`).join('');
   const axisPosition = scale.scale === 5 ? 'is-top' : 'is-bottom';
   const percentageAxis = `<div class="grade-position-percent-axis ${axisPosition}" aria-label="${scale.scale}등급제 구간 누적 기준">${axis}</div>`;
-  return `<div class="grade-position-scale-row" data-scale="${scale.scale}">${scale.scale === 5 ? `${percentageAxis}${bands}` : `${bands}${percentageAxis}`}</div>`;
+  const markerLabel = `<div class="grade-position-marker-label" aria-hidden="true" style="--grade-row-position:${marker.position}%"><b>${marker.label}</b></div>`;
+  return `<div class="grade-position-scale-row" data-scale="${scale.scale}">${scale.scale === 5 ? `${percentageAxis}${markerLabel}${bands}` : `${bands}${markerLabel}${percentageAxis}`}</div>`;
 }
 function gradePositionComparisonHtml(model) {
-  return `<div class="grade-position-comparison" role="img" aria-label="현재 5등급제 평균 ${fmt(model.grade5)}등급과 9등급제 환산 참고 약 ${fmt(model.grade9)}등급의 등급 환산상 대략적인 위치를 보여줘요. 실제 석차 백분위가 아니에요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot" style="--grade-position:${model.markerPosition}%"><i class="grade-position-shared-marker" aria-hidden="true"><b>현재 위치</b></i>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>등급 환산 기준 위치</span><span>낮은 등급</span></p>`;
+  return `<div class="grade-position-comparison" role="img" aria-label="현재 5등급제 평균 ${fmt(model.grade5)}등급과 9등급제 환산 참고 약 ${fmt(model.grade9)}등급을 각 등급 구간 안의 별도 참고 위치로 보여줘요. 실제 석차 백분위가 아니에요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot">${gradeScaleBandsHtml(model.grade5Scale, { position: model.grade5Position, label: `현재 ${fmt(model.grade5)}` })}${gradeScaleBandsHtml(model.grade9Scale, { position: model.grade9Position, label: `환산 ${fmt(model.grade9)}` })}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>등급 환산 기준 위치</span><span>낮은 등급</span></p>`;
 }
 function renderGradePosition() {
   const container = $('#grade-position');

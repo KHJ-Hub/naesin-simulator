@@ -15,7 +15,7 @@ export const GRADE_POSITION_SCALES = Object.freeze({
 
 /**
  * 차트 안에서 마커를 배치하기 위한 0~100 시각 좌표다.
- * 현재 5등급 값이 속한 등급 구간 안에서만 보간하며 실제 석차 백분위나
+ * 각 등급값이 속한 등급 구간 안에서만 보간하며 실제 석차 백분위나
  * 학생의 누적분포 추정값이 아니다.
  */
 function visualMarkerPosition(value, scale) {
@@ -33,11 +33,13 @@ export function buildGradePositionModel(currentGrade) {
   if (!Number.isFinite(grade5) || grade5 < 1 || grade5 > 5) return null;
   const conversion = convertGrade5ToGrade9(grade5);
   if (!conversion) return null;
-  const markerPosition = visualMarkerPosition(grade5, GRADE_POSITION_SCALES.grade5);
+  const grade5Position = visualMarkerPosition(grade5, GRADE_POSITION_SCALES.grade5);
+  const grade9Position = visualMarkerPosition(conversion.convertedValue, GRADE_POSITION_SCALES.grade9);
   return {
     grade5,
     grade9: conversion.convertedValue,
-    markerPosition,
+    grade5Position,
+    grade9Position,
     grade5Scale: GRADE_POSITION_SCALES.grade5,
     grade9Scale: GRADE_POSITION_SCALES.grade9,
     conversionDataset: conversion.conversionDataset,
