@@ -33,6 +33,7 @@ function completeStudentState() {
       { referenceYear: 2026, universityId: 'university-a', university: '검증대학교', department: '경제학과', admissionName: '일반전형', admissionCategory: '학생부교과', cut70Original: 3.2, cut70Converted: 1.95, comparisonBasis: 'current', comparisonScore: 2.3, sourceUrl: 'https://example.edu/result' },
       { referenceYear: 2026, universityId: 'university-b', university: '확인대학교', department: '경영학과', admissionName: '학생부종합', admissionCategory: '학생부종합', averageGradeOriginal: 3.4, averageGradeConverted: 2.1, comparisonReferenceType: 'average-grade', comparisonBasis: 'reference', sourceUrl: 'https://example.edu/comprehensive' },
     ],
+    rankReference: { rank: '37', total: '200' },
     admissionUi: {
       admissionViewMode: 'student-record-subject',
       comparisonBasis: 'target',
@@ -65,6 +66,7 @@ test('학생 정보·상세/성취도 성적·목표·관심 대학·입결 UI �
   assert.equal(restored.calculated, true);
   assert.equal(restored.goalCalculated, true);
   assert.deepEqual(restored.admissionInterests, profile.admissionInterests);
+  assert.deepEqual(restored.rankReference, { rank: '37', total: '200' });
   assert.deepEqual(restored.admissionUi, profile.admissionUi);
 });
 
@@ -84,6 +86,8 @@ test('백업 복원 데이터로 현재 내신·목표 시뮬레이션·관심 �
   assert.equal(model.interests.comprehensive.length, 1);
   assert.match(html, /검증대학교/);
   assert.match(html, /확인대학교/);
+  assert.match(html, /실제 석차 참고:/);
+  assert.match(html, /37 \/ 200명 · 상위 18\.5%/);
 });
 
 test('구버전 무표식 백업은 알려진 학생 상태 구조일 때 schemaVersion 1로 마이그레이션한다', () => {

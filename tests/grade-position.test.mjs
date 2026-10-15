@@ -62,6 +62,10 @@ test('학생 화면은 선형 등급값 위치와 누적 비율 참고표를 분
   assert.match(appSource, /valueLabel: '환산'/);
   assert.match(appSource, /내 위치/);
   assert.match(appSource, /등급 구간 비율 참고/);
+  assert.match(appSource, /data-rank-reference="rank"/);
+  assert.match(appSource, /data-rank-reference="total"/);
+  assert.match(appSource, /actual-rank-band-marker/);
+  assert.match(appSource, /reference\.status !== 'valid'/);
   assert.match(appSource, /grade-position-percent-axis/);
   assert.doesNotMatch(styles, /\.grade-position-shared-marker/);
   assert.doesNotMatch(styles, /\.grade-position-row-marker|\.grade-position-marker-label/);

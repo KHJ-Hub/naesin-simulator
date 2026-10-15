@@ -11,7 +11,7 @@ export function normalizeBackupRecordId(value, fallback = '') {
 
 function isLegacyStudentBackup(value) {
   if (!isObject(value) || !Array.isArray(value.actual) || !isObject(value.student)) return false;
-  const knownKeys = ['targetAverage', 'weighted', 'quickAverages', 'inputModes', 'admissionInterests', 'calculated', 'goalCalculated'];
+  const knownKeys = ['targetAverage', 'weighted', 'quickAverages', 'inputModes', 'admissionInterests', 'rankReference', 'calculated', 'goalCalculated'];
   return knownKeys.some((key) => Object.hasOwn(value, key));
 }
 

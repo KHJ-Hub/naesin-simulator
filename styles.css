@@ -3856,6 +3856,88 @@ h3:not(.hero-grid h2),
   font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif;
 }
 
+.actual-rank-entry {
+  margin-bottom: 10px;
+  padding: 9px 10px;
+  border: 1px solid #d7daf0;
+  border-radius: 11px;
+  background: rgba(255,255,255,.74);
+}
+
+.actual-rank-entry > p:first-child {
+  margin: 0 0 7px;
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1.4;
+}
+
+.actual-rank-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 7px;
+  align-items: end;
+}
+
+.actual-rank-controls > label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: #4a526d;
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.actual-rank-controls > label > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  font-size: .74rem;
+}
+
+.actual-rank-controls .input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 7px 9px;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.actual-rank-controls > span {
+  padding-bottom: 12px;
+  color: #7b8198;
+  font-size: .82rem;
+}
+
+.actual-rank-error {
+  min-height: 0;
+  margin: 5px 0 0;
+  color: var(--danger);
+  font-size: .68rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.actual-rank-error:empty { display: none; }
+
+.actual-rank-result {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1px 8px;
+  align-items: center;
+  margin-top: 7px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: #eef0fb;
+}
+
+.actual-rank-result[hidden] { display: none; }
+.actual-rank-result span { color: #5e6680; font-size: .66rem; }
+.actual-rank-result strong { color: #40378f; font-size: .84rem; font-variant-numeric: tabular-nums; }
+.actual-rank-result small { grid-column: 1 / -1; color: var(--muted); font-size: .64rem; }
+
 .grade-value-scale + .grade-value-scale { margin-top: 7px; }
 
 .grade-value-scale-heading {
@@ -4017,6 +4099,48 @@ h3:not(.hero-grid h2),
   padding-top: 32px;
 }
 
+.actual-rank-band-marker {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  right: 0;
+  bottom: 16px;
+  left: 0;
+  pointer-events: none;
+}
+
+.actual-rank-band-marker[hidden] { display: none; }
+
+.actual-rank-band-marker > span {
+  position: absolute;
+  top: 0;
+  left: clamp(49px, var(--actual-rank-position), calc(100% - 49px));
+  padding: 2px 7px;
+  border: 1px solid rgba(255,255,255,.92);
+  border-radius: 999px;
+  background: #4338a8;
+  color: #fff;
+  font-size: .6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(47, 42, 117, .2);
+  transform: translateX(-50%);
+}
+
+.actual-rank-band-marker > i {
+  position: absolute;
+  top: 47px;
+  bottom: 0;
+  left: var(--actual-rank-position);
+  width: 2px;
+  border-radius: 2px;
+  background: #4338a8;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.88);
+  transform: translateX(-50%);
+}
+
 .grade-position-bands {
   display: grid;
   grid-template-columns: var(--grade-band-columns);
@@ -4152,6 +4276,7 @@ h3:not(.hero-grid h2),
 .grade-position-empty { padding-block: 22px; }
 
 @media (max-width: 900px) {
+  .actual-rank-band-marker { bottom: 26px; }
   .grade-position-percent-axis.is-bottom { height: 24px; }
   .grade-position-percent-axis.is-bottom span:nth-child(even) { transform: translate(-50%, 10px); }
   .grade-position-bands[data-scale="5"] .grade-position-band { flex-direction: column; gap: 0; }
@@ -4183,6 +4308,9 @@ h3:not(.hero-grid h2),
   .grade-position-subheading { align-items: flex-start; flex-direction: column; gap: 1px; }
   .grade-value-marker-label { font-size: .58rem; }
   .grade-value-scale[data-scale="9"] .grade-value-ticks { font-size: .62rem; }
+  .actual-rank-entry { padding-inline: 8px; }
+  .actual-rank-controls { gap: 4px; }
+  .actual-rank-controls .input { padding-inline: 5px; }
 }
 
 @media (max-width: 430px) {

@@ -33,7 +33,7 @@ import {
   reconcileAdmissionInterestComparisonSelection,
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
-import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20260921-entry-year1';
+import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261016-rank-reference1';
 import { printStudentReport } from './print-ux.mjs?v=20260928-print-pdf1';
 import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
@@ -48,10 +48,11 @@ import {
   createAdmissionAccordionState,
 } from './admission-accordion-state.mjs?v=20260917-result-groups1';
 import { UNIVERSITY_BY_ID, UNIVERSITY_BY_NAME } from './data/universities.mjs?v=20260919-readiness1';
-import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20260921-security-audit1';
-import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20260928-backup-dirty1';
+import { createStudentBackup, normalizeBackupRecordId, parseStudentBackup } from './student-backup.mjs?v=20261016-rank-reference1';
+import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeUnload } from './student-backup-dirty.mjs?v=20261016-rank-reference1';
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-comparison2';
+import { buildStudentRankReference, normalizeStudentRankReference } from './student-rank-reference.mjs?v=20261016-rank-reference1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -67,6 +68,7 @@ const defaultState = () => ({
   quickAverages: {},
   inputModes: {},
   admissionInterests: [],
+  rankReference: { rank: '', total: '' },
   includeAchievementCourses: false,
 });
 
@@ -250,6 +252,7 @@ function normalizeState(saved = {}) {
     quickAverages: normalizeQuickAverages(saved.quickAverages),
     inputModes: normalizeInputModes(saved.inputModes),
     admissionInterests: normalizeAdmissionInterests(saved.admissionInterests),
+    rankReference: normalizeStudentRankReference(saved.rankReference),
     includeAchievementCourses,
   };
 }
@@ -366,6 +369,8 @@ function hasCurrentStudentInput() {
     state.student.studentId
     || state.student.studentName
     || state.targetAverage
+    || state.rankReference?.rank
+    || state.rankReference?.total
     || state.admissionInterests.length
     || Object.keys(state.quickAverages ?? {}).length
     || state.actual.some((record) => record.gradeValue || record.achievement || (record.courseId && !defaultCourseIds.has(record.courseId)))
@@ -649,10 +654,32 @@ function gradeValueScaleHtml({ scale, value, position, valueLabel }) {
   return `<div class="grade-value-scale" data-scale="${scale}"><div class="grade-value-scale-heading"><strong>${scale}등급제</strong><span>등급 숫자 기준</span></div><div class="grade-value-scale-chart" style="--grade-value-position:${safePosition}%"><span class="grade-value-marker-label">${valueLabel} ${fmt(value)}</span><i class="grade-value-marker" aria-hidden="true"></i><div class="grade-value-track" aria-hidden="true"></div><div class="grade-value-ticks" aria-hidden="true">${ticks}</div></div></div>`;
 }
 function gradeValuePositionHtml(model) {
-  return `<section class="grade-value-position" aria-labelledby="grade-value-position-title"><div class="grade-position-subheading"><strong id="grade-value-position-title">내 위치</strong><span>등급 숫자 사이에서 확인해요</span></div>${gradeValueScaleHtml({ scale: 5, value: model.grade5, position: model.grade5LinearPosition, valueLabel: '현재' })}${gradeValueScaleHtml({ scale: 9, value: model.grade9, position: model.grade9LinearPosition, valueLabel: '환산' })}<p>위의 내 위치는 등급 숫자를 기준으로 표시한 위치예요.</p></section>`;
+  const rank = escapeHtml(state.rankReference?.rank ?? '');
+  const total = escapeHtml(state.rankReference?.total ?? '');
+  return `<section class="grade-value-position" aria-labelledby="grade-value-position-title"><div class="grade-position-subheading"><strong id="grade-value-position-title">내 위치</strong><span>등급 숫자 사이에서 확인해요</span></div><div class="actual-rank-entry"><p>석차를 알고 있다면 입력해서 실제 위치를 참고할 수 있어요.</p><div class="actual-rank-controls"><label>실제 석차<span><input class="input" data-rank-reference="rank" type="number" inputmode="numeric" min="1" step="1" value="${rank}" aria-describedby="actual-rank-error" />등</span></label><span aria-hidden="true">/</span><label>석차 산출 인원<span><input class="input" data-rank-reference="total" type="number" inputmode="numeric" min="1" step="1" value="${total}" aria-describedby="actual-rank-error" />명</span></label></div><p id="actual-rank-error" class="actual-rank-error" role="alert"></p><div class="actual-rank-result" role="status" aria-live="polite" hidden><span>실제 석차 기준</span><strong></strong><small>입력한 석차와 인원을 기준으로 계산한 상위 비율이에요.</small></div></div>${gradeValueScaleHtml({ scale: 5, value: model.grade5, position: model.grade5LinearPosition, valueLabel: '현재' })}${gradeValueScaleHtml({ scale: 9, value: model.grade9, position: model.grade9LinearPosition, valueLabel: '환산' })}<p>위의 내 위치는 등급 숫자를 기준으로 표시한 위치예요.</p></section>`;
 }
 function gradePositionComparisonHtml(model) {
-  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비율 참고</strong><span>누적 비율 기준</span></div><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생 개인의 실제 석차 백분위를 나타내지 않아요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot">${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">아래 막대는 각 등급이 차지하는 누적 비율을 비교한 참고표예요. 실제 개인 석차 백분위를 의미하지 않아요.</p></section>`;
+  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비율 참고</strong><span>누적 비율 기준</span></div><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생이 실제 석차를 입력한 경우에만 그 상위 비율을 함께 표시해요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot"><div class="actual-rank-band-marker" hidden><span></span><i aria-hidden="true"></i></div>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">아래 막대는 각 등급이 차지하는 누적 비율을 비교한 참고표예요. 실제 개인 석차 백분위를 의미하지 않아요.</p></section>`;
+}
+function updateStudentRankReferenceUi() {
+  const container = $('#grade-position');
+  if (!container) return;
+  const reference = buildStudentRankReference(state.rankReference);
+  const error = container.querySelector('#actual-rank-error');
+  const result = container.querySelector('.actual-rank-result');
+  const marker = container.querySelector('.actual-rank-band-marker');
+  if (error) error.textContent = reference.status === 'invalid' ? reference.message : '';
+  if (result) {
+    result.hidden = reference.status !== 'valid';
+    const summary = result.querySelector('strong');
+    if (summary) summary.textContent = reference.status === 'valid' ? reference.summary : '';
+  }
+  if (marker) {
+    marker.hidden = reference.status !== 'valid';
+    marker.style.setProperty('--actual-rank-position', reference.status === 'valid' ? `${reference.percentage}%` : '0%');
+    const label = marker.querySelector('span');
+    if (label) label.textContent = reference.status === 'valid' ? `내 실제 위치 ${reference.percentageLabel}` : '';
+  }
 }
 function renderGradePosition() {
   const container = $('#grade-position');
@@ -663,6 +690,7 @@ function renderGradePosition() {
     return;
   }
   container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div>${gradeValuePositionHtml(model)}${gradePositionComparisonHtml(model)}<p class="grade-position-note">9등급제 환산값은 교육청 자료를 기준으로 한 참고값이며, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
+  updateStudentRankReferenceUi();
 }
 function renderSubjectSummary() {
   if (usesQuickAverage()) {
@@ -1106,6 +1134,15 @@ function render() {
     ? `학번 ${state.student.studentId} · ${state.student.studentName}${catalogContext.entryYear ? ` · ${catalogContext.entryYear}학년도 입학생` : ''}`
     : '';
 }
+
+$('#grade-position').addEventListener('input', (event) => {
+  const field = event.target.dataset.rankReference;
+  if (field !== 'rank' && field !== 'total') return;
+  state.rankReference[field] = event.target.value;
+  saveState();
+  updateStudentRankReferenceUi();
+  renderPrintReport();
+});
 
 const semesterCards = $('#semester-cards');
 semesterCards.addEventListener('click', (event) => {

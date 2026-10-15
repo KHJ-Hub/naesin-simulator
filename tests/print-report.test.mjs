@@ -43,6 +43,7 @@ function baseState() {
         comparisonBasis: 'reference',
       },
     ],
+    rankReference: { rank: '37', total: '200' },
     profiles: { '20202': { studentName: '다른 학생' } },
   };
 }
@@ -120,6 +121,15 @@ test('학생이 먼저 보는 핵심 내신 수치는 인쇄용 강조 클래스
   const html = renderPrintReport(buildPrintReportModel(baseState(), { remainingRecords }));
   assert.equal((html.match(/class="print-key-metric"/g) ?? []).length, 3);
   assert.match(html, /print-scenario-final/);
+});
+
+test('유효한 실제 석차는 인쇄에만 간단히 표시하고 미입력 시 줄 자체를 생략한다', () => {
+  const model = buildPrintReportModel(baseState(), { remainingRecords });
+  assert.equal(model.current.rankReference.percentageLabel, '18.5%');
+  assert.match(renderPrintReport(model), /실제 석차 참고:<\/strong><span>37 \/ 200명 · 상위 18\.5%/);
+  const withoutRank = baseState();
+  delete withoutRank.rankReference;
+  assert.doesNotMatch(renderPrintReport(buildPrintReportModel(withoutRank, { remainingRecords })), /실제 석차 참고/);
 });
 
 test('인쇄 안내문은 세로 공간을 줄이는 단일 요약 그리드로 묶는다', () => {
