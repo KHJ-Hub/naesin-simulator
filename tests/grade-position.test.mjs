@@ -60,8 +60,9 @@ test('학생 화면은 두 등급 행을 관통하는 공통 마커 하나만 �
   assert.match(appSource, /grade-position-percent-axis/);
   assert.match(styles, /\.grade-position-shared-marker[\s\S]*?height: 102px/);
   assert.match(appSource, /<b>현재 위치<\/b>/);
-  assert.match(styles, /\.grade-position-comparison \{[\s\S]*?font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif/);
-  assert.match(styles, /\.grade-position-band b \{[\s\S]*?font-weight: 700;[\s\S]*?letter-spacing: -\.02em/);
+  assert.match(styles, /\.grade-position-comparison \{[\s\S]*?font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif/);
+  assert.match(styles, /\.grade-position-bands\[data-scale="5"\][\s\S]*?font-size: clamp\(\.82rem, 1\.2vw, \.95rem\);[\s\S]*?font-weight: 650/);
+  assert.match(styles, /\.grade-position-bands\[data-scale="9"\][\s\S]*?font-size: clamp\(\.82rem, 1\.15vw, \.94rem\);[\s\S]*?font-weight: 600;[\s\S]*?font-variant-numeric: tabular-nums/);
   assert.match(styles, /\.grade-position-shared-marker[\s\S]*?width: 3px[\s\S]*?background: #332978/);
   assert.match(styles, /\.grade-position-shared-marker::before[\s\S]*?width: 22px[\s\S]*?background: rgba\(92, 82, 177, \.13\)/);
   assert.doesNotMatch(styles, /\.grade-position-shared-marker::after/);
@@ -82,7 +83,7 @@ test('학생 화면은 5등급 경계를 막대 위, 9등급 경계를 막대 �
   assert.match(positionSection, /scale\.scale === 5 \? 'is-top' : 'is-bottom'/);
   assert.match(positionSection, /scale\.scale === 5 \? `\$\{percentageAxis\}\$\{bands\}` : `\$\{bands\}\$\{percentageAxis\}`/);
   assert.match(styles, /grade-position-percent-axis\.is-top[\s\S]*?margin-bottom/);
-  assert.match(styles, /\.grade-position-percent-axis \{[\s\S]*?font-size: \.62rem;[\s\S]*?font-weight: 700/);
+  assert.match(styles, /\.grade-position-percent-axis \{[\s\S]*?font-size: \.64rem;[\s\S]*?font-weight: 600/);
   assert.match(styles, /\.grade-position-bands\[data-scale="5"\][\s\S]*?#cbb9f3[\s\S]*?#afe5cc/);
   assert.match(styles, /\.grade-position-bands\[data-scale="9"\][\s\S]*?#cbb9f3[\s\S]*?#afe5cc/);
   assert.doesNotMatch(styles, /grade-position-percent-axis\.is-bottom span:nth-child\(even\)/);

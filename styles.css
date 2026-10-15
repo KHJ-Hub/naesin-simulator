@@ -3839,7 +3839,7 @@ h3:not(.hero-grid h2),
   border: 1px solid var(--line);
   border-radius: 14px;
   background: linear-gradient(180deg, #fdfdff 0%, #f8fbff 100%);
-  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif;
 }
 
 .grade-position-row-labels {
@@ -3890,8 +3890,18 @@ h3:not(.hero-grid h2),
 }
 
 .grade-position-band:last-child { border-right: 0; }
-.grade-position-band b { font-size: clamp(.78rem, 1.15vw, .92rem); font-weight: 700; letter-spacing: -.02em; }
-.grade-position-band small { font-size: .6rem; font-weight: 700; }
+.grade-position-band b { letter-spacing: -.025em; line-height: 1; }
+.grade-position-band small { line-height: 1; }
+
+.grade-position-bands[data-scale="5"] .grade-position-band b {
+  font-size: clamp(.82rem, 1.2vw, .95rem);
+  font-weight: 650;
+}
+
+.grade-position-bands[data-scale="5"] .grade-position-band small {
+  font-size: .62rem;
+  font-weight: 650;
+}
 
 .grade-position-bands[data-scale="5"] .grade-position-band:nth-child(1) { background: #cbb9f3; }
 .grade-position-bands[data-scale="5"] .grade-position-band:nth-child(2) { background: #b8c4f2; }
@@ -3914,6 +3924,13 @@ h3:not(.hero-grid h2),
   line-height: 1.05;
 }
 
+.grade-position-bands[data-scale="9"] .grade-position-band b {
+  font-size: clamp(.82rem, 1.15vw, .94rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
 .grade-position-bands[data-scale="9"] .grade-position-band small { display: none; }
 
 .grade-position-scale-row {
@@ -3925,9 +3942,9 @@ h3:not(.hero-grid h2),
 .grade-position-percent-axis {
   position: relative;
   height: 14px;
-  color: #596276;
-  font-size: .62rem;
-  font-weight: 700;
+  color: #4f5870;
+  font-size: .64rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -.01em;
   line-height: 1;
@@ -4056,13 +4073,13 @@ h3:not(.hero-grid h2),
   .grade-position-comparison { grid-template-columns: 41px minmax(0, 1fr); gap: 4px; padding-inline: 7px; }
   .grade-position-row-labels strong { font-size: .68rem; }
   .grade-position-shared-marker b { font-size: .62rem; }
-  .grade-position-percent-axis { font-size: .54rem; }
+  .grade-position-percent-axis { font-size: .56rem; }
   .grade-position-scale-caption { margin-left: 48px; font-size: .58rem; }
   .grade-position-bands[data-scale="9"] .grade-position-band:is(:first-child, :nth-child(2), :nth-child(8), :last-child) b { font-size: .68rem; }
 }
 
 @media (max-width: 430px) {
-  .grade-position-percent-axis { font-size: .57rem; }
+  .grade-position-percent-axis { font-size: .6rem; }
 }
 
 /* Teacher quick consultation: compact session-only workflow using the shared design system. */
