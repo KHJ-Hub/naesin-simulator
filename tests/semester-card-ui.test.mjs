@@ -73,3 +73,13 @@ test('모바일은 입력 방식과 계산 영역을 한 열로 배치하고 터
   assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.semester-complete-button \{ width: 100%; min-height: 48px/);
   assert.match(styles, /\.grade-calculation-actions \{ grid-template-columns: 1fr/);
 });
+
+test('상세입력은 필수 등급을 크게, 선택 석차를 보조 입력으로 배치한다', () => {
+  assert.match(app, /grade-fields \$\{gradingInputs\(record\.gradingType\)\.grade[\s\S]*?'has-course-rank'/);
+  assert.match(app, /<span>석차<small>\(선택\)<\/small><\/span>/);
+  assert.match(styles, /\.grade-fields\.has-course-rank \{[\s\S]*?grid-template-columns: minmax\(150px, 180px\) minmax\(0, 1fr\)/);
+  assert.match(styles, /\.grade-fields\.has-course-rank > \.grade-input select \{[\s\S]*?min-width: 150px;[\s\S]*?min-height: 48px/);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1199px\)[\s\S]*?\.grade-row\.has-course-rank-inputs > \.grade-fields \{[\s\S]*?grid-column: 1 \/ 4;[\s\S]*?width: min\(100%, 620px\)/);
+  assert.match(styles, /@media \(max-width: 767px\)[\s\S]*?\.grade-row \.grade-fields\.has-course-rank \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(styles, /\.grade-fields\.has-course-rank > \.course-rank-reference \{[\s\S]*?padding-top: 8px;[\s\S]*?border-top: 1px solid var\(--line\)/);
+});

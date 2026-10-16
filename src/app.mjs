@@ -465,10 +465,10 @@ function gradeRowsHtml(semesterId) {
   const list = detailedRows(semesterId);
   if (!list.length) return `<div class="empty-state">${semesterLabel(semesterId)}에 등록된 성적이 없어요. 과목을 추가해 보세요.</div>`;
   return list.map((record) => `
-    <div class="grade-row" data-id="${escapeHtml(record.id)}">
+    <div class="grade-row ${gradingInputs(record.gradingType).grade && record.fiveLevelEligible !== false ? 'has-course-rank-inputs' : ''}" data-id="${escapeHtml(record.id)}">
       <div class="course-name"><span>과목명</span><strong>${escapeHtml(record.subjectName)}</strong></div>
       <div class="course-meta"><span>${escapeHtml(record.subjectGroup)}</span><small>${escapeHtml(record.credit)}학점</small></div>
-      <div class="grade-fields">
+      <div class="grade-fields ${gradingInputs(record.gradingType).grade && record.fiveLevelEligible !== false ? 'has-course-rank' : ''}">
         ${record.gradingType === 'unconfirmed' ? '<small class="muted">성적 처리 방식 확인이 필요해요. 이 과목은 학기 평균 간편입력으로 반영해 주세요.</small>' : `
           ${gradingInputs(record.gradingType).grade ? `<label class="grade-input"><span>등급</span><select data-field="gradeValue" aria-label="${escapeHtml(record.subjectName)} 등급"><option value="">선택</option>${[1,2,3,4,5].map((value) => `<option value="${value}" ${Number(record.gradeValue) === value ? 'selected' : ''}>${value}등급</option>`).join('')}</select></label>` : ''}
           ${gradingInputs(record.gradingType).achievement || gradingInputs(record.gradingType).passfail ? `<label class="achievement-input"><span>${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}</span><select data-field="achievement" aria-label="${escapeHtml(record.subjectName)} ${gradingInputs(record.gradingType).passfail ? '이수 여부' : '성취도'}"><option value="">-</option>${allowedAchievements(record).map((value) => `<option value="${value}" ${record.achievement === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>` : ''}
@@ -484,7 +484,7 @@ function courseRankInputsHtml(record) {
   const total = escapeHtml(record.courseRankTotal ?? '');
   const validation = validateCourseRankReference(record);
   const error = validation.status === 'empty' || validation.status === 'valid' ? '' : validation.message;
-  return `<div class="course-rank-reference"><span>과목 석차 <small>선택</small></span><div><label><span class="sr-only">${escapeHtml(record.subjectName)} 실제 석차</span><input data-course-rank="courseRank" type="text" inputmode="numeric" value="${rank}" aria-label="${escapeHtml(record.subjectName)} 실제 석차" /> <b>등</b></label><em>/</em><label><span class="sr-only">${escapeHtml(record.subjectName)} 석차 산출 인원</span><input data-course-rank="courseRankTotal" type="text" inputmode="numeric" value="${total}" aria-label="${escapeHtml(record.subjectName)} 석차 산출 인원" /> <b>명</b></label></div><small class="course-rank-error" role="alert">${escapeHtml(error)}</small></div>`;
+  return `<div class="course-rank-reference"><span>석차<small>(선택)</small></span><div><label><span class="sr-only">${escapeHtml(record.subjectName)} 실제 석차</span><input data-course-rank="courseRank" type="text" inputmode="numeric" value="${rank}" aria-label="${escapeHtml(record.subjectName)} 실제 석차" /> <b>등</b></label><em>/</em><label><span class="sr-only">${escapeHtml(record.subjectName)} 석차 산출 인원</span><input data-course-rank="courseRankTotal" type="text" inputmode="numeric" value="${total}" aria-label="${escapeHtml(record.subjectName)} 석차 산출 인원" /> <b>명</b></label></div><small class="course-rank-error" role="alert">${escapeHtml(error)}</small></div>`;
 }
 
 function courseSelectionHtml(semesterId) {
