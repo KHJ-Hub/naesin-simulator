@@ -12,6 +12,17 @@ import {
 
 const app = await readFile(new URL('../src/app.mjs', import.meta.url), 'utf8');
 
+test('학번 앞자리 0은 수동 백업·복원과 인쇄에서도 5자리 문자열로 유지된다', () => {
+  const state = completeStudentState();
+  state.student.studentId = '00123';
+  const restored = parseStudentBackup(JSON.stringify(createStudentBackup(state)));
+  assert.equal(restored.student.studentId, '00123');
+  assert.equal(typeof restored.student.studentId, 'string');
+  const model = buildPrintReportModel(restored);
+  assert.equal(model.student.studentId, '00123');
+  assert.match(renderPrintReport(model), /<dt>학번<\/dt><dd>00123<\/dd>/);
+});
+
 function completeStudentState() {
   return {
     student: { studentId: '10101', studentName: '김학생' },

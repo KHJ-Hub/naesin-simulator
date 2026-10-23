@@ -40,6 +40,19 @@ test('학생 화면은 학번과 이름만 받고 다중 프로필 조작 UI를 
     .forEach((id) => assert.doesNotMatch(html, new RegExp(`id="${id}"`)));
 });
 
+test('학번은 숫자 키패드를 지원하는 5자리 텍스트이고 이름은 한국어 입력 속성을 사용한다', () => {
+  const studentId = html.match(/<input id="student-id"[^>]*>/)[0];
+  const studentName = html.match(/<input id="student-name"[^>]*>/)[0];
+  assert.match(studentId, /type="text"/);
+  assert.match(studentId, /inputmode="numeric"/);
+  assert.match(studentId, /pattern="\[0-9\]\*"/);
+  assert.match(studentId, /maxlength="5"/);
+  for (const attribute of ['type="text"', 'lang="ko"', 'autocomplete="name"', 'autocapitalize="none"', 'spellcheck="false"']) {
+    assert.ok(studentName.includes(attribute));
+  }
+  assert.doesNotMatch(styles, /ime-mode\s*:/);
+});
+
 test('학생 앱은 개인 데이터를 localStorage에서 읽거나 쓰지 않는다', () => {
   assert.doesNotMatch(app, /student-profile-store|student-runtime-storage|studentStorage/);
   assert.match(app, /function loadState\(\)\s*{[\s\S]*?return defaultState\(\);/);
