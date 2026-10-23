@@ -3881,8 +3881,8 @@ h3:not(.hero-grid h2),
 .course-relative-summary span { color: #4c6171; font-size: .68rem; font-weight: 750; }
 .course-relative-summary strong { color: var(--teal-700); font-size: .88rem; font-variant-numeric: tabular-nums; }
 .course-relative-summary small { color: var(--muted); font-size: .65rem; }
-.course-relative-summary .course-rank-interpretation { grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 5px; margin:3px 0 0; line-height:1.6; }
-.course-relative-summary .course-rank-interpretation span { color:#42556b; font-size:.75rem; font-weight:500; white-space:nowrap; }
+.course-rank-info { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
+.course-relative-summary .course-relative-note { grid-column:1/-1; margin:3px 0 0; color:#4c6171; font-size:.75rem; line-height:1.55; overflow-wrap:anywhere; }
 .grade-band-reference-note {
   margin: 7px 0 0;
   color: var(--muted);
