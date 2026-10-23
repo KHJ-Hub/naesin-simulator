@@ -260,10 +260,8 @@ export function getAvailableUniversities(data, filters = {}, universities = UNIV
   // 대학 자체와 입시결과 공개 여부는 별개다. 대학 목록은 마스터의 지역만으로 만들고,
   // 계열·전형·자격 및 입시결과 레코드 존재 여부는 대학 선택 후 결과 조회에만 적용한다.
   const selectedRegion = normalizeAdmissionRegion(filters.region);
-  const selectedOwnership = normalizeUniversityOwnership(filters.ownership);
   const entries = masterUniversities(universities)
     .filter((item) => !selectedRegion || item.region === selectedRegion)
-    .filter((item) => !selectedOwnership || normalizeUniversityOwnership(item.ownership ?? item.establishmentType) === selectedOwnership)
     .filter((item) => genderConditionMatches(item, filters.schoolGender));
   return uniqueSorted(entries.map((item) => item.name));
 }
@@ -276,11 +274,8 @@ export function getAvailableOwnershipTypes(universities = UNIVERSITIES) {
 }
 
 export function getAvailableAcademicFields(data, filters = {}) {
-  const records = visibleRecords(data, filters).filter((item) => matches(item, filters, ['academicField', 'department', 'admissionName']));
-  const present = new Set(records.map(itemAcademicField));
-  return ADMISSION_ACADEMIC_FIELD_FILTERS.filter((field) => field === 'other-unknown'
-    ? present.has(ADMISSION_ACADEMIC_FIELDS.OTHER) || present.has(ADMISSION_ACADEMIC_FIELDS.UNKNOWN)
-    : present.has(field));
+  // 지역 데이터가 아직 없거나 교집합이 0건이어도 기존 공식 분류는 선택 가능하다.
+  return [...ADMISSION_ACADEMIC_FIELD_FILTERS];
 }
 
 export function departmentSearchMetadata(itemOrDepartment = {}) {
@@ -331,12 +326,9 @@ export function getAvailableAdmissionNames(data, filters = {}) {
   return uniqueSorted(records.filter(isMeaningfulAdmissionNameOption).map((item) => String(item.admissionName).trim()));
 }
 
-/** 현재 조건에서 선택 가능한 canonical 지원 유형만 반환한다. unknown은 선택지로 만들지 않는다. */
+/** 기존 canonical 지원 유형은 현재 결과·지역 로딩 상태와 무관하게 제공한다. */
 export function getAvailableAdmissionSupportTypes(data, filters = {}) {
-  const records = visibleRecords(data, { ...filters, includeSpecialEligibility: true, supportType: '' })
-    .filter((item) => matches(item, filters, ['supportType', 'admissionName']));
-  const present = new Set(records.map((item) => admissionSupportTypeForEligibility(item.eligibilityType)).filter(Boolean));
-  return ADMISSION_SUPPORT_TYPE_OPTIONS.filter((type) => present.has(type));
+  return [...ADMISSION_SUPPORT_TYPE_OPTIONS];
 }
 
 export function getAvailableAdmissionCategories(data, filters = {}) {
@@ -380,7 +372,7 @@ export function reconcileAdmissionFilters(data, filters = {}, universities = UNI
   if (next.ownership && !getAvailableOwnershipTypes(universities).includes(next.ownership)) next.ownership = '';
   if (next.university && !getAvailableUniversities(data, { ...next, field: '', department: '', supportType: '', admissionName: '' }, universities).includes(next.university)) next.university = '';
   if (next.field && !getAvailableAcademicFields(data, { ...next, department: '', supportType: '', admissionName: '' }).includes(next.field)) next.field = '';
-  if (next.department && !searchAvailableDepartments(data, { ...next, department: '', supportType: '', admissionName: '' }, next.department, { limit: 1 }).length) next.department = '';
+  // 자유 검색어는 0건이어도 학생의 선택 조건으로 유지한다.
   if (next.supportType && !getAvailableAdmissionSupportTypes(data, next).includes(next.supportType)) next.supportType = '';
   if (next.admissionName && !getAvailableAdmissionNames(data, next).includes(next.admissionName)) next.admissionName = '';
   if (next.admissionCategory && !getAvailableAdmissionCategories(data, next).includes(next.admissionCategory)) next.admissionCategory = '';

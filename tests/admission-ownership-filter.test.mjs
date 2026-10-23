@@ -94,25 +94,25 @@ test('설립유형은 지역·계열·학과 검색·교과/학종과 동시에 
   assert.equal(comprehensive.totalMatchedResults, 1);
 });
 
-test('대학 선택지는 지역과 설립유형을 함께 적용하고 입결 0건 대학도 유지한다', () => {
-  assert.deepEqual(getAvailableUniversities([], { region: '부산', ownership: 'national' }, UNIVERSITY_FIXTURE), ['부산국립대']);
-  assert.deepEqual(getAvailableUniversities([], { ownership: 'public' }, UNIVERSITY_FIXTURE), ['서울공립대']);
-  assert.deepEqual(getAvailableUniversities([], { ownership: 'private' }, UNIVERSITY_FIXTURE), ['국립가짜대학교', '부산사립대']);
+test('대학 선택지는 지역만 적용하고 설립유형과 입결 유무로 숨기지 않는다', () => {
+  assert.deepEqual(getAvailableUniversities([], { region: '부산', ownership: 'national' }, UNIVERSITY_FIXTURE), ['부산국립대', '부산사립대']);
+  assert.equal(getAvailableUniversities([], { ownership: 'public' }, UNIVERSITY_FIXTURE).length, 4);
+  assert.equal(getAvailableUniversities([], { ownership: 'private' }, UNIVERSITY_FIXTURE).length, 4);
 });
 
-test('설립유형 변경으로 맞지 않는 대학 선택은 전체 대학으로 초기화된다', () => {
+test('설립유형 변경은 대학 선택을 보존하고 결과 교집합에만 적용한다', () => {
   const reconciled = reconcileAdmissionFilters([], {
     region: '부산', ownership: 'national', university: '부산사립대',
   }, UNIVERSITY_FIXTURE);
   assert.equal(reconciled.ownership, 'national');
-  assert.equal(reconciled.university, '');
+  assert.equal(reconciled.university, '부산사립대');
 
   const viewFilters = reconcileAdmissionViewFilters(DATA, {
     admissionViewMode: ADMISSION_VIEW_MODES.SUBJECT,
     filters: { region: '부산', ownership: 'national', university: '동아대학교' },
   });
   assert.equal(viewFilters.ownership, 'national');
-  assert.equal(viewFilters.university, '');
+  assert.equal(viewFilters.university, '동아대학교');
 });
 
 test('필터 파이프라인과 종속 선택지에 설립유형 단계가 포함된다', () => {
@@ -124,7 +124,7 @@ test('필터 파이프라인과 종속 선택지에 설립유형 단계가 포�
   });
   assert.deepEqual(options.ownershipTypes, ['national', 'public', 'private']);
   assert.ok(options.universities.includes('부산대학교'));
-  assert.equal(options.universities.includes('동아대학교'), false);
+  assert.equal(options.universities.includes('동아대학교'), true);
 });
 
 test('학생용과 교사용 화면은 같은 설립유형 필터 상태를 공통 로직에 연결한다', async () => {

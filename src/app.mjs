@@ -12,7 +12,7 @@ import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, r
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20260922-official-field1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
-import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS, ADMISSION_SUPPORT_TYPE_LABELS } from './admission-filter-options.mjs?v=20260928-support-type1';
+import { ADMISSION_ACADEMIC_FIELD_LABELS, ADMISSION_OWNERSHIP_LABELS, ADMISSION_SUPPORT_TYPE_LABELS } from './admission-filter-options.mjs?v=20261023-independent-filters1';
 import {
   ADMISSION_SUBJECT_GROUPS,
   ADMISSION_VIEW_MODES,
@@ -24,7 +24,7 @@ import {
   prepareAdmissionResultView,
   reconcileAdmissionViewFilters,
   resetAdmissionGroupLimits,
-} from './admission-result-view.mjs?v=20260928-support-type1';
+} from './admission-result-view.mjs?v=20261023-independent-filters1';
 import { admissionInterestKey, normalizeAdmissionInterests, toggleAdmissionInterest } from './admission-reference-store.mjs?v=20260921-security-audit1';
 import {
   MAX_ADMISSION_INTEREST_COMPARISONS,
@@ -103,6 +103,7 @@ const admissionInterestComparisonSelection = new Set();
 let admissionInterestComparisonOpen = false;
 const DEPARTMENT_SEARCH_DEBOUNCE_MS = 180;
 let departmentSearchTimer = null;
+let departmentSearchRequestVersion = 0;
 let isDepartmentSuggestionsOpen = false;
 let isDepartmentSearchComposing = false;
 let pendingDepartmentSearchCommit = false;
@@ -734,7 +735,7 @@ function setAdmissionViewMode(mode) {
   if (normalized === admissionViewMode) return;
   closeDepartmentSuggestions();
   admissionViewMode = normalized;
-  Object.assign(admissionFilters, { region: '', ownership: '', university: '', field: '', department: '', supportType: '' });
+  Object.assign(admissionFilters, reconcileAdmissionViewFilters(admissionReferenceData, { admissionViewMode, filters: admissionFilters }));
   resetAdmissionViewPaging();
 }
 function ensureAdmissionViewModeControls() {
@@ -756,11 +757,12 @@ function renderDepartmentSuggestions(suggestions = []) {
   if (!input || !list) return;
   list.innerHTML = suggestions.map(({ department }) => `<button type="button" role="option" data-department-suggestion="${escapeHtml(department)}">${escapeHtml(department)}</button>`).join('');
   if (!suggestions.length) isDepartmentSuggestionsOpen = false;
-  const visible = Boolean(admissionViewMode && isDepartmentSuggestionsOpen && admissionFilters.department && suggestions.length);
+  const visible = Boolean(isDepartmentSuggestionsOpen && admissionFilters.department && suggestions.length);
   list.hidden = !visible;
   input.setAttribute('aria-expanded', String(visible));
 }
 function closeDepartmentSuggestions() {
+  departmentSearchRequestVersion += 1;
   isDepartmentSuggestionsOpen = false;
   const input = $('#admission-department');
   const list = $('#admission-department-suggestions');
@@ -769,13 +771,13 @@ function closeDepartmentSuggestions() {
 }
 function openDepartmentSuggestions() {
   const options = getAdmissionViewFilterOptions(admissionReferenceData, { admissionViewMode, filters: admissionFilters });
-  isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
+  isDepartmentSuggestionsOpen = Boolean(admissionFilters.department && options.departmentSuggestions.length);
   renderDepartmentSuggestions(options.departmentSuggestions);
 }
 function updateDepartmentSuggestions(input, { open = true } = {}) {
   admissionFilters.department = input.value.trim();
   const options = getAdmissionViewFilterOptions(admissionReferenceData, { admissionViewMode, filters: admissionFilters });
-  if (open) isDepartmentSuggestionsOpen = Boolean(admissionViewMode && admissionFilters.department && options.departmentSuggestions.length);
+  if (open) isDepartmentSuggestionsOpen = Boolean(admissionFilters.department && options.departmentSuggestions.length);
   renderDepartmentSuggestions(options.departmentSuggestions);
 }
 function scrollAdmissionResultsIntoView() {
@@ -798,9 +800,12 @@ async function commitDepartmentSearch(input, { dismissKeyboard = false, revealRe
 }
 function scheduleDepartmentSearchRender() {
   clearTimeout(departmentSearchTimer);
-  departmentSearchTimer = window.setTimeout(() => {
+  const requestVersion = ++departmentSearchRequestVersion;
+  departmentSearchTimer = window.setTimeout(async () => {
     departmentSearchTimer = null;
+    if (admissionFilters.department) await ensureAdmissionData({ allWhenUnscoped: true });
     renderAdmissionReferences();
+    if (requestVersion === departmentSearchRequestVersion && document.activeElement === $('#admission-department')) openDepartmentSuggestions();
   }, DEPARTMENT_SEARCH_DEBOUNCE_MS);
 }
 function renderAdmissionFilterOptions() {
@@ -817,11 +822,11 @@ function renderAdmissionFilterOptions() {
     if (!element) return;
     element.innerHTML = admissionOptions(values, placeholder, labels);
     element.value = admissionFilters[key];
-    element.disabled = !admissionViewMode || (key === 'supportType' && values.length === 0);
+    element.disabled = false;
   });
   const departmentInput = $('#admission-department');
   departmentInput.value = admissionFilters.department;
-  departmentInput.disabled = !admissionViewMode;
+  departmentInput.disabled = false;
   renderDepartmentSuggestions(options.departmentSuggestions);
   document.querySelectorAll('[data-admission-view-mode]').forEach((control) => {
     const active = normalizeAdmissionViewMode(control.dataset.admissionViewMode ?? control.value) === admissionViewMode;
@@ -1265,7 +1270,7 @@ document.querySelector('#admission-filters').addEventListener('change', async (e
   admissionFilters[key] = event.target.value;
   resetAdmissionViewPaging();
   renderAdmissionReferences();
-  if (key === 'region' || key === 'university') await ensureAdmissionData();
+  await ensureAdmissionData({ allWhenUnscoped: true });
   Object.assign(admissionFilters, reconcileAdmissionViewFilters(admissionReferenceData, { admissionViewMode, filters: admissionFilters }));
   renderAdmissionReferences();
 });

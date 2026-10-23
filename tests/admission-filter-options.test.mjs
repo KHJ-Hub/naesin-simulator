@@ -133,7 +133,7 @@ test('대학 선택 여부와 관계없이 현재 범위의 공식 모집단위�
   assert.deepEqual(getAvailableDepartments(FIXTURE, {}), ['건축공학과', '건축학과', '건축학전공', '국어국문학과', '컴퓨터공학과']);
 });
 
-test('상위 지역 변경으로 무효가 된 대학·모집단위·전형명은 전체 선택으로 초기화한다', () => {
+test('지역과 충돌하는 대학은 초기화하고 학과 자유검색어는 유지한다', () => {
   const filters = reconcileAdmissionFilters(FIXTURE, {
     region: '서울특별시',
     university: '부산대학교',
@@ -144,11 +144,11 @@ test('상위 지역 변경으로 무효가 된 대학·모집단위·전형명�
   }, UNIVERSITY_FIXTURE);
   assert.equal(filters.region, '서울특별시');
   assert.equal(filters.university, '');
-  assert.equal(filters.department, '');
+  assert.equal(filters.department, '컴퓨터공학과');
   assert.equal(filters.admissionName, '');
 });
 
-test('상위 지역 변경으로 존재하지 않게 된 계열도 전체로 초기화한다', () => {
+test('지역 변경 후 결과가 없는 계열도 선택을 유지한다', () => {
   const fieldRecords = [
     result({ region: '부산광역시', university: '부산대학교', department: '회화과', academicField: 'arts' }),
     result({ region: '서울특별시', university: '서울대학교', department: '국어국문학과', academicField: 'humanities' }),
@@ -159,8 +159,8 @@ test('상위 지역 변경으로 존재하지 않게 된 계열도 전체로 초
     university: '',
     field: 'arts',
   }, UNIVERSITY_FIXTURE);
-  assert.equal(filters.field, '');
-  assert.deepEqual(getAvailableAcademicFields(fieldRecords, { region: '서울특별시' }), ['humanities']);
+  assert.equal(filters.field, 'arts');
+  assert.deepEqual(getAvailableAcademicFields(fieldRecords, { region: '서울특별시' }), ['humanities', 'natural', 'arts', 'open-major']);
 });
 
 test('건축 검색은 명칭을 합치지 않고 관련 공식 모집단위명을 그대로 반환한다', () => {
@@ -228,7 +228,7 @@ test('새 공식 데이터는 제공된 academicField를 저장하고 공식값�
 test('학생부교과·종합과 계열 조건이 선택지와 실제 결과에 함께 적용된다', () => {
   assert.deepEqual(getAvailableAdmissionNames(FIXTURE), ['교과우수전형', '지역균형전형', '지역인재', '학교장추천', '학생부종합일반']);
   assert.deepEqual(getAvailableDepartments(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합' }), ['국어국문학과']);
-  assert.deepEqual(getAvailableAcademicFields(FIXTURE, { university: '부산대학교', admissionCategory: '학생부교과' }), ['natural']);
+  assert.deepEqual(getAvailableAcademicFields(FIXTURE, { university: '부산대학교', admissionCategory: '학생부교과' }), ['humanities', 'natural', 'arts', 'open-major']);
   assert.deepEqual(getAvailableAdmissionNames(FIXTURE, { university: '부산대학교', field: 'humanities' }), ['학생부종합일반']);
   assert.deepEqual(getAvailableAdmissionCategories(FIXTURE, { university: '부산대학교', department: '국어국문학과' }), ['학생부종합']);
   const comprehensive = filterAdmissionRecords(FIXTURE, { university: '부산대학교', admissionCategory: '학생부종합', field: 'humanities' });

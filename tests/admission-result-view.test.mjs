@@ -58,13 +58,13 @@ const subjectView = (data, options = {}) => prepareAdmissionResultView(data, {
   ...options,
 });
 
-test('전형 방식을 고르기 전에는 결과와 하위 필터 선택지를 만들지 않는다', () => {
+test('전형 방식을 고르기 전에도 필터는 제공하고 결과는 모드 선택을 기다린다', () => {
   const view = prepareAdmissionResultView(FIXTURE, { comparisonValue: 2 });
   const options = getAdmissionViewFilterOptions(FIXTURE);
   assert.equal(view.admissionViewMode, null);
   assert.equal(view.totalMatchedResults, 0);
-  assert.deepEqual(options.regions, []);
-  assert.deepEqual(options.universities, []);
+  assert.ok(options.regions.includes('부산광역시'));
+  assert.ok(options.universities.includes('부산대학교'));
 });
 
 test('학생 내신 2.00 기준 ±0.20 경계를 포함하고 등급 숫자 방향을 정확히 분류한다', () => {
@@ -231,27 +231,27 @@ test('9등급제 원본 교과 모드는 학생 내신 비교와 범위 그룹 �
   assert.ok(view.subjectReference.visibleResults.every(({ difference, absoluteDifference, group }) => difference === null && absoluteDifference === null && group === null));
 });
 
-test('전형 모드가 바뀌어도 대학은 입결 유무가 아닌 마스터로 표시하고 하위 선택지는 해당 모드로 제한한다', () => {
+test('전형 모드가 바뀌어도 대학과 canonical 계열 선택지는 유지한다', () => {
   const subjectOptions = getAdmissionViewFilterOptions(FIXTURE, { admissionViewMode: ADMISSION_VIEW_MODES.SUBJECT });
   const comprehensiveOptions = getAdmissionViewFilterOptions(FIXTURE, { admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE });
   assert.ok(subjectOptions.regions.includes('부산광역시'));
   assert.ok(comprehensiveOptions.regions.includes('서울특별시'));
   assert.ok(subjectOptions.universities.includes('부산대학교'));
   assert.ok(comprehensiveOptions.universities.includes('부산대학교'));
-  assert.deepEqual(subjectOptions.academicFields, ['humanities', 'natural']);
-  assert.deepEqual(comprehensiveOptions.academicFields, ['humanities']);
+  assert.deepEqual(subjectOptions.academicFields, ['humanities', 'natural', 'arts', 'open-major']);
+  assert.deepEqual(comprehensiveOptions.academicFields, subjectOptions.academicFields);
 });
 
-test('모드 변경으로 유효하지 않은 하위 필터는 전체 선택으로 초기화한다', () => {
+test('모드 변경 시 계열·자유검색은 유지하고 잘못된 대학·기존 전형명만 초기화한다', () => {
   const filters = reconcileAdmissionViewFilters(FIXTURE, {
     admissionViewMode: ADMISSION_VIEW_MODES.COMPREHENSIVE,
     filters: { region: '부산', university: '가대학교', field: 'natural', department: '컴퓨터공학과', admissionName: '일반전형' },
   });
-  // 지역은 대학 마스터에 존재하므로 유지하고, 해당 모드에서 무효한 하위 선택만 초기화한다.
+  // 대학은 마스터로 검증하고, 0건이 되는 계열·검색어는 그대로 유지한다.
   assert.equal(filters.region, '부산광역시');
   assert.equal(filters.university, '');
-  assert.equal(filters.field, '');
-  assert.equal(filters.department, '');
+  assert.equal(filters.field, 'natural');
+  assert.equal(filters.department, '컴퓨터공학과');
   assert.equal(filters.admissionName, '');
 });
 

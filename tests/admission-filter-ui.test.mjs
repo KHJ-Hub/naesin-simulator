@@ -32,7 +32,7 @@ test('학과 검색은 대학 선택 없이 사용할 수 있는 검색 입력�
   assert.match(html, /enterkeyhint="search"/);
   assert.match(html, /inputmode="search"/);
   assert.match(html, /placeholder="학과\/모집단위 검색 \(예: 경제, 간호, 공학\)"/);
-  assert.match(app, /departmentInput\.disabled = !admissionViewMode/);
+  assert.match(app, /departmentInput\.disabled = false/);
   assert.equal(app.includes("key === 'department' && !admissionFilters.university"), false);
   assert.equal(app.includes('대학을 먼저 선택하세요'), false);
 });
@@ -40,7 +40,7 @@ test('학과 검색은 대학 선택 없이 사용할 수 있는 검색 입력�
 test('학과 자유 입력은 자동완성 선택 없이 입력·Enter·변경 시 결과를 다시 렌더링한다', () => {
   assert.match(app, /DEPARTMENT_SEARCH_DEBOUNCE_MS = 180/);
   assert.match(app, /function updateDepartmentSuggestions\(input,[\s\S]*?admissionFilters\.department = input\.value\.trim\(\)/);
-  assert.match(app, /departmentSearchTimer = window\.setTimeout\(\(\) => \{[\s\S]*?renderAdmissionReferences\(\)/);
+  assert.match(app, /departmentSearchTimer = window\.setTimeout\(async \(\) => \{[\s\S]*?renderAdmissionReferences\(\)/);
   assert.match(app, /if \(key === 'department'\)[\s\S]*?renderAdmissionReferences\(\)/);
   assert.match(app, /if \(event\.key !== 'Enter'\) return;[\s\S]*?commitDepartmentSearch\(event\.target, \{ dismissKeyboard: true, revealResults: true \}\)/);
   assert.match(app, /addEventListener\('search',[\s\S]*?commitDepartmentSearch\(event\.target, \{ dismissKeyboard: true, revealResults: true \}\)/);
@@ -48,13 +48,15 @@ test('학과 자유 입력은 자동완성 선택 없이 입력·Enter·변경 �
 
 test('학과 자동완성은 입력 중에만 열리고 확정·취소 동작에서 즉시 닫힌다', () => {
   assert.match(app, /let isDepartmentSuggestionsOpen = false/);
-  assert.match(app, /isDepartmentSuggestionsOpen = Boolean\(admissionViewMode && admissionFilters\.department && options\.departmentSuggestions\.length\)/);
+  assert.match(app, /isDepartmentSuggestionsOpen = Boolean\(admissionFilters\.department && options\.departmentSuggestions\.length\)/);
   assert.match(app, /if \(event\.key === 'Escape'\)[\s\S]*?closeDepartmentSuggestions\(\)/);
   assert.match(app, /data-department-suggestion[\s\S]*?closeDepartmentSuggestions\(\)[\s\S]*?renderAdmissionReferences\(\)/);
   assert.match(app, /document\.addEventListener\('pointerdown',[\s\S]*?\.admission-department-field[\s\S]*?closeDepartmentSuggestions\(\)/);
   assert.match(app, /#admission-view-button'\)\.addEventListener\('click',[\s\S]*?closeDepartmentSuggestions\(\)/);
   assert.match(app, /#admission-department'\)\.addEventListener\('focus',[\s\S]*?openDepartmentSuggestions\(\)/);
   assert.match(app, /#admission-department'\)\.addEventListener\('click', openDepartmentSuggestions\)/);
+  assert.match(app, /function closeDepartmentSuggestions\(\) \{\s*departmentSearchRequestVersion \+= 1/);
+  assert.match(app, /requestVersion === departmentSearchRequestVersion && document\.activeElement === \$\('#admission-department'\)/);
 });
 
 test('모바일 한글 IME 조합 종료 시 후보를 즉시 갱신하고 조합 중 Search 입력을 보존한다', () => {
