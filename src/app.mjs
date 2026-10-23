@@ -106,7 +106,6 @@ let departmentSearchTimer = null;
 let departmentSearchRequestVersion = 0;
 let isDepartmentSuggestionsOpen = false;
 let isDepartmentSearchComposing = false;
-let pendingDepartmentSearchCommit = false;
 let ignoreNativeDepartmentSearchUntil = 0;
 let departmentResultScrollTimer = null;
 
@@ -755,7 +754,7 @@ function renderDepartmentSuggestions(suggestions = []) {
   const input = $('#admission-department');
   const list = $('#admission-department-suggestions');
   if (!input || !list) return;
-  list.innerHTML = suggestions.map(({ department }) => `<button type="button" role="option" data-department-suggestion="${escapeHtml(department)}">${escapeHtml(department)}</button>`).join('');
+  list.innerHTML = `<div class="department-suggestion-heading" role="presentation"><strong>관련 모집단위</strong><small>선택하지 않아도 입력한 검색어 전체로 검색돼요.</small></div>${suggestions.map(({ department }) => `<button type="button" role="option" data-department-suggestion="${escapeHtml(department)}">${escapeHtml(department)}</button>`).join('')}`;
   if (!suggestions.length) isDepartmentSuggestionsOpen = false;
   const visible = Boolean(isDepartmentSuggestionsOpen && admissionFilters.department && suggestions.length);
   list.hidden = !visible;
@@ -1282,7 +1281,6 @@ $('#admission-department').addEventListener('input', (event) => {
 });
 $('#admission-department').addEventListener('compositionstart', () => {
   isDepartmentSearchComposing = true;
-  pendingDepartmentSearchCommit = false;
 });
 $('#admission-department').addEventListener('compositionupdate', (event) => {
   window.requestAnimationFrame(() => updateDepartmentSuggestions(event.target));
@@ -1291,14 +1289,10 @@ $('#admission-department').addEventListener('compositionend', (event) => {
   isDepartmentSearchComposing = false;
   updateDepartmentSuggestions(event.target);
   resetAdmissionViewPaging();
-  if (pendingDepartmentSearchCommit) {
-    pendingDepartmentSearchCommit = false;
-    commitDepartmentSearch(event.target, { dismissKeyboard: true, revealResults: true });
-    return;
-  }
   scheduleDepartmentSearchRender();
 });
 $('#admission-department').addEventListener('keydown', (event) => {
+  if (event.isComposing || isDepartmentSearchComposing || event.keyCode === 229) return;
   if (event.key === 'Escape') {
     event.preventDefault();
     closeDepartmentSuggestions();
@@ -1307,14 +1301,10 @@ $('#admission-department').addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return;
   event.preventDefault();
   ignoreNativeDepartmentSearchUntil = Date.now() + 500;
-  if (event.isComposing || isDepartmentSearchComposing || event.keyCode === 229) {
-    pendingDepartmentSearchCommit = true;
-    return;
-  }
   commitDepartmentSearch(event.target, { dismissKeyboard: true, revealResults: true });
 });
 $('#admission-department').addEventListener('search', (event) => {
-  if (Date.now() < ignoreNativeDepartmentSearchUntil) return;
+  if (event.isComposing || isDepartmentSearchComposing || Date.now() < ignoreNativeDepartmentSearchUntil) return;
   commitDepartmentSearch(event.target, { dismissKeyboard: true, revealResults: true });
 });
 $('#admission-department').addEventListener('focus', () => {

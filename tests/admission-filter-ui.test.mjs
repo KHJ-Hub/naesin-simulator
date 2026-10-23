@@ -1,9 +1,83 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const app = fs.readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+
+function departmentHandler(eventName, selector = '#admission-department') {
+  const start = app.indexOf(`$('${selector}').addEventListener('${eventName}', `);
+  assert.ok(start >= 0);
+  const body = app.slice(start + app.slice(start).indexOf('(event) => {') + '(event) => {'.length);
+  return `(() => {${body.slice(0, body.indexOf('\n});'))}\n})()`;
+}
+
+test('Enter는 자유 검색어를 확정하고 조합 중 Enter·Esc는 추천창을 조작하지 않는다', () => {
+  const commits = [];
+  let closes = 0;
+  const input = { value: '경제' };
+  const context = vm.createContext({
+    event: { key: 'Enter', target: input, preventDefault() {} },
+    isDepartmentSearchComposing: false,
+    ignoreNativeDepartmentSearchUntil: 0,
+    Date,
+    commitDepartmentSearch(target) { commits.push(target.value); },
+    closeDepartmentSuggestions() { closes += 1; },
+  });
+  const handler = departmentHandler('keydown');
+  vm.runInContext(handler, context);
+  assert.deepEqual(commits, ['경제']);
+  for (const flags of [{ isComposing: true }, { keyCode: 229 }, {}]) {
+    context.isDepartmentSearchComposing = Object.keys(flags).length === 0;
+    context.event = { key: 'Enter', target: input, ...flags, preventDefault() { assert.fail('조합 입력을 차단하면 안 됨'); } };
+    vm.runInContext(handler, context);
+  }
+  assert.deepEqual(commits, ['경제']);
+  assert.equal(closes, 0);
+  context.isDepartmentSearchComposing = false;
+  context.event = { key: 'Escape', target: input, preventDefault() {} };
+  vm.runInContext(handler, context);
+  assert.equal(closes, 1);
+  assert.equal(input.value, '경제');
+});
+
+test('추천 선택은 검색어를 확정하고 닫으며 추천 목록에 선택 안내를 제공한다', () => {
+  let closed = false;
+  let rendered = false;
+  const input = { value: '경제' };
+  const context = vm.createContext({
+    event: { target: { closest: () => ({ dataset: { departmentSuggestion: '농업경제학과' } }) } },
+    admissionFilters: { department: '경제' },
+    $: () => input,
+    clearTimeout() {}, departmentSearchTimer: null,
+    closeDepartmentSuggestions() { closed = true; },
+    resetAdmissionViewPaging() {}, renderAdmissionReferences() { rendered = true; },
+  });
+  vm.runInContext(departmentHandler('click', '#admission-department-suggestions'), context);
+  assert.equal(input.value, '농업경제학과');
+  assert.equal(context.admissionFilters.department, '농업경제학과');
+  assert.ok(closed && rendered);
+  assert.match(app, /관련 모집단위/);
+  assert.match(app, /선택하지 않아도 입력한 검색어 전체로 검색돼요\./);
+});
+
+test('바깥 클릭은 검색어를 보존하고 닫으며 목록 내부 클릭은 선택 전에 닫지 않는다', () => {
+  const start = app.indexOf("document.addEventListener('pointerdown', (event) => {");
+  const body = app.slice(start).split('\n});')[0].split('(event) => {')[1];
+  let closed = 0;
+  const context = vm.createContext({
+    admissionFilters: { department: '경제' },
+    event: { target: { closest: () => true } },
+    closeDepartmentSuggestions() { closed += 1; },
+  });
+  vm.runInContext(`(() => {${body}})()`, context);
+  assert.equal(closed, 0);
+  context.event.target.closest = () => null;
+  vm.runInContext(`(() => {${body}})()`, context);
+  assert.equal(closed, 1);
+  assert.equal(context.admissionFilters.department, '경제');
+});
 
 test('입시결과 주요 필터를 아코디언 없이 모두 노출한다', () => {
   assert.equal(html.includes('필터 더보기'), false);
@@ -61,10 +135,10 @@ test('학과 자동완성은 입력 중에만 열리고 확정·취소 동작에
 
 test('모바일 한글 IME 조합 종료 시 후보를 즉시 갱신하고 조합 중 Search 입력을 보존한다', () => {
   assert.match(app, /let isDepartmentSearchComposing = false/);
-  assert.match(app, /let pendingDepartmentSearchCommit = false/);
+  assert.doesNotMatch(app, /pendingDepartmentSearchCommit/);
   assert.match(app, /addEventListener\('compositionstart',[\s\S]*?isDepartmentSearchComposing = true/);
   assert.match(app, /addEventListener\('compositionupdate',[\s\S]*?updateDepartmentSuggestions\(event\.target\)/);
-  assert.match(app, /addEventListener\('compositionend',[\s\S]*?updateDepartmentSuggestions\(event\.target\)[\s\S]*?pendingDepartmentSearchCommit[\s\S]*?dismissKeyboard: true/);
+  assert.match(app, /addEventListener\('compositionend',[\s\S]*?updateDepartmentSuggestions\(event\.target\)[\s\S]*?scheduleDepartmentSearchRender\(\)/);
   assert.match(app, /event\.isComposing \|\| isDepartmentSearchComposing \|\| event\.keyCode === 229/);
 });
 

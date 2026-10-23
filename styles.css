@@ -3740,6 +3740,22 @@ h3:not(.hero-grid h2),
   display: none;
 }
 
+.department-suggestion-heading {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--lavender-200);
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: .85rem;
+}
+
+.department-suggestion-heading small {
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
 .admission-department-suggestions button {
   display: block;
   width: 100%;
