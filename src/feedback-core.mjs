@@ -138,6 +138,10 @@ export function listFeedback(adminToken, options) {
   return feedbackApiRequest('listFeedback', {}, { ...options, adminToken });
 }
 
+export function logoutFeedbackAdmin(adminToken, options) {
+  return feedbackApiRequest('adminLogout', {}, { ...options, adminToken });
+}
+
 export function updateFeedback({ id, status, adminNote }, adminToken, options) {
   const feedbackId = cleanText(id, 100);
   const nextStatus = cleanText(status, 20);

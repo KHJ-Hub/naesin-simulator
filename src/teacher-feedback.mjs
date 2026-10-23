@@ -6,6 +6,7 @@ import {
   filterFeedbackRecords,
   listFeedback,
   loginFeedbackAdmin,
+  logoutFeedbackAdmin,
   updateFeedback,
 } from './feedback-core.mjs?v=20260921-service-settings1';
 
@@ -146,7 +147,17 @@ loginForm.addEventListener('submit', async (event) => {
 });
 
 refreshButton.addEventListener('click', () => loadFeedback({ announce: true }));
-logoutButton.addEventListener('click', () => { clearAdminSession(); feedbackToast('의견함에서 로그아웃했습니다.'); });
+logoutButton.addEventListener('click', async () => {
+  const token = adminToken;
+  const serverLogout = token ? logoutFeedbackAdmin(token) : Promise.resolve({ ok: true });
+  clearAdminSession();
+  try {
+    await serverLogout;
+    feedbackToast('의견함에서 로그아웃했습니다.');
+  } catch {
+    feedbackToast('이 브라우저에서는 로그아웃했습니다. 서버 연결을 확인해 주세요.');
+  }
+});
 
 ['category', 'status', 'grade', 'sort'].forEach((key) => {
   $(`#feedback-filter-${key}`).addEventListener('change', (event) => { filters[key] = event.target.value; renderFeedback(); });

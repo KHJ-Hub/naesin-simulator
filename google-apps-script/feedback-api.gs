@@ -18,6 +18,18 @@ var FEEDBACK_GRADES = ['', '1학년', '2학년', '3학년'];
 var FEEDBACK_MESSAGE_MAX_LENGTH = 1200;
 var FEEDBACK_NOTE_MAX_LENGTH = 800;
 var FEEDBACK_SESSION_SECONDS = 21600;
+var FEEDBACK_CREATE_BURST_SECONDS = 10;
+var FEEDBACK_CREATE_BURST_MAX = 60;
+var FEEDBACK_CREATE_WINDOW_SECONDS = 60;
+var FEEDBACK_CREATE_WINDOW_MAX = 180;
+var FEEDBACK_DUPLICATE_SECONDS = 120;
+var FEEDBACK_LOGIN_MAX_FAILURES = 5;
+var FEEDBACK_LOGIN_WINDOW_SECONDS = 900;
+var FEEDBACK_LOGIN_LOCKOUT_SECONDS = 900;
+var FEEDBACK_CREATE_FIELDS = [
+  'category', 'message', 'grade', 'appVersion', 'buildDate', 'currentSection',
+  'viewport', 'userAgent', 'submittedAt'
+];
 
 function doGet() {
   return feedbackJson_({ ok: false, error: 'method_not_allowed' });
@@ -28,7 +40,9 @@ function doPost(e) {
     var request = feedbackParseRequest_(e);
     if (request.action === 'createFeedback') return feedbackJson_(feedbackCreate_(request.payload));
     if (request.action === 'adminLogin') return feedbackJson_(feedbackAdminLogin_(request.payload));
+    if (request.action === 'adminLogout') return feedbackJson_(feedbackAdminLogout_(request.adminToken));
     if (request.action === 'listFeedback') {
+      feedbackAssertAllowedFields_(request.payload, []);
       feedbackRequireAdmin_(request.adminToken);
       return feedbackJson_({ ok: true, feedback: feedbackList_() });
     }
@@ -53,12 +67,43 @@ function feedbackParseRequest_(e) {
   if (!raw || raw.length > 20000) throw new Error('invalid_request');
   var parsed;
   try { parsed = JSON.parse(raw); } catch (error) { throw new Error('invalid_request'); }
-  if (!parsed || typeof parsed !== 'object') throw new Error('invalid_request');
+  if (!feedbackIsPlainObject_(parsed)) throw new Error('invalid_request');
+  feedbackAssertAllowedFields_(parsed, ['action', 'payload', 'adminToken']);
+  if (parsed.payload != null && !feedbackIsPlainObject_(parsed.payload)) throw new Error('invalid_request');
+  if (parsed.adminToken != null && typeof parsed.adminToken !== 'string') throw new Error('invalid_request');
   return {
     action: feedbackText_(parsed.action, 40),
-    payload: parsed.payload && typeof parsed.payload === 'object' ? parsed.payload : {},
+    payload: parsed.payload || {},
     adminToken: feedbackText_(parsed.adminToken, 200)
   };
+}
+
+function feedbackIsPlainObject_(value) {
+  return Object.prototype.toString.call(value) === '[object Object]';
+}
+
+function feedbackAssertAllowedFields_(value, allowedFields) {
+  if (!feedbackIsPlainObject_(value)) throw new Error('invalid_request');
+  var allowed = {};
+  allowedFields.forEach(function (field) { allowed[field] = true; });
+  Object.keys(value).forEach(function (field) {
+    if (!allowed[field]) throw new Error('invalid_request');
+  });
+}
+
+function feedbackRequiredText_(value, maxLength) {
+  if (typeof value !== 'string') throw new Error('invalid_request');
+  var text = value.replace(/\u0000/g, '').trim();
+  if (!text || text.length > maxLength) throw new Error('invalid_request');
+  return text;
+}
+
+function feedbackOptionalText_(value, maxLength) {
+  if (value == null) return '';
+  if (typeof value !== 'string') throw new Error('invalid_request');
+  var text = value.replace(/\u0000/g, '').trim();
+  if (text.length > maxLength) throw new Error('invalid_request');
+  return text;
 }
 
 function feedbackText_(value, maxLength) {
@@ -92,10 +137,11 @@ function feedbackSheet_() {
 }
 
 function feedbackCreate_(payload) {
-  var category = feedbackText_(payload.category, 40);
-  var rawMessage = String(payload.message == null ? '' : payload.message).replace(/\u0000/g, '').trim();
-  var grade = feedbackText_(payload.grade, 10);
-  if (FEEDBACK_CATEGORIES.indexOf(category) < 0 || !rawMessage || rawMessage.length > FEEDBACK_MESSAGE_MAX_LENGTH) throw new Error('invalid_request');
+  feedbackAssertAllowedFields_(payload, FEEDBACK_CREATE_FIELDS);
+  var category = feedbackRequiredText_(payload.category, 40);
+  var rawMessage = feedbackRequiredText_(payload.message, FEEDBACK_MESSAGE_MAX_LENGTH);
+  var grade = feedbackOptionalText_(payload.grade, 10);
+  if (FEEDBACK_CATEGORIES.indexOf(category) < 0) throw new Error('invalid_request');
   if (FEEDBACK_GRADES.indexOf(grade) < 0) throw new Error('invalid_request');
   var record = {
     id: Utilities.getUuid(),
@@ -103,35 +149,90 @@ function feedbackCreate_(payload) {
     category: category,
     message: rawMessage,
     grade: grade,
-    appVersion: feedbackText_(payload.appVersion, 30),
-    buildDate: feedbackText_(payload.buildDate, 30),
-    currentSection: feedbackText_(payload.currentSection, 100) || '확인 불가',
-    viewport: feedbackText_(payload.viewport, 30),
-    userAgent: feedbackText_(payload.userAgent, 400),
+    appVersion: feedbackOptionalText_(payload.appVersion, 30),
+    buildDate: feedbackOptionalText_(payload.buildDate, 30),
+    currentSection: feedbackOptionalText_(payload.currentSection, 100) || '확인 불가',
+    viewport: feedbackOptionalText_(payload.viewport, 30),
+    userAgent: feedbackOptionalText_(payload.userAgent, 400),
     status: '신규',
     adminNote: ''
   };
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) throw new Error('rate_limited');
   try {
+    var cache = CacheService.getScriptCache();
+    var fingerprint = feedbackCreateFingerprint_(record);
+    feedbackAssertCreateAllowed_(cache, fingerprint);
     var sheet = feedbackSheet_();
     var nextRow = Math.max(2, sheet.getLastRow() + 1);
     var range = sheet.getRange(nextRow, 1, 1, FEEDBACK_HEADERS.length);
     range.setNumberFormat('@');
     range.setValues([feedbackRecordToRow_(record)]);
+    feedbackRememberCreate_(cache, fingerprint);
   } finally {
     lock.releaseLock();
   }
   return { ok: true, id: record.id };
 }
 
+function feedbackCreateFingerprint_(record) {
+  var source = [record.category, record.message, record.grade, record.currentSection, record.viewport, record.userAgent].join('\n');
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, source, Utilities.Charset.UTF_8);
+  return digest.map(function (value) {
+    return ('0' + ((value + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+}
+
+function feedbackCacheCount_(cache, key) {
+  var value = Number(cache.get(key));
+  return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function feedbackAssertCreateAllowed_(cache, fingerprint) {
+  if (cache.get('feedback-create-duplicate:' + fingerprint)) throw new Error('rate_limited');
+  if (feedbackCacheCount_(cache, 'feedback-create-burst') >= FEEDBACK_CREATE_BURST_MAX) throw new Error('rate_limited');
+  if (feedbackCacheCount_(cache, 'feedback-create-window') >= FEEDBACK_CREATE_WINDOW_MAX) throw new Error('rate_limited');
+}
+
+function feedbackRememberCreate_(cache, fingerprint) {
+  cache.put('feedback-create-duplicate:' + fingerprint, '1', FEEDBACK_DUPLICATE_SECONDS);
+  cache.put('feedback-create-burst', String(feedbackCacheCount_(cache, 'feedback-create-burst') + 1), FEEDBACK_CREATE_BURST_SECONDS);
+  cache.put('feedback-create-window', String(feedbackCacheCount_(cache, 'feedback-create-window') + 1), FEEDBACK_CREATE_WINDOW_SECONDS);
+}
+
 function feedbackAdminLogin_(payload) {
-  var password = String(payload.password || '');
-  var config = feedbackConfig_();
-  if (!password || password !== config.adminPassword) throw new Error('unauthorized');
-  var token = Utilities.getUuid() + Utilities.getUuid().replace(/-/g, '');
-  CacheService.getScriptCache().put('feedback-admin:' + token, '1', FEEDBACK_SESSION_SECONDS);
-  return { ok: true, adminToken: token, expiresIn: FEEDBACK_SESSION_SECONDS };
+  feedbackAssertAllowedFields_(payload, ['password']);
+  var password = feedbackRequiredText_(payload.password, 200);
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error('rate_limited');
+  try {
+    var cache = CacheService.getScriptCache();
+    if (cache.get('feedback-admin-login-lockout')) throw new Error('rate_limited');
+    var config = feedbackConfig_();
+    if (password !== config.adminPassword) {
+      var failures = feedbackCacheCount_(cache, 'feedback-admin-login-failures') + 1;
+      if (failures >= FEEDBACK_LOGIN_MAX_FAILURES) {
+        cache.remove('feedback-admin-login-failures');
+        cache.put('feedback-admin-login-lockout', '1', FEEDBACK_LOGIN_LOCKOUT_SECONDS);
+        throw new Error('rate_limited');
+      }
+      cache.put('feedback-admin-login-failures', String(failures), FEEDBACK_LOGIN_WINDOW_SECONDS);
+      throw new Error('unauthorized');
+    }
+    cache.remove('feedback-admin-login-failures');
+    cache.remove('feedback-admin-login-lockout');
+    var token = Utilities.getUuid() + Utilities.getUuid().replace(/-/g, '');
+    cache.put('feedback-admin:' + token, '1', FEEDBACK_SESSION_SECONDS);
+    return { ok: true, adminToken: token, expiresIn: FEEDBACK_SESSION_SECONDS };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function feedbackAdminLogout_(token) {
+  var value = feedbackText_(token, 200);
+  if (value) CacheService.getScriptCache().remove('feedback-admin:' + value);
+  return { ok: true };
 }
 
 function feedbackRequireAdmin_(token) {
@@ -150,10 +251,11 @@ function feedbackList_() {
 }
 
 function feedbackUpdate_(payload) {
-  var id = feedbackText_(payload.id, 100);
-  var status = feedbackText_(payload.status, 20);
-  var rawNote = String(payload.adminNote == null ? '' : payload.adminNote).replace(/\u0000/g, '').trim();
-  if (!id || FEEDBACK_STATUSES.indexOf(status) < 0 || rawNote.length > FEEDBACK_NOTE_MAX_LENGTH) throw new Error('invalid_request');
+  feedbackAssertAllowedFields_(payload, ['id', 'status', 'adminNote']);
+  var id = feedbackRequiredText_(payload.id, 100);
+  var status = feedbackRequiredText_(payload.status, 20);
+  var rawNote = feedbackOptionalText_(payload.adminNote, FEEDBACK_NOTE_MAX_LENGTH);
+  if (FEEDBACK_STATUSES.indexOf(status) < 0) throw new Error('invalid_request');
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) throw new Error('rate_limited');
   try {

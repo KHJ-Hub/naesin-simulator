@@ -7,6 +7,7 @@ import {
   feedbackStatusCounts,
   filterFeedbackRecords,
   listFeedback,
+  logoutFeedbackAdmin,
   submitAnonymousFeedback,
   updateFeedback,
   validateAnonymousFeedback,
@@ -132,6 +133,18 @@ test('관리자 목록과 수정 요청에는 관리자 토큰이 포함된다',
   assert.deepEqual(requests[1].payload, { id: 'id-1', status: '확인중', adminNote: '확인했어요.' });
 });
 
+test('관리자 로그아웃은 서버 token 폐기 요청을 보낸다', async () => {
+  let request;
+  await logoutFeedbackAdmin('session-token', {
+    endpoint: ENDPOINT,
+    fetchImpl: async (_url, options) => {
+      request = JSON.parse(options.body);
+      return response({ ok: true });
+    },
+  });
+  assert.deepEqual(request, { action: 'adminLogout', payload: {}, adminToken: 'session-token' });
+});
+
 test('의견 요약·필터·검색은 최신순으로 동작한다', () => {
   const records = [
     { id: '1', category: '기능 제안', message: '검색 개선', grade: '1학년', status: '신규', submittedAt: '2026-09-19T00:00:00Z' },
@@ -153,7 +166,7 @@ test('학생/관리자 UI와 Apps Script는 익명 제출 및 보호된 관리 �
     readFile(new URL('../google-apps-script/feedback-api.gs', import.meta.url), 'utf8'),
   ]);
   assert.match(html, /💬 의견 보내기/);
-  assert.match(html, /이름, 학번, 성적은 수집하지 않아요/);
+  assert.match(html, /이름, 학번 등 개인정보는 의견 내용에 입력하지 마세요/);
   assert.match(studentModule, /createAnonymousFeedbackPayload/);
   assert.match(studentModule, /보내는 중/);
   assert.match(studentModule, /FEEDBACK_SUBMIT_COOLDOWN_MS/);
@@ -164,7 +177,10 @@ test('학생/관리자 UI와 Apps Script는 익명 제출 및 보호된 관리 �
   assert.match(teacher, /관리자 메모/);
   assert.match(teacherModule, /sessionStorage/);
   assert.match(teacherModule, /updateFeedback/);
+  assert.match(teacherModule, /logoutFeedbackAdmin/);
+  assert.match(teacherModule, /clearAdminSession\(\)[\s\S]*await serverLogout/);
   assert.match(gas, /request\.action === 'createFeedback'/);
+  assert.match(gas, /request\.action === 'adminLogout'/);
   assert.match(gas, /request\.action === 'listFeedback'[\s\S]*feedbackRequireAdmin_/);
   assert.match(gas, /request\.action === 'updateFeedback'[\s\S]*feedbackRequireAdmin_/);
   assert.doesNotMatch(gas, /학번|targetGrade|interestedUniversities|관심 대학|성적/);

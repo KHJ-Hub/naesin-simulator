@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="description" content="로그인 없이 내신을 기록하고 목표 내신을 시뮬레이션하는 학업 설계 도구" />
     <title>배정고 내신 설계 노트</title>
     <link rel="icon" href="./favicon.ico?v=20260928-favicon2" sizes="any" />
@@ -86,7 +88,7 @@
         <label>의견 종류 <select name="category" class="input" required><option value="">선택해 주세요</option><option>오류가 있어요</option><option>사용하기 불편해요</option><option>기능 제안</option><option>입결 데이터 관련</option><option>기타</option></select></label>
         <label>의견 내용 <textarea name="message" class="input" maxlength="1200" rows="6" required placeholder="어떤 점이 불편했는지 알려 주세요."></textarea></label>
         <label>학년 <select name="grade" class="input"><option value="">선택 안 함</option><option>1학년</option><option>2학년</option><option>3학년</option></select></label>
-        <p class="student-feedback-privacy">이름, 학번, 성적은 수집하지 않아요.</p>
+        <p class="student-feedback-privacy">이름, 학번 등 개인정보는 의견 내용에 입력하지 마세요. 성적은 자동으로 전송되지 않아요.</p>
         <p id="student-feedback-status" class="student-feedback-status" role="status" aria-live="polite"></p>
         <div class="student-feedback-actions"><button type="button" class="quiet-button" data-feedback-close>취소</button><button type="submit" class="primary-button">의견 보내기</button></div>
       </form>
