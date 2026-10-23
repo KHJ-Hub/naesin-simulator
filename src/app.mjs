@@ -33,9 +33,10 @@ import {
   reconcileAdmissionInterestComparisonSelection,
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
-import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261016-course-rank1';
+import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261023-subject-semester1';
 import { printStudentReport } from './print-ux.mjs?v=20260928-print-pdf1';
 import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
+import { buildSubjectGroupSummaryDisplay } from './subject-group-summary.mjs?v=20261023-subject-semester1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
   canCompareWithBusanAdmissions,
@@ -694,19 +695,26 @@ function renderGradePosition() {
   updateCourseRelativePositionUi();
 }
 function renderSubjectSummary() {
-  if (usesQuickAverage()) {
+  const currentModel = buildStudentGradeModels(gradeCalculationState()).current;
+  if (currentModel.hasQuick) {
     $('#subject-summary').innerHTML = '<div class="empty-state">교과별 분석은 과목별 상세 입력 시 이용할 수 있어요.</div>';
     return;
   }
-  const detailedRecords = buildStudentGradeModels(gradeCalculationState()).current.completedSemesters.flatMap((semester) => semester.source === 'detailed' ? semester.validRows : []);
+  const detailedRecords = currentModel.completedSemesters.flatMap((semester) => semester.source === 'detailed' ? semester.validRows : []);
   const summary = calculateSubjectGroupAverages(state.calculated ? detailedRecords : [], state.weighted);
-  const overall = state.calculated ? buildStudentGradeModels(gradeCalculationState()).current.average : null;
-  const advice = (average) => {
-    if (!Number.isFinite(overall)) return '';
-    const gap = average - overall;
-    if (gap <= -0.45) return '강점'; if (gap <= 0.2) return '유지 권장'; if (gap <= 0.6) return '조금 더 올리면 좋아요'; if (gap <= 1) return '향상 필요'; return '우선 관리 권장';
-  };
-  $('#subject-summary').innerHTML = summary.length ? summary.map(({ subjectGroup, average }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong><small>${advice(average)}</small></div>`).join('') : '<div class="empty-state">내신 계산 후 교과별 분석이 표시돼요.</div>';
+  const display = buildSubjectGroupSummaryDisplay(summary, {
+    overallAverage: state.calculated ? currentModel.average : null,
+    completedSemesterCount: currentModel.completedSemesters.length,
+  });
+  if (!display.items.length) {
+    $('#subject-summary').innerHTML = '<div class="empty-state">내신 계산 후 교과별 분석이 표시돼요.</div>';
+    return;
+  }
+  const context = display.notice
+    ? `<div class="subject-summary-context"><span>${escapeHtml(display.contextLabel)}</span><p>${escapeHtml(display.notice)}</p></div>`
+    : '';
+  const cards = display.items.map(({ subjectGroup, average, evaluation }) => `<div class="subject-card"><span>${escapeHtml(subjectGroup)}</span><strong>${fmt(average)}</strong>${display.showEvaluation ? `<small>${escapeHtml(evaluation)}</small>` : ''}</div>`).join('');
+  $('#subject-summary').innerHTML = `${context}${cards}`;
 }
 function admissionOptions(values, placeholder, labels = {}) {
   return `<option value="">${placeholder}</option>${values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(labels[value] ?? value)}</option>`).join('')}`;

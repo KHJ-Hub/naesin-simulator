@@ -9,6 +9,7 @@ import { createGoalScenarioSummaries } from './goal-simulation.mjs';
 import { admissionDifference } from './admission-reference-core.mjs';
 import { buildStudentGradeModels } from './semester-grade-model.mjs';
 import { buildCourseRelativePosition } from './course-relative-position.mjs?v=20261016-course-rank1';
+import { buildSubjectGroupSummaryDisplay } from './subject-group-summary.mjs?v=20261023-subject-semester1';
 
 const SEMESTER_ORDER = new Map(SEMESTERS.map(({ id }, index) => [id, index]));
 
@@ -138,6 +139,10 @@ export function buildPrintReportModel(state = {}, { remainingRecords = null, now
   const enteredCourseCount = semesterStatuses.reduce((sum, semester) => sum + semester.enteredCourseCount, 0);
   const totalCourseCount = semesterStatuses.reduce((sum, semester) => sum + semester.totalCourseCount, 0);
   const courseRelativePosition = buildCourseRelativePosition(state);
+  const subjectSummary = buildSubjectGroupSummaryDisplay(
+    hasQuick ? [] : calculateSubjectGroupAverages(detailedRecords, weighted).filter((item) => item.average !== null),
+    { overallAverage: currentAverage, completedSemesterCount: completedSemesters.length },
+  );
 
   const semesters = semesterStatuses.map((semester) => ({
     id: semester.id,
@@ -233,7 +238,11 @@ export function buildPrintReportModel(state = {}, { remainingRecords = null, now
     subjects: {
       available: !hasQuick && effective.length > 0,
       message: hasQuick ? '교과별 분석은 과목별 상세 입력 시 확인할 수 있습니다.' : '입력된 상세 성적이 없습니다.',
-      items: hasQuick ? [] : calculateSubjectGroupAverages(detailedRecords, weighted).filter((item) => item.average !== null),
+      completedSemesterCount: subjectSummary.completedSemesterCount,
+      showEvaluation: subjectSummary.showEvaluation,
+      contextLabel: subjectSummary.contextLabel,
+      notice: subjectSummary.notice,
+      items: subjectSummary.items,
     },
     goal,
     interests: {
@@ -394,9 +403,10 @@ function sourceNotes(model) {
 
 export function renderPrintReport(model) {
   const goal = model.goal;
+  const subjectEvaluationHeader = model.subjects.showEvaluation ? '<th>해석</th>' : '';
   const subjects = model.subjects.items.length
-    ? model.subjects.items.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td></tr>`).join('')
-    : `<tr><td colspan="2">${escapeHtml(model.subjects.message)}</td></tr>`;
+    ? model.subjects.items.map((item) => `<tr><td>${escapeHtml(item.subjectGroup)}</td><td>${fmt(item.average)}</td>${model.subjects.showEvaluation ? `<td>${escapeHtml(item.evaluation)}</td>` : ''}</tr>`).join('')
+    : `<tr><td colspan="${model.subjects.showEvaluation ? 3 : 2}">${escapeHtml(model.subjects.message)}</td></tr>`;
   const goalResultHtml = goal?.noRemaining
     ? '<p>3학년 1학기까지 완료되어 남은 시뮬레이션 학기가 없습니다. 현재 내신과 목표 내신을 상담 참고값으로 확인하세요.</p>'
     : goal?.achievable
@@ -426,7 +436,10 @@ export function renderPrintReport(model) {
     ? 'print-sheet print-sheet-secondary print-sheet-secondary--has-interests'
     : 'print-sheet print-sheet-secondary';
 
-  const subjectSection = model.quickConsult ? '' : `<section class="print-subject-section"><h2>교과별 요약</h2><table class="print-subject-table"><thead><tr><th>교과군</th><th>평균 등급</th></tr></thead><tbody>${subjects}</tbody></table></section>`;
+  const subjectContext = model.subjects.notice
+    ? `<p class="print-subject-note"><strong>${escapeHtml(model.subjects.contextLabel)}</strong> ${escapeHtml(model.subjects.notice)}</p>`
+    : '';
+  const subjectSection = model.quickConsult ? '' : `<section class="print-subject-section"><h2>교과별 요약</h2>${subjectContext}<table class="print-subject-table"><thead><tr><th>교과군</th><th>평균 등급</th>${subjectEvaluationHeader}</tr></thead><tbody>${subjects}</tbody></table></section>`;
   const reportDescription = model.reportDescription ? `<p class="print-report-description">${escapeHtml(model.reportDescription)}</p>` : '';
   const catalogBasis = model.current.catalogBasis ? `<span>과목 기준: ${escapeHtml(model.current.catalogBasis)}</span>` : '';
   const courseRelativePosition = model.current.courseRelativePosition
