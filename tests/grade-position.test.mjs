@@ -54,15 +54,17 @@ test('5등급 경계는 위, 9등급 경계는 아래에 실제 좌표로 표시
   assert.match(positionSection, /9등급제 환산 참고/);
 });
 
-test('과목별 석차 참고값은 전용 막대로 표시하고 등급 구간에 개인 표시를 넣지 않는다', async () => {
+test('과목별 석차 참고값은 5등급제에만 표시하고 9등급제와 연결하지 않는다', async () => {
   const appSource = await readFile(new URL('../src/app.mjs', import.meta.url), 'utf8');
   assert.match(appSource, /data-course-rank="courseRank"/);
   assert.match(appSource, /data-course-rank="courseRankTotal"/);
   assert.match(appSource, /buildCourseRelativePosition\(gradeCalculationState\(\)\)/);
   assert.match(appSource, /summary.innerHTML = renderCourseRankPosition\(relative\)/);
   assert.doesNotMatch(appSource, /course-relative-band-marker/);
-  const comparison = appSource.slice(appSource.indexOf('function gradePositionComparisonHtml'), appSource.indexOf('function updateCourseRelativePositionUi'));
-  assert.doesNotMatch(comparison, /marker|relative\.percentage|참고 위치를 함께 표시/);
+  const scales = appSource.slice(appSource.indexOf('function gradeScaleBandsHtml'), appSource.indexOf('function gradePositionComparisonHtml'));
+  assert.match(scales, /scale.scale === 5 \? '<div class="course-rank-marker-host" data-rank-scale="5" hidden><\/div>' : ''/);
+  assert.match(appSource, /renderCourseRankGrade5Marker\(relative, 5\)/);
+  assert.doesNotMatch(appSource, /data-rank-scale="9"/);
 });
 
 test('등급 위치 시각화는 인쇄에 추가하지 않고 과목별 상대 위치만 유지한다', async () => {

@@ -54,7 +54,7 @@ import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeU
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-comparison3';
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
-import { renderCourseRankPosition } from './course-rank-position-view.mjs?v=20261023-rank-track1';
+import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261023-grade5-rank-marker1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -656,7 +656,7 @@ function renderSemesterSummary() {
 function gradeScaleBandsHtml(scale) {
   const segments = Array.from({ length: scale.scale }, (_, index) => `<span class="grade-position-band" aria-label="${index + 1}등급"><b>${index + 1}</b><small>등급</small></span>`).join('');
   const columns = scale.bandPercentages.map((percentage) => `${percentage}fr`).join(' ');
-  const bands = `<div class="grade-position-bands" data-scale="${scale.scale}" style="--grade-band-columns:${columns}">${segments}</div>`;
+  const bands = `<div class="grade-band-with-marker" data-scale="${scale.scale}"><div class="grade-position-bands" data-scale="${scale.scale}" style="--grade-band-columns:${columns}">${segments}</div>${scale.scale === 5 ? '<div class="course-rank-marker-host" data-rank-scale="5" hidden></div>' : ''}</div>`;
   const boundaries = scale.cumulativePercentages.slice(0, -1);
   const axis = boundaries.map((percentage) => `<span style="--grade-boundary:${percentage}%">${percentage}%</span>`).join('');
   const axisPosition = scale.scale === 5 ? 'is-top' : 'is-bottom';
@@ -677,6 +677,14 @@ function updateCourseRelativePositionUi() {
     summary.hidden = !relative;
     summary.innerHTML = renderCourseRankPosition(relative);
   }
+  const markerHost = container.querySelector('[data-rank-scale="5"]');
+  if (markerHost) {
+    const marker = renderCourseRankGrade5Marker(relative, 5);
+    markerHost.hidden = !marker;
+    markerHost.innerHTML = marker;
+    markerHost.style.setProperty('--course-rank-position', relative ? `${relative.percentage}%` : '0%');
+    container.querySelector('.grade-position-comparison')?.classList.toggle('has-rank-marker', Boolean(marker));
+  }
 }
 function renderGradePosition() {
   const container = $('#grade-position');
@@ -686,7 +694,7 @@ function renderGradePosition() {
     container.innerHTML = '<div class="empty-state grade-position-empty">내신을 계산하면 등급 구간과 환산 참고값을 확인할 수 있어요.</div>';
     return;
   }
-  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div><section class="course-rank-info" aria-label="과목별 석차 기준 상대 위치"><div class="course-relative-summary" role="status" hidden></div><p class="course-relative-empty">과목별 석차를 입력하면 상대 위치도 확인할 수 있어요.</p></section>${gradePositionComparisonHtml(model)}<p class="grade-reference-separation-note">9등급 환산값과 석차 기준 상대 위치는 계산 기준이 서로 다른 별도 참고정보예요.</p><p class="grade-position-note">9등급제 환산값은 교육청 자료를 기준으로 한 참고값이며, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
+  container.innerHTML = `<div class="grade-position-values"><div><span>현재 5등급제 평균</span><strong>${fmt(model.grade5)}</strong><small>현재 계산 내신</small></div><div><span>9등급제 환산 참고</span><strong>약 ${fmt(model.grade9)}</strong><small>교육청 기준 환산</small></div></div><section class="course-rank-info" aria-label="과목별 석차 기준 상대 위치"><div class="course-relative-summary" role="status" hidden></div><p class="course-relative-empty">과목별 석차를 입력하면 상대 위치도 확인할 수 있어요.</p></section>${gradePositionComparisonHtml(model)}<p class="grade-reference-separation-note">9등급 환산값과는 계산 기준이 다른 별도 참고정보예요.</p><p class="grade-position-note">9등급제 환산값은 교육청 자료를 기준으로 한 참고값이며, 실제 대학별 반영 방식과 다를 수 있어요.</p>`;
   updateCourseRelativePositionUi();
 }
 function renderSubjectSummary() {

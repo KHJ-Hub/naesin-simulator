@@ -3881,11 +3881,14 @@ h3:not(.hero-grid h2),
 .course-relative-summary .course-rank-title { color:var(--title-strong); font-size:.8rem; font-weight:700; line-height:1.45; }
 .course-relative-summary strong { color:var(--indigo-500); font-size:1.15rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .course-relative-summary small { grid-column:1/-1; color:var(--muted); font-size:.7rem; }
-.course-rank-scale { grid-column:1/-1; min-width:0; margin:7px 0 3px; }
-.course-rank-directions,.course-rank-endpoints { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:.68rem; line-height:1.4; }
-.course-rank-track { position:relative; height:10px; margin:14px 6px 9px; border:1px solid #d9d6eb; border-radius:999px; background:#ece9f7; }
-.course-rank-marker { position:absolute; top:-4px; left:var(--course-rank-position); width:2px; height:17px; background:#443784; border-radius:2px; transform:translateX(-50%); box-shadow:0 0 0 1px #fff; }
-.course-rank-marker::before { content:""; position:absolute; top:-7px; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#443784; }
+.grade-band-with-marker { position:relative; min-width:0; }
+.course-rank-marker-host { position:absolute; inset:0; pointer-events:none; }
+.course-rank-marker-host[hidden] { display:none; }
+.course-rank-marker-label { position:absolute; z-index:2; top:-42px; left:clamp(82px,var(--course-rank-position),calc(100% - 82px)); transform:translateX(-50%); padding:3px 7px; border-radius:999px; color:#fff; background:#443784; font-size:.65rem; font-weight:700; line-height:1.4; white-space:nowrap; }
+.course-rank-grade5-line { position:absolute; z-index:1; top:0; height:14px; width:2px; border-radius:2px; background:#443784; box-shadow:0 0 0 1px #fff; transform:translateX(-50%); }
+.course-rank-grade5-line::before { content:""; position:absolute; top:-6px; left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:#443784; }
+.grade-position-comparison.has-rank-marker .grade-position-plot,
+.grade-position-comparison.has-rank-marker .grade-position-row-labels { padding-top:32px; }
 .grade-reference-separation-note { margin:9px 0 0; color:var(--muted); font-size:.72rem; line-height:1.5; }
 .course-rank-info { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
 .course-relative-summary .course-relative-note { grid-column:1/-1; margin:3px 0 0; color:#4c6171; font-size:.75rem; line-height:1.55; overflow-wrap:anywhere; }
