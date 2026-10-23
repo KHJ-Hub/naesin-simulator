@@ -3868,19 +3868,25 @@ h3:not(.hero-grid h2),
 
 .course-relative-summary {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px 8px;
   align-items: baseline;
   margin-bottom: 7px;
-  padding: 7px 9px;
-  border: 1px solid #b9ddda;
+  padding: 11px 12px;
+  border: 1px solid #d7d3ed;
   border-radius: 10px;
-  background: var(--teal-50);
+  background: #f8f7ff;
 }
 .course-relative-summary[hidden] { display: none; }
-.course-relative-summary span { color: #4c6171; font-size: .68rem; font-weight: 750; }
-.course-relative-summary strong { color: var(--teal-700); font-size: .88rem; font-variant-numeric: tabular-nums; }
-.course-relative-summary small { color: var(--muted); font-size: .65rem; }
+.course-relative-summary .course-rank-title { color:var(--title-strong); font-size:.8rem; font-weight:700; line-height:1.45; }
+.course-relative-summary strong { color:var(--indigo-500); font-size:1.15rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.course-relative-summary small { grid-column:1/-1; color:var(--muted); font-size:.7rem; }
+.course-rank-scale { grid-column:1/-1; min-width:0; margin:7px 0 3px; }
+.course-rank-directions,.course-rank-endpoints { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:.68rem; line-height:1.4; }
+.course-rank-track { position:relative; height:10px; margin:14px 6px 9px; border:1px solid #d9d6eb; border-radius:999px; background:#ece9f7; }
+.course-rank-marker { position:absolute; top:-4px; left:var(--course-rank-position); width:2px; height:17px; background:#443784; border-radius:2px; transform:translateX(-50%); box-shadow:0 0 0 1px #fff; }
+.course-rank-marker::before { content:""; position:absolute; top:-7px; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#443784; }
+.grade-reference-separation-note { margin:9px 0 0; color:var(--muted); font-size:.72rem; line-height:1.5; }
 .course-rank-info { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
 .course-relative-summary .course-relative-note { grid-column:1/-1; margin:3px 0 0; color:#4c6171; font-size:.75rem; line-height:1.55; overflow-wrap:anywhere; }
 .grade-band-reference-note {
@@ -3891,7 +3897,9 @@ h3:not(.hero-grid h2),
 }
 
 .grade-band-reference {
-  margin-top: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 .course-relative-empty {
@@ -3920,7 +3928,7 @@ h3:not(.hero-grid h2),
   grid-template-rows: 64px 64px;
   gap: 2px;
   align-items: center;
-  padding-top: 34px;
+  padding-top: 4px;
   color: var(--muted);
   font-size: .7rem;
   line-height: 1.2;
@@ -3936,46 +3944,7 @@ h3:not(.hero-grid h2),
   grid-template-rows: 64px 64px;
   gap: 2px;
   min-width: 0;
-  padding-top: 34px;
-}
-
-.course-relative-band-marker {
-  position: absolute;
-  z-index: 5;
-  top: 0;
-  right: 0;
-  bottom: 16px;
-  left: 0;
-  pointer-events: none;
-}
-.course-relative-band-marker[hidden] { display: none; }
-.course-relative-band-marker > span {
-  position: absolute;
-  top: 0;
-  left: clamp(58px, var(--course-relative-position), calc(100% - 58px));
-  padding: 2px 7px;
-  border: 1px solid rgba(255,255,255,.92);
-  border-radius: 999px;
-  background: #14757a;
-  color: #fff;
-  font-size: .58rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.35;
-  white-space: nowrap;
-  box-shadow: 0 2px 5px rgba(20,117,122,.18);
-  transform: translateX(-50%);
-}
-.course-relative-band-marker > i {
-  position: absolute;
-  top: 50px;
-  bottom: 0;
-  left: var(--course-relative-position);
-  width: 2px;
-  border-radius: 2px;
-  background: #14757a;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.88);
-  transform: translateX(-50%);
+  padding-top: 4px;
 }
 
 .grade-position-bands {
@@ -4129,7 +4098,7 @@ h3:not(.hero-grid h2),
   .grade-position-plot { grid-template-rows: 60px 70px; gap: 2px; }
   .grade-position-scale-caption { margin-left: calc(44px + 13px); }
   .grade-position-note br { display: none; }
-  .course-relative-summary { grid-template-columns: auto auto; }
+  .course-relative-summary { grid-template-columns: minmax(0,1fr) auto; }
   .course-relative-summary small { grid-column: 1 / -1; }
 }
 

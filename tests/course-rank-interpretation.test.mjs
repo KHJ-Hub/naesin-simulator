@@ -4,6 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { buildGradePositionModel } from '../src/grade-position.mjs';
 import { buildCourseRelativePosition } from '../src/course-relative-position.mjs';
 import { buildCurrentGradeModel } from '../src/semester-grade-model.mjs';
+import { renderCourseRankPosition } from '../src/course-rank-position-view.mjs';
+import { buildPrintReportModel, renderPrintReport } from '../src/print-report.mjs';
 
 for (const [average, converted, percentage] of [
   [1.65, 2.64, 15.7],
@@ -22,6 +24,17 @@ for (const [average, converted, percentage] of [
     assert.equal(buildGradePositionModel(current.average).grade9, converted);
     const relative = buildCourseRelativePosition(state);
     assert.ok(Math.abs(relative.percentage - percentage) < 1e-10);
+    const html = renderCourseRankPosition(relative);
+    assert.match(html, /course-rank-marker/);
+    assert.ok(html.includes(`--course-rank-position:${relative.percentage}%`));
+    assert.ok(html.includes(`${relative.percentageLabel} 지점`));
+    assert.doesNotMatch(html, /[1-9]등급|전교 상위/);
+    const printModel = buildPrintReportModel({ ...state, calculated: true });
+    assert.equal(printModel.current.average, average);
+    assert.equal(printModel.current.courseRelativePosition.percentageLabel, relative.percentageLabel);
+    const printHtml = renderPrintReport(printModel);
+    assert.ok(printHtml.includes(relative.percentageLabel));
+    assert.doesNotMatch(printHtml, /course-rank-track|course-relative-band-marker|참고 위치 기준 ·|[59]등급제 [1-9]등급 구간/);
     assert.equal(buildCurrentGradeModel({ ...state, actual: actual.map(({ courseRank, courseRankTotal, ...record }) => record) }).average, average);
   });
 }
@@ -29,10 +42,19 @@ for (const [average, converted, percentage] of [
 test('학생 UI는 석차 위치를 환산값과 구획하고 특정 등급으로 자동 해석하지 않는다', async () => {
   const app = await readFile(new URL('../src/app.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(app, /interpretCourseRankPosition|course-rank-interpretation|참고 위치 기준 ·|interpretation\.grade/);
-  assert.match(app, /석차 기준 위치와 9등급 환산값은 계산 기준이 서로 다른 별도 참고정보예요/);
-  assert.match(app, /실제 전교 석차나 대학의 공식 백분위를 의미하지 않아요/);
+  assert.match(app, /9등급 환산값과 석차 기준 상대 위치는 계산 기준이 서로 다른 별도 참고정보예요/);
   assert.match(app, /<section class="course-rank-info"/);
-  assert.match(app, /두 등급제의 누적 등급 구간을 비교하는 참고표예요/);
-  assert.match(app, /석차 기준 위치 · \$\{relative.percentageLabel\}/);
-  assert.match(app, /\$\{relative.courseCount\}과목 · \$\{relative.credits\}학점 반영/);
+  assert.match(app, /5등급제와 9등급제의 등급별 누적 구간을 비교한 참고표예요/);
+  assert.match(app, /renderCourseRankPosition\(relative\)/);
+});
+
+test('석차 미입력 시 전용 막대를 만들지 않고 유효 범위 끝값도 그대로 표시한다', () => {
+  assert.equal(renderCourseRankPosition(buildCourseRelativePosition({ actual: [] })), '');
+  for (const percentage of [0, 0.1, 100]) {
+    const html = renderCourseRankPosition({ percentage, courseCount: 6, credits: 23 });
+    assert.ok(html.includes(`--course-rank-position:${percentage}%`));
+    assert.match(html, /석차 입력 6과목 · 23학점 반영/);
+    assert.match(html, /실제 전교 전체 석차나 대학의 공식 백분위를 의미하지 않아요/);
+  }
+  for (const percentage of [-1, 101, NaN, undefined]) assert.equal(renderCourseRankPosition({ percentage }), '');
 });
