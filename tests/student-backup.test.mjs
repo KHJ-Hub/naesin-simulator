@@ -85,7 +85,7 @@ test('백업 복원 데이터로 현재 내신·목표 시뮬레이션·관심 �
   assert.equal(model.interests.comprehensive.length, 1);
   assert.match(html, /검증대학교/);
   assert.match(html, /확인대학교/);
-  assert.match(html, /과목별 상대 위치 참고:/);
+  assert.match(html, /과목별 석차 기준 위치 ·/);
   assert.match(html, /20% \(석차 입력 1과목 · 4학점 반영\)/);
 });
 

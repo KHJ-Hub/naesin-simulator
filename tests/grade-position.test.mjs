@@ -34,7 +34,7 @@ test('등급 위치 카드는 중복 선형 그래프와 전체 석차 입력 �
   assert.doesNotMatch(styles, /\.grade-value-position|\.grade-value-marker|\.actual-rank/);
   assert.match(appSource, /grade-position-percent-axis/);
   assert.match(appSource, /course-relative-band-marker/);
-  assert.match(appSource, /과목별 석차를 입력하면 상대 위치 참고값도 확인할 수 있어요/);
+  assert.match(appSource, /과목별 석차를 입력하면 석차 기준 위치도 확인할 수 있어요/);
   assert.match(styles, /\.grade-position-comparison \{[\s\S]*?font-family: "Gowun Dodum", "Malgun Gothic", system-ui, sans-serif/);
 });
 
@@ -60,7 +60,7 @@ test('과목별 실제 석차 참고값만 누적 비율 막대의 개인 참고
   assert.match(appSource, /data-course-rank="courseRankTotal"/);
   assert.match(appSource, /buildCourseRelativePosition\(gradeCalculationState\(\)\)/);
   assert.match(appSource, /course-relative-band-marker/);
-  assert.match(appSource, /과목별 상대 위치 ·/);
+  assert.match(appSource, /석차 기준 위치 ·/);
   assert.match(appSource, /\$\{relative\.courseCount\}과목 · \$\{relative\.credits\}학점 반영/);
   assert.match(appSource, /실제 전교 석차나 대학의 공식 백분위를 의미하지 않아요/);
 });
@@ -68,7 +68,7 @@ test('과목별 실제 석차 참고값만 누적 비율 막대의 개인 참고
 test('등급 위치 시각화는 인쇄에 추가하지 않고 과목별 상대 위치만 유지한다', async () => {
   const printSource = await readFile(new URL('../src/print-report.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(printSource, /grade-position|내 위치와 등급 구간 비교|실제 석차 참고/);
-  assert.match(printSource, /과목별 상대 위치 참고/);
+  assert.match(printSource, /과목별 석차 기준 위치/);
 });
 
 test('계산 전이거나 5등급 범위 밖이면 위치 모델을 만들지 않는다', () => {

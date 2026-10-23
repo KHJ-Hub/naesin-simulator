@@ -24,7 +24,7 @@ test('1개 완료 학기는 평균을 유지하고 모든 평가를 숨기며 �
   assert.equal(display.completedSemesterCount, 1);
   assert.equal(display.showEvaluation, false);
   assert.equal(display.contextLabel, '1개 학기 기준');
-  assert.match(display.notice, /현재 입력한 학기 기준/);
+  assert.equal(display.notice, '여러 학기를 입력하면 교과군별 변화와 강점을 함께 확인할 수 있어요.');
   assert.deepEqual(display.items.map(({ average, evaluation }) => [average, evaluation]), [[2, ''], [4, '']]);
 });
 

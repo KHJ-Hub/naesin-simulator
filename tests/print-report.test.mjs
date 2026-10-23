@@ -127,10 +127,10 @@ test('유효한 과목별 석차 참고값만 인쇄하고 입력이 없으면 �
   const model = buildPrintReportModel(baseState(), { remainingRecords });
   assert.equal(model.current.courseRelativePosition.courseCount, 2);
   assert.equal(model.current.courseRelativePosition.percentageLabel, '27.5%');
-  assert.match(renderPrintReport(model), /과목별 상대 위치 참고:<\/strong><span>27\.5% \(석차 입력 2과목 · 8학점 반영\)/);
+  assert.match(renderPrintReport(model), /과목별 석차 기준 위치 ·<\/strong><span>27\.5% \(석차 입력 2과목 · 8학점 반영\)/);
   const withoutCourseRanks = baseState();
   withoutCourseRanks.actual = withoutCourseRanks.actual.map(({ courseRank, courseRankTotal, ...record }) => record);
-  assert.doesNotMatch(renderPrintReport(buildPrintReportModel(withoutCourseRanks, { remainingRecords })), /과목별 상대 위치 참고:/);
+  assert.doesNotMatch(renderPrintReport(buildPrintReportModel(withoutCourseRanks, { remainingRecords })), /과목별 석차 기준 위치 ·/);
 });
 
 test('인쇄 안내문은 세로 공간을 줄이는 단일 요약 그리드로 묶는다', () => {

@@ -33,10 +33,10 @@ import {
   reconcileAdmissionInterestComparisonSelection,
 } from './admission-interest-comparison.mjs?v=20260919-interest-compare1';
 import { createGoalScenarioSummaries } from './goal-simulation.mjs?v=20260921-semester-model1';
-import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261023-subject-semester1';
+import { buildPrintReportModel, renderPrintReport as renderPrintReportHtml } from './print-report.mjs?v=20261023-result-interpretation1';
 import { printStudentReport } from './print-ux.mjs?v=20260928-print-pdf1';
 import { buildStudentGradeModels } from './semester-grade-model.mjs?v=20260921-semester-model1';
-import { buildSubjectGroupSummaryDisplay } from './subject-group-summary.mjs?v=20261023-subject-semester1';
+import { buildSubjectGroupSummaryDisplay } from './subject-group-summary.mjs?v=20261023-result-interpretation1';
 import { renderAdmissionCardSupplement } from './admission-card-details.mjs?v=20260918-card-details-button1';
 import {
   canCompareWithBusanAdmissions,
@@ -54,6 +54,7 @@ import { createStudentBackupFingerprint, isStudentBackupDirty, shouldWarnBeforeU
 import { getSchoolSettings } from './school-settings.mjs?v=20260917-integrated-audit1';
 import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-comparison3';
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
+import { interpretCourseRankPosition } from './course-rank-interpretation.mjs?v=20261023-result-interpretation1';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
 import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
@@ -662,7 +663,7 @@ function gradeScaleBandsHtml(scale) {
   return `<div class="grade-position-scale-row" data-scale="${scale.scale}">${scale.scale === 5 ? `${percentageAxis}${bands}` : `${bands}${percentageAxis}`}</div>`;
 }
 function gradePositionComparisonHtml(model) {
-  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비교</strong><span>누적 비율 기준</span></div><div class="course-relative-summary" role="status" hidden></div><p class="course-relative-empty">과목별 석차를 입력하면 상대 위치 참고값도 확인할 수 있어요.</p><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생이 입력한 과목별 실제 석차가 있으면 참고 위치를 함께 표시해요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot"><div class="course-relative-band-marker" hidden><span></span><i aria-hidden="true"></i></div>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">입력한 과목별 석차를 학기 안에서 학점 반영해 계산한 참고값이에요. 실제 전교 석차나 대학의 공식 백분위를 의미하지 않아요.</p></section>`;
+  return `<section class="grade-band-reference" aria-labelledby="grade-band-reference-title"><div class="grade-position-subheading"><strong id="grade-band-reference-title">등급 구간 비교</strong><span>누적 비율 기준</span></div><div class="course-relative-summary" role="status" hidden></div><p class="course-relative-empty">과목별 석차를 입력하면 석차 기준 위치도 확인할 수 있어요.</p><div class="grade-position-comparison" role="img" aria-label="5등급제와 9등급제에서 각 등급이 차지하는 누적 비율 구간을 비교해요. 학생이 입력한 과목별 실제 석차가 있으면 참고 위치를 함께 표시해요."><div class="grade-position-row-labels" aria-hidden="true"><strong>5등급제</strong><strong>9등급제</strong></div><div class="grade-position-plot"><div class="course-relative-band-marker" hidden><span></span><i aria-hidden="true"></i></div>${gradeScaleBandsHtml(model.grade5Scale)}${gradeScaleBandsHtml(model.grade9Scale)}</div></div><p class="grade-position-scale-caption" aria-hidden="true"><span>높은 등급</span><span>누적 비율 구간</span><span>낮은 등급</span></p><p class="grade-band-reference-note">입력한 과목별 석차를 학점 반영해 계산한 참고 위치예요. 실제 전교 석차나 대학의 공식 백분위를 의미하지 않아요.</p></section>`;
 }
 function updateCourseRelativePositionUi() {
   const container = $('#grade-position');
@@ -674,13 +675,14 @@ function updateCourseRelativePositionUi() {
   if (empty) empty.hidden = Boolean(relative);
   if (summary) {
     summary.hidden = !relative;
-    summary.innerHTML = relative ? `<span>과목별 상대 위치 참고값</span><strong>${escapeHtml(relative.percentageLabel)}</strong><small>${relative.courseCount}과목 · ${relative.credits}학점 반영</small>` : '';
+    const interpretation = relative ? interpretCourseRankPosition(relative.percentage) : null;
+    summary.innerHTML = relative ? `<span>과목별 석차 기준 위치 ·</span><strong>${escapeHtml(relative.percentageLabel)}</strong><small>${relative.courseCount}과목 · ${relative.credits}학점 반영</small>${interpretation ? `<p class="course-rank-interpretation"><span>참고 위치 기준 ·</span><span>${interpretation.grade5Label}</span><span>/ ${interpretation.grade9Label}</span></p>` : ''}` : '';
   }
   if (marker) {
     marker.hidden = !relative;
     marker.style.setProperty('--course-relative-position', relative ? `${relative.percentage}%` : '0%');
     const label = marker.querySelector('span');
-    if (label) label.textContent = relative ? `과목별 상대 위치 · ${relative.percentageLabel}` : '';
+    if (label) label.textContent = relative ? `석차 기준 위치 · ${relative.percentageLabel}` : '';
   }
 }
 function renderGradePosition() {
