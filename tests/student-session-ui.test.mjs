@@ -40,11 +40,11 @@ test('학생 화면은 학번과 이름만 받고 다중 프로필 조작 UI를 
     .forEach((id) => assert.doesNotMatch(html, new RegExp(`id="${id}"`)));
 });
 
-test('학번은 숫자 키패드를 지원하는 5자리 텍스트이고 이름은 한국어 입력 속성을 사용한다', () => {
+test('학번은 입력 모드를 강제하지 않는 5자리 텍스트이고 이름은 한국어 입력 속성을 사용한다', () => {
   const studentId = html.match(/<input id="student-id"[^>]*>/)[0];
   const studentName = html.match(/<input id="student-name"[^>]*>/)[0];
   assert.match(studentId, /type="text"/);
-  assert.match(studentId, /inputmode="numeric"/);
+  assert.doesNotMatch(studentId, /inputmode\s*=/);
   assert.match(studentId, /pattern="\[0-9\]\*"/);
   assert.match(studentId, /maxlength="5"/);
   for (const attribute of ['type="text"', 'lang="ko"', 'autocomplete="name"', 'autocapitalize="none"', 'spellcheck="false"']) {
