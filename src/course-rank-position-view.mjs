@@ -16,5 +16,5 @@ export function renderCourseRankPosition(relative) {
 export function renderCourseRankGrade5Marker(relative, scale) {
   if (scale !== 5 || !validPosition(relative)) return '';
   const label = formatCourseRelativePercentage(relative.percentage);
-  return `<span class="course-rank-marker-label">석차 기준 참고 위치 · ${label}</span><i class="course-rank-grade5-line" aria-hidden="true" style="left:${relative.percentage}%"></i>`;
+  return `<span class="course-rank-marker-label">내 위치 ${label}</span><i class="course-rank-grade5-line" aria-hidden="true" style="left:${relative.percentage}%"></i>`;
 }

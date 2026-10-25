@@ -29,7 +29,7 @@ for (const [average, converted, percentage] of [
     const marker = renderCourseRankGrade5Marker(relative, 5);
     assert.match(marker, /course-rank-grade5-line/);
     assert.ok(marker.includes(`left:${relative.percentage}%`));
-    assert.ok(marker.includes(`석차 기준 참고 위치 · ${relative.percentageLabel}`));
+    assert.ok(marker.includes(`내 위치 ${relative.percentageLabel}`));
     assert.doesNotMatch(marker, /현재 [1-9]등급|실제 [1-9]등급/);
     assert.equal(renderCourseRankGrade5Marker(relative, 9), '');
     assert.ok(html.includes(`${relative.percentageLabel} 지점`));
@@ -56,7 +56,7 @@ test('학생 UI는 석차 위치를 환산값과 구획하고 특정 등급으�
 test('석차 미입력 시 요약과 마커가 없고 끝값도 5등급제에만 표시한다', () => {
   assert.equal(renderCourseRankPosition(buildCourseRelativePosition({ actual: [] })), '');
   assert.equal(renderCourseRankGrade5Marker(null, 5), '');
-  for (const percentage of [0, 0.1, 100]) {
+  for (const percentage of [0, 0.1, 2, 98, 100]) {
     const html = renderCourseRankPosition({ percentage, courseCount: 6, credits: 23 });
     assert.ok(renderCourseRankGrade5Marker({ percentage }, 5).includes(`left:${percentage}%`));
     assert.equal(renderCourseRankGrade5Marker({ percentage }, 9), '');
@@ -67,4 +67,17 @@ test('석차 미입력 시 요약과 마커가 없고 끝값도 5등급제에만
     assert.equal(renderCourseRankPosition({ percentage }), '');
     assert.equal(renderCourseRankGrade5Marker({ percentage }, 5), '');
   }
+});
+
+test('5등급 마커는 읽기 쉬운 pill과 3px 선을 사용하고 라벨만 경계 안으로 제한한다', async () => {
+  const css = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
+  const label = css.match(/\.course-rank-marker-label \{([^}]+)\}/)[1];
+  const line = css.match(/\.course-rank-grade5-line \{([^}]+)\}/)[1];
+  assert.match(label, /left:clamp\(58px,var\(--course-rank-position\),calc\(100% - 58px\)\)/);
+  assert.match(label, /width:116px/);
+  assert.match(label, /color:#fff/);
+  assert.match(label, /font-weight:700/);
+  assert.match(line, /width:3px/);
+  assert.match(line, /height:calc\(100% \+ 27px\)/);
+  assert.match(css, /\.course-rank-grade5-line::before[^}]*border-top-color:#373080/);
 });

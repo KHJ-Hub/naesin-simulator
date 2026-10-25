@@ -3900,11 +3900,11 @@ h3:not(.hero-grid h2),
 .grade-band-with-marker { position:relative; min-width:0; }
 .course-rank-marker-host { position:absolute; inset:0; pointer-events:none; }
 .course-rank-marker-host[hidden] { display:none; }
-.course-rank-marker-label { position:absolute; z-index:2; top:-42px; left:clamp(82px,var(--course-rank-position),calc(100% - 82px)); transform:translateX(-50%); padding:3px 7px; border-radius:999px; color:#fff; background:#443784; font-size:.65rem; font-weight:700; line-height:1.4; white-space:nowrap; }
-.course-rank-grade5-line { position:absolute; z-index:1; top:0; height:14px; width:2px; border-radius:2px; background:#443784; box-shadow:0 0 0 1px #fff; transform:translateX(-50%); }
-.course-rank-grade5-line::before { content:""; position:absolute; top:-6px; left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:#443784; }
+.course-rank-marker-label { position:absolute; z-index:4; top:-58px; left:clamp(58px,var(--course-rank-position),calc(100% - 58px)); transform:translateX(-50%); box-sizing:border-box; width:116px; padding:5px 8px; border-radius:999px; color:#fff; background:#373080; font-family:inherit; font-size:.78rem; font-weight:700; line-height:1.4; text-align:center; white-space:nowrap; box-shadow:0 2px 5px rgba(55,48,128,.18); }
+.course-rank-grade5-line { position:absolute; z-index:1; top:-27px; height:calc(100% + 27px); width:3px; border-radius:2px; background:#373080; box-shadow:0 0 0 1px #fff; transform:translateX(-50%); }
+.course-rank-grade5-line::before { content:""; position:absolute; top:-5px; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#373080; }
 .grade-position-comparison.has-rank-marker .grade-position-plot,
-.grade-position-comparison.has-rank-marker .grade-position-row-labels { padding-top:32px; }
+.grade-position-comparison.has-rank-marker .grade-position-row-labels { padding-top:48px; }
 .grade-reference-separation-note { margin:9px 0 0; color:var(--muted); font-size:.72rem; line-height:1.5; }
 .course-rank-info { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
 .course-relative-summary .course-relative-note { grid-column:1/-1; margin:3px 0 0; color:#4c6171; font-size:.75rem; line-height:1.55; overflow-wrap:anywhere; }
