@@ -78,6 +78,8 @@ test('5등급 마커는 읽기 쉬운 pill과 3px 선을 사용하고 라벨만 
   assert.match(label, /color:#fff/);
   assert.match(label, /font-weight:700/);
   assert.match(line, /width:3px/);
-  assert.match(line, /height:calc\(100% \+ 27px\)/);
+  assert.match(line, /top:-27px/);
+  assert.match(line, /bottom:0/);
+  assert.match(line, /height:auto/);
   assert.match(css, /\.course-rank-grade5-line::before[^}]*border-top-color:#373080/);
 });
