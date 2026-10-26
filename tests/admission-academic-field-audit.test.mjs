@@ -114,24 +114,23 @@ test('전국 데이터의 안전 분류와 미분류 수를 고정하고 0건 �
   assert.equal(dashboard.summary.quality.academicFieldInfo.unclassified, 0);
   assert.deepEqual(dashboard.summary.quality.academicFieldInfo.uniqueDepartments, {
     officiallyVerified: 210,
-    dataOrTaxonomyClassified: 5409,
+    dataOrTaxonomyClassified: 5413,
     unclassified: 0,
   });
   assert.deepEqual(dashboard.summary.quality.academicFieldInfo.counts, {
-    humanities: 6033,
+    humanities: 6039,
     natural: 8966,
-    arts: 1004,
+    arts: 1006,
     'open-major': 256,
     other: 0,
     unknown: 0,
   });
   assert.deepEqual(dashboard.summary.quality.zeroResultInfo.byReason, {
-    'source-review-needed': 1,
     'outside-current-scope': 6,
     'official-not-published': 13,
   });
-  assert.equal(dashboard.summary.quality.zeroResultInfo.total, 20);
-  assert.equal(dashboard.summary.quality.actionableCount, 1);
+  assert.equal(dashboard.summary.quality.zeroResultInfo.total, 19);
+  assert.equal(dashboard.summary.quality.actionableCount, 0);
   assert.equal(dashboard.warnings.filter((item) => item.type === '입결 0건' && item.severity === 'info').length, 19);
   assert.deepEqual(dashboard.warnings.filter((item) => item.type === '계열 분류 불가'), []);
 });

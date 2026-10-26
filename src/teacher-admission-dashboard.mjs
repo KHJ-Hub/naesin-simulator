@@ -31,7 +31,7 @@ const academicFieldSourceLabel = (value) => ({
   taxonomy: 'taxonomy 분류',
   'open-major': 'taxonomy 분류',
 }[value] ?? '분류 확인 필요');
-const valueLabel = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '-';
+const valueLabel = (value) => value != null && value !== '' && Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '-';
 const UNIVERSITY_PAGE_SIZE = 20;
 const WARNING_PAGE_SIZE = 30;
 const RECORD_PAGE_SIZE = 15;
@@ -116,7 +116,7 @@ function renderUniversities() {
 }
 
 function recordCard(record) {
-  return `<article class="admission-dashboard-record"><div><strong>${escapeHtml(record.department || '모집단위 미확인')}</strong><span>${escapeHtml(record.admissionName || '전형명 미확인')}</span></div><dl><div><dt>전형구분</dt><dd>${escapeHtml(categoryLabel(record.admissionCategory))}</dd></div><div><dt>계열</dt><dd>${escapeHtml(academicFieldLabel(record.academicField))}</dd></div><div><dt>분류 상태</dt><dd>${escapeHtml(academicFieldSourceLabel(record.academicFieldClassificationSource))}</dd></div><div><dt>기준연도</dt><dd>${Number.isInteger(Number(record.referenceYear)) ? Number(record.referenceYear) : '-'}</dd></div><div><dt>상태</dt><dd>${escapeHtml(ADMISSION_DASHBOARD_STATUS_LABELS[record.dataAvailability] ?? record.dataAvailability ?? '미확인')}</dd></div><div><dt>70%컷</dt><dd>${valueLabel(record.cut70Original)}</dd></div><div><dt>50%컷</dt><dd>${valueLabel(record.cut50Original)}</dd></div><div><dt>평균</dt><dd>${valueLabel(record.averageGradeOriginal)}</dd></div></dl></article>`;
+  return `<article class="admission-dashboard-record"><div><strong>${escapeHtml(record.department || '모집단위 미확인')}</strong><span>${escapeHtml([record.admissionName || '전형명 미확인', record.admissionPeriod].filter(Boolean).join(' · '))}</span></div><dl><div><dt>전형구분</dt><dd>${escapeHtml(categoryLabel(record.admissionCategory))}</dd></div><div><dt>계열</dt><dd>${escapeHtml(academicFieldLabel(record.academicField))}</dd></div><div><dt>분류 상태</dt><dd>${escapeHtml(academicFieldSourceLabel(record.academicFieldClassificationSource))}</dd></div><div><dt>기준연도</dt><dd>${Number.isInteger(Number(record.referenceYear)) ? Number(record.referenceYear) : '-'}</dd></div><div><dt>상태</dt><dd>${escapeHtml(ADMISSION_DASHBOARD_STATUS_LABELS[record.dataAvailability] ?? record.dataAvailability ?? '미확인')}</dd></div><div><dt>70%컷</dt><dd>${valueLabel(record.cut70Original)}</dd></div><div><dt>50%컷</dt><dd>${valueLabel(record.cut50Original)}</dd></div><div><dt>평균</dt><dd>${valueLabel(record.averageGradeOriginal)}</dd></div></dl></article>`;
 }
 
 function renderUniversityRecords(details) {

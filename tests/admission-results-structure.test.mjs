@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { UNIVERSITIES, UNIVERSITY_BY_NAME } from '../src/data/universities.mjs';
 import { admissionResultsByRegion2026 } from '../src/admission-results/index.mjs';
+import { admissionInterestKey } from '../src/admission-reference-store.mjs';
 import { clearAdmissionResultsCache, loadAdmissionResultsByRegion } from '../src/admission-results-loader.mjs';
 
 test('현재 공식 확인 대학 기본정보는 입시결과와 연결된다', () => {
@@ -118,8 +119,8 @@ test('대구 공식 2026 모집단위별 결과를 연결한다', () => {
 
 test('경북 공식 2026 모집단위별 결과를 연결한다', () => {
   const rows = admissionResultsByRegion2026.gyeongbuk;
-  assert.equal(rows.length, 1_353);
-  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 1_009);
+  assert.equal(rows.length, 1_361);
+  assert.equal(rows.filter((item) => item.admissionCategory === '학생부교과').length, 1_017);
   assert.equal(rows.filter((item) => item.admissionCategory === '학생부종합').length, 344);
   assert.ok(rows.every((item) => item.sourceUrl.includes('searchSyr=2026')));
 });
@@ -198,7 +199,7 @@ test('제주 공식 2026 모집단위별 결과를 연결한다', () => {
 
 test('전국 지역별 결과는 canonical 필드와 원본·환산값을 보존한다', () => {
   const rows = Object.values(admissionResultsByRegion2026).flat();
-  const keys = rows.map((item) => [item.referenceYear, item.university, item.department, item.admissionCategory, item.admissionName].join('|'));
+  const keys = rows.map(admissionInterestKey);
   assert.equal(new Set(keys).size, rows.length);
   assert.ok(rows.every((item) => item.referenceYear === 2026 && item.sourceUrl));
   assert.ok(rows.every((item) => item.cut50Original == null || (item.cut50Converted >= 1 && item.cut50Converted <= 5)));

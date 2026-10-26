@@ -99,6 +99,7 @@ function buildInterest(item, currentAverage, targetAverage) {
     university: String(item.university ?? ''),
     department: String(item.department ?? ''),
     admissionName: String(item.admissionName ?? ''),
+    ...(item.admissionPeriod ? { admissionPeriod: String(item.admissionPeriod) } : {}),
     referenceYear: numberOrNull(item.referenceYear),
     admissionCategory: comprehensive ? 'student-record-comprehensive' : 'student-record-subject',
     cut50Original: fixed(item.cut50Original ?? item.cut50),
@@ -380,12 +381,12 @@ function subjectInterestRows(items = []) {
     const original = useCut70 ? item.cut70Original : item.cut50Original;
     const converted = useCut70 ? item.cut70Converted : item.cut50Converted;
     const difference = item.difference === null ? '-' : `${item.difference >= 0 ? '+' : ''}${fmt(item.difference)}`;
-    return `<tr><td>${escapeHtml(item.university)}</td><td><strong>${escapeHtml(item.department)}</strong><span class="print-subline">${escapeHtml(item.admissionName)}</span></td><td>${item.referenceYear ?? '-'}</td><td><strong>${fmt(converted)}</strong><span class="print-subline">원본 ${fmt(original)} · ${cutLabel}</span></td><td>${escapeHtml(item.comparisonBasisLabel)} ${fmt(item.comparisonValue)}</td><td class="print-difference">${difference}</td></tr>`;
+    return `<tr><td>${escapeHtml(item.university)}</td><td><strong>${escapeHtml(item.department)}</strong><span class="print-subline">${escapeHtml([item.admissionName, item.admissionPeriod].filter(Boolean).join(' · '))}</span></td><td>${item.referenceYear ?? '-'}</td><td><strong>${fmt(converted)}</strong><span class="print-subline">원본 ${fmt(original)} · ${cutLabel}</span></td><td>${escapeHtml(item.comparisonBasisLabel)} ${fmt(item.comparisonValue)}</td><td class="print-difference">${difference}</td></tr>`;
   }).join('');
 }
 
 function comprehensiveInterestRows(items = []) {
-  return items.map((item) => `<tr><td>${escapeHtml(item.university)}</td><td><strong>${escapeHtml(item.department)}</strong><span class="print-subline">${escapeHtml(item.admissionName)}</span></td><td>${item.referenceYear ?? '-'}</td><td><strong>${fmt(item.referenceConverted)}</strong><span class="print-subline">원본 ${fmt(item.referenceOriginal)} · ${escapeHtml(item.referenceLabel)}</span></td></tr>`).join('');
+  return items.map((item) => `<tr><td>${escapeHtml(item.university)}</td><td><strong>${escapeHtml(item.department)}</strong><span class="print-subline">${escapeHtml([item.admissionName, item.admissionPeriod].filter(Boolean).join(' · '))}</span></td><td>${item.referenceYear ?? '-'}</td><td><strong>${fmt(item.referenceConverted)}</strong><span class="print-subline">원본 ${fmt(item.referenceOriginal)} · ${escapeHtml(item.referenceLabel)}</span></td></tr>`).join('');
 }
 
 function sourceNotes(model) {

@@ -192,7 +192,7 @@ export function renderLocalAdmissionComparison(result = {}) {
   const rows = result.results.slice(0, LOCAL_ADMISSION_RESULT_LIMIT).map(({ item, reference: candidateReference, difference }, index) => `
     <li>
       <span class="local-admission-rank" aria-label="${index + 1}순위">${index + 1}</span>
-      <span class="local-admission-result-copy"><strong>${escapeHtml(item.university)}</strong><small>${escapeHtml(item.department)} · ${escapeHtml(item.admissionName)}</small></span>
+      <span class="local-admission-result-copy"><strong>${escapeHtml(item.university)}</strong><small>${escapeHtml(item.department)} · ${escapeHtml([item.admissionName, item.admissionPeriod].filter(Boolean).join(' · '))}</small></span>
       <b>${formatGrade(candidateReference.converted)}</b>
       <em title="입결 차이">${signedDifference(difference)}</em>
     </li>`).join('');

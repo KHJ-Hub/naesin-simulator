@@ -2,6 +2,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { uniqueRecords } from './lib/adiga-result-records.mjs';
 
 const REGIONS = Object.freeze({
   seoul: ['01', '서울특별시'], gyeonggi: ['08', '경기도'], incheon: ['04', '인천광역시'],
@@ -192,6 +193,8 @@ function parsePopup(html, university, sourceUrl) {
       department,
       admissionName,
       admissionCategory,
+      referenceYear: RESULT_YEAR,
+      admissionPeriod: row[0] ?? '',
       cut50Original,
       cut70Original,
       averageGradeOriginal: null,
@@ -216,21 +219,6 @@ async function mapWithConcurrency(values, limit, mapper) {
   }
   await Promise.all(Array.from({ length: Math.min(limit, values.length) }, worker));
   return results;
-}
-
-function uniqueRecords(records) {
-  const unique = new Map();
-  const conflicts = new Set();
-  for (const record of records) {
-    const key = [record.university, record.department, record.admissionName, record.admissionCategory].join('|');
-    const values = [record.cut50Original, record.cut70Original].join('|');
-    if (!unique.has(key)) unique.set(key, { record, values });
-    else if (unique.get(key).values !== values) conflicts.add(key);
-  }
-  return {
-    records: [...unique.entries()].filter(([key]) => !conflicts.has(key)).map(([, value]) => value.record),
-    conflicts: [...conflicts],
-  };
 }
 
 const universities = await listUniversities();

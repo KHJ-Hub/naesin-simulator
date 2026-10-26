@@ -108,7 +108,7 @@ export const universities2026Gyeongbuk = Object.freeze([
     "homepageUrl": "https://www.daeshin.ac.kr",
     "admissionsUrl": "http://www.daeshin.ac.kr/html/02_admission/",
     "adigaUrl": "https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0000093",
-    "admissionResultsAvailable": false
+    "admissionResultsAvailable": true
   },
   {
     "universityId": "adiga-0000101",

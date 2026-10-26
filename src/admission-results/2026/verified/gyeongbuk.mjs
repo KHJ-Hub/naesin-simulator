@@ -1,4 +1,5 @@
 import { createOfficialAdmissionResult } from '../../admission-result-factory.mjs';
+import { admissionResults2026Daeshin } from './daeshin.mjs';
 
 const rows = [
   {
@@ -17592,4 +17593,4 @@ const rows = [
   }
 ];
 
-export const admissionResults2026GyeongbukVerified = Object.freeze(rows.map(createOfficialAdmissionResult));
+export const admissionResults2026GyeongbukVerified = Object.freeze([...rows.map(createOfficialAdmissionResult), ...admissionResults2026Daeshin]);

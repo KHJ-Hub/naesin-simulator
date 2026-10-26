@@ -414,12 +414,17 @@ export const universityAudit2026GyeongbukVerified = Object.freeze([
     "universityName": "대신대학교",
     "region": "경상북도",
     "referenceYear": 2026,
-    "subjectAdmissionStatus": "not-published",
+    "subjectAdmissionStatus": "confirmed-cut",
     "comprehensiveAdmissionStatus": "no-comprehensive-admission",
-    "checkedAt": "2026-09-16",
-    "sourceUrls": [],
-    "auditState": "completed-with-parser-warnings",
-    "failureReason": "4 conflicting result keys excluded"
+    "checkedAt": "2026-10-26",
+    "sourceUrls": [
+      "https://www.adiga.kr/ucp/cls/uni/classUnivAdmssPopup.do?ruCd=0013122&searchSyr=2026&unvCd=0000093",
+      "https://www.adiga.kr/ucp/cls/uni/classUnivAdmssPopup.do?ruCd=0245823&searchSyr=2026&unvCd=0000093",
+      "https://www.adiga.kr/ucp/cls/uni/classUnivAdmssPopup.do?ruCd=0249078&searchSyr=2026&unvCd=0000093",
+      "https://www.adiga.kr/ucp/cls/uni/classUnivAdmssPopup.do?ruCd=0249874&searchSyr=2026&unvCd=0000093"
+    ],
+    "auditState": "completed",
+    "failureReason": null
   },
   {
     "universityId": "adiga-0000101",

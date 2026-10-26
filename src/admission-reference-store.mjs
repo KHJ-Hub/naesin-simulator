@@ -13,7 +13,10 @@ export function normalizePublicHttpUrl(value) {
 }
 
 export function admissionInterestKey(item = {}) {
-  return [item.referenceYear, item.university, item.department, item.admissionCategory ?? item.category, item.admissionName].map((value) => String(value ?? '').trim()).join('|');
+  const parts = [item.referenceYear, item.university, item.department, item.admissionCategory ?? item.category, item.admissionName];
+  // 기존 백업 키는 유지하되 공식 자료에 모집시기가 있으면 수시/정시를 구분한다.
+  if (String(item.admissionPeriod ?? '').trim()) parts.push(item.admissionPeriod);
+  return parts.map((value) => String(value ?? '').trim()).join('|');
 }
 
 export function normalizeAdmissionInterest(item = {}) {
@@ -38,6 +41,7 @@ export function normalizeAdmissionInterest(item = {}) {
   const hasPublishedGrade = [cut70, cut50, cut70Converted, cut50Converted, averageGradeOriginal, averageGradeConverted].some((value) => value !== null);
   if (!Number.isInteger(referenceYear) || !university || !department || !admissionName || !hasPublishedGrade) return null;
   return { referenceYear, universityId, university, universityName: university, department, admissionName,
+    ...(item.admissionPeriod ? { admissionPeriod: String(item.admissionPeriod).trim().slice(0, 50) } : {}),
     admissionType: String(item.admissionType ?? '').trim().slice(0, 50),
     admissionCategory: String(item.admissionCategory ?? item.category ?? '').trim().slice(0, 50),
     category: String(item.category ?? item.admissionCategory ?? '').trim().slice(0, 50), cut70,
