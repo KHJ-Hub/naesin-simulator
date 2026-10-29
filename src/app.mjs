@@ -56,7 +56,7 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20260921-service-settings1';
+import { APP_VERSION } from './app-version.mjs?v=20261030-steps1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
