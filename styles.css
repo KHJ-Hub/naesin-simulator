@@ -4887,3 +4887,24 @@ h3:not(.hero-grid h2),
   .admission-dashboard-panel,
   .service-settings-panel { display: none !important; }
 }
+
+/* 단계 번호 표기와 STEP 3 묶음 */
+.step-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.step-title h2 { margin: 0; }
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--lavender-200);
+  border-radius: 999px;
+  background: var(--lavender-100);
+  color: var(--accent-strong);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.step-section { margin-top: 16px; }
+.step-section-heading { padding: 2px 4px 0; }
+.step-section-heading .step-title h2 { font-size: var(--font-section); font-weight: 800; line-height: var(--leading-section); }

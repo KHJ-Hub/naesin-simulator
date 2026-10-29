@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?v=20260928-favicon2" />
     <link rel="icon" type="image/png" sizes="64x64" href="./favicon-64x64.png?v=20260928-favicon2" />
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260928-favicon2" />
-    <link rel="stylesheet" href="./styles.css?v=20261026-admission-period1" />
+    <link rel="stylesheet" href="./styles.css?v=20261030-steps1" />
   </head>
   <body>
     <main class="app-shell">
@@ -26,7 +26,7 @@
       <section class="notice-card"><strong>현재 화면에서만 안전하게 계산해요</strong><p>입력한 성적은 서버로 전송되거나 브라우저에 자동 저장되지 않아요. 다음에 이어서 사용하려면 <span class="backup-action-label">‘내 데이터 백업’</span>으로 파일을 보관하고, 다시 접속한 뒤 <span class="backup-action-label">‘백업 불러오기’</span>로 복원해 주세요. <span class="backup-action-label">‘백업 필요’</span>가 보이면 마지막 백업 뒤에 바뀐 내용이 있어요.</p></section>
 
       <section class="panel student-panel">
-        <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><h2>학생 정보</h2><p>학번과 이름은 현재 화면과 백업 파일에만 포함돼요.</p></div></div>
+        <div class="panel-heading compact"><div><p class="eyebrow">결과표 정보</p><div class="step-title"><span class="step-badge">STEP 1 / 4</span><h2>학생 정보</h2></div><p>학번과 이름은 현재 화면과 백업 파일에만 포함돼요.</p></div></div>
         <div class="student-form">
           <label>학번 <input id="student-id" class="input" type="text" maxlength="5" pattern="[0-9]*" autocomplete="off" placeholder="예: 10101" /></label>
           <label>이름 <input id="student-name" class="input" type="text" lang="ko" maxlength="30" autocomplete="name" autocapitalize="none" spellcheck="false" placeholder="예: 김철수" /></label>
@@ -36,15 +36,17 @@
       </section>
 
       <section class="panel" id="simulator-panel">
-        <div class="panel-heading"><div><p class="eyebrow">STEP 1</p><h2>실제 성적 입력</h2><p>학기별 실제 성적을 입력하면 현재 내신을 계산해요.</p></div></div>
+        <div class="panel-heading"><div><div class="step-title"><span class="step-badge">STEP 2 / 4</span><h2>실제 성적 입력</h2></div><p>학기별 실제 성적을 입력하면 현재 내신을 계산해요.</p></div></div>
         <p id="course-catalog-status" class="course-catalog-status" role="status" aria-live="polite"></p>
         <div id="semester-cards" class="semester-card-list" aria-label="학기별 성적 입력"></div>
         <aside class="side-help semester-card-help"><h3>입력 안내</h3><ul><li>각 학기를 열어 학기 평균 또는 과목별 입력을 선택해 주세요.</li><li>과목별 입력을 완료한 학기는 간편 평균보다 상세 입력값을 우선 사용해요.</li><li>입력 방식만 바꿔도 기존 값은 삭제되지 않아요.</li></ul></aside>
         <div class="grade-calculation-actions"><button id="calculate-button" class="primary-button">내신 계산하기</button><div id="current-grade-result" class="current-grade-result" aria-live="polite"></div></div>
       </section>
 
+      <section class="step-section" id="analysis-section" aria-labelledby="analysis-section-title">
+      <div class="step-section-heading"><div class="step-title"><span class="step-badge">STEP 3 / 4</span><h2 id="analysis-section-title">내신 분석과 목표 시뮬레이션</h2></div></div>
       <section class="dashboard-grid">
-        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">STEP 3</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
+        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">목표 설정</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
         <div class="flow-column">
           <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">나의 흐름</p><h2>학기별 변화</h2></div></div><div id="semester-summary" class="bar-list"></div></section>
           <section class="panel grade-position-panel" aria-labelledby="grade-position-title"><div class="panel-heading compact"><div><p class="eyebrow">5등급제 · 9등급제</p><h2 id="grade-position-title">등급 구간 비교</h2></div></div><div id="grade-position" aria-live="polite"></div></section>
@@ -52,9 +54,10 @@
       </section>
 
       <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">교과별 확인</p><h2>교과군 평균</h2></div></div><div id="subject-summary" class="subject-grid"></div></section>
+      </section>
 
       <section class="panel admission-reference-panel" id="admission-reference-panel">
-        <div class="panel-heading compact"><div><p class="eyebrow">전년도 입시결과 참고</p><h2>공개 입시결과와 내신 비교</h2><p>대학별 산출방식이 다르므로 전년도 최종등록자 결과를 참고용으로만 비교해요.</p></div></div>
+        <div class="panel-heading compact"><div><p class="eyebrow">전년도 입시결과 참고</p><div class="step-title"><span class="step-badge">STEP 4 / 4</span><h2>공개 입시결과와 내신 비교</h2></div><p>대학별 산출방식이 다르므로 전년도 최종등록자 결과를 참고용으로만 비교해요.</p></div></div>
         <div class="admission-overview">
           <div class="admission-status"><span class="eyebrow">비교 준비</span><strong id="admission-current-score">내신 계산 후 이용 가능</strong><p>내신 계산 후 현재 또는 목표 내신과 비교할 수 있어요.</p></div>
           <div class="admission-control-group"><span>비교할 내신</span><div class="admission-basis" role="radiogroup" aria-label="비교 기준"><label><input type="radio" name="admission-basis" value="current" checked /> 현재 내신</label><label><input type="radio" name="admission-basis" value="target" /> 목표 내신</label></div></div>
@@ -95,6 +98,6 @@
     </dialog>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20261026-admission-period1"></script>
+    <script type="module" src="./src/app.mjs?v=20261030-steps1"></script>
   </body>
 </html>
