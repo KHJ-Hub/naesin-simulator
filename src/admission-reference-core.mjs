@@ -18,7 +18,7 @@ export const ADMISSION_REFERENCE_SETTINGS = Object.freeze({
   }),
 });
 
-export const ADMISSION_CONVERSION_NOTICE = '5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값이에요. 실제 대학별 2028학년도 평가·환산 방식과 다를 수 있어요.';
+export const ADMISSION_CONVERSION_NOTICE = '5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값이에요. 대학별 평가·환산 방식은 학년도마다 다를 수 있어요. 본인이 지원할 학년도의 모집요강을 꼭 확인해 주세요.';
 
 export const ADMISSION_REFERENCE_SCHEMA = Object.freeze({
   referenceYear: 'number (canonical)', universityId: 'string|null', region: 'string', university: 'string', field: 'string|null', academicField: 'humanities|natural|arts|open-major|other|unknown',

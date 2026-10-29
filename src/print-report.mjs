@@ -255,7 +255,7 @@ export function buildPrintReportModel(state = {}, { remainingRecords = null, now
       rows: courseAppendixRows,
     },
     notices: {
-      conversion: '5등급 환산값은 부산교육청의 실제 학생 성적 분포 자료를 기반으로 한 참고값이며, 대학의 실제 2028학년도 평가 기준 또는 합격 가능성을 의미하지 않습니다.',
+      conversion: '5등급 환산값은 부산교육청의 실제 학생 성적 분포 자료를 기반으로 한 참고값이며, 대학별 평가·환산 방식은 학년도마다 다를 수 있으므로 본인이 지원할 학년도의 모집요강을 꼭 확인해 주세요. 합격 가능성을 의미하지 않습니다.',
       comprehensive: '학생부종합전형은 내신 성적뿐 아니라 과목 선택, 세부능력 및 특기사항 등 학생부 전체를 종합적으로 평가합니다. 전년도 등록자 내신은 참고자료로만 활용하세요.',
     },
   };

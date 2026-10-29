@@ -31,6 +31,7 @@
           <label>학번 <input id="student-id" class="input" type="text" maxlength="5" pattern="[0-9]*" autocomplete="off" placeholder="예: 10101" /></label>
           <label>이름 <input id="student-name" class="input" type="text" lang="ko" maxlength="30" autocomplete="name" autocapitalize="none" spellcheck="false" placeholder="예: 김철수" /></label>
         </div>
+        <p class="field-hint">상담할 때 선생님이 알아볼 수 있도록 입력해요. 공용 기기에서는 비워도 돼요.</p>
         <p id="student-info-error" class="field-error" role="alert" aria-live="polite"></p>
         <p id="student-info-summary" class="student-info-summary" aria-live="polite"></p>
       </section>
@@ -46,7 +47,7 @@
       <section class="step-section" id="analysis-section" aria-labelledby="analysis-section-title">
       <div class="step-section-heading"><div class="step-title"><span class="step-badge">STEP 3 / 4</span><h2 id="analysis-section-title">내신 분석과 목표 시뮬레이션</h2></div></div>
       <section class="dashboard-grid">
-        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">목표 설정</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
+        <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">목표 설정</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><p class="field-hint toggle-hint">과목별로 입력한 학기에서 학점이 큰 과목이 평균에 더 크게 반영돼요. 끄면 모든 과목을 같은 비중으로 계산해요.</p><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
         <div class="flow-column">
           <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">나의 흐름</p><h2>학기별 변화</h2></div></div><div id="semester-summary" class="bar-list"></div></section>
           <section class="panel grade-position-panel" aria-labelledby="grade-position-title"><div class="panel-heading compact"><div><p class="eyebrow">5등급제 · 9등급제</p><h2 id="grade-position-title">등급 구간 비교</h2></div></div><div id="grade-position" aria-live="polite"></div></section>
@@ -77,7 +78,7 @@
         <button id="admission-view-button" class="primary-button">전년도 입시결과 보기</button>
         <details class="admission-help"><summary>70% cut · 50% cut 안내</summary><p><strong>70% cut</strong>은 전년도 최종등록자 성적 분포에서 참고할 수 있는 지표예요. <strong>50% cut</strong>도 같은 방식의 참고 지표이며, 어느 수치도 합격선이나 최저 합격등급을 뜻하지 않아요.</p></details>
         <div id="admission-reference-result" class="admission-reference-result"></div>
-        <p class="admission-conversion-notice">5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값이에요. 실제 대학별 2028학년도 평가·환산 방식과 다를 수 있어요.</p>
+        <p class="admission-conversion-notice">5등급제 환산값은 부산광역시교육청학력개발원 진로진학지원센터의 부산 관내 98개교 15,978명 누적 등급평균 자료를 기준으로 환산한 참고값이에요. 대학별 평가·환산 방식은 학년도마다 다를 수 있어요. 본인이 지원할 학년도의 모집요강을 꼭 확인해 주세요.</p>
         <section class="admission-interests"><div class="section-title"><div><h3>관심 대학</h3><p class="muted">저장한 항목은 현재 화면과 백업 파일에만 보관되고 결과표에 포함돼요.</p></div></div><div id="admission-interests"></div></section>
         <details class="admission-disclaimer"><summary>입시결과 이용 안내</summary><p>본 결과는 전년도 공개 입시결과와 현재 입력 내신을 단순 비교한 참고자료예요. 실제 합격 가능성을 의미하지 않아요. 대학별 학생부 반영 교과, 학년별 반영 비율, 진로선택과목 처리, 가산점 및 전형방법에 따라 결과가 달라질 수 있어요.</p></details>
       </section>
@@ -88,7 +89,7 @@
     <dialog id="student-feedback-dialog" class="student-feedback-dialog" aria-labelledby="student-feedback-title">
       <form id="student-feedback-form" class="student-feedback-form" method="dialog">
         <div class="student-feedback-heading"><div><p class="eyebrow">익명 학생 의견</p><h2 id="student-feedback-title">의견 보내기</h2><p>사용하면서 불편했던 점이나 있었으면 하는 기능을 알려 주세요.</p></div><button type="button" class="quiet-button" data-feedback-close aria-label="의견 보내기 닫기">닫기</button></div>
-        <label>의견 종류 <select name="category" class="input" required><option value="">선택해 주세요</option><option>오류가 있어요</option><option>사용하기 불편해요</option><option>기능 제안</option><option>입결 데이터 관련</option><option>기타</option></select></label>
+        <label>의견 종류 <select name="category" class="input" required><option value="">선택해 주세요</option><option>오류가 있어요</option><option>사용하기 불편해요</option><option>기능 제안</option><option value="입결 데이터 관련">입시결과 관련</option><option>기타</option></select></label>
         <label>의견 내용 <textarea name="message" class="input" maxlength="1200" rows="6" required placeholder="어떤 점이 불편했는지 알려 주세요."></textarea></label>
         <label>학년 <select name="grade" class="input"><option value="">선택 안 함</option><option>1학년</option><option>2학년</option><option>3학년</option></select></label>
         <p class="student-feedback-privacy">이름, 학번 등 개인정보는 의견 내용에 입력하지 마세요. 성적은 자동으로 전송되지 않아요.</p>

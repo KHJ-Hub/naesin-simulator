@@ -4908,3 +4908,6 @@ h3:not(.hero-grid h2),
 .step-section { margin-top: 16px; }
 .step-section-heading { padding: 2px 4px 0; }
 .step-section-heading .step-title h2 { font-size: var(--font-section); font-weight: 800; line-height: var(--leading-section); }
+
+.field-hint { margin: .45rem 0 0; color: var(--muted); font-size: .85rem; line-height: 1.5; }
+.toggle-hint { margin: -2px 0 0; }
