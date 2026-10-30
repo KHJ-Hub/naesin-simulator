@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?v=20260928-favicon2" />
     <link rel="icon" type="image/png" sizes="64x64" href="./favicon-64x64.png?v=20260928-favicon2" />
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260928-favicon2" />
-    <link rel="stylesheet" href="./styles.css?v=20261030-steps2" />
+    <link rel="stylesheet" href="./styles.css?v=20261030-collapse1" />
   </head>
   <body>
     <main class="app-shell">
@@ -50,8 +50,8 @@
       </section>
       </section>
 
-      <section class="step-section" id="analysis-section" aria-labelledby="analysis-section-title">
-      <div class="step-section-heading"><div class="step-title"><span class="step-badge">STEP 3 / 4</span><h2 id="analysis-section-title">내신 분석과 목표 시뮬레이션</h2></div></div>
+      <details class="step-section step-collapsible" id="analysis-section">
+      <summary class="step-section-heading"><h2 class="step-title" id="analysis-section-title"><span class="step-badge">STEP 3 / 4</span>내신 분석과 목표 시뮬레이션</h2><span class="step-hint step-hint-locked">내신을 계산하면 열려요</span><span class="step-hint step-hint-ready">눌러서 열기</span><span class="step-chevron" aria-hidden="true"></span></summary>
       <section class="dashboard-grid">
         <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">목표 설정</p><h2>목표 내신 시뮬레이션</h2></div></div><div class="goal-form"><label>목표 내신 <input id="target-average" class="input" type="number" min="1" max="5" step="0.01" placeholder="예: 1.80" /></label><label class="toggle-line"><input id="weighted-toggle" type="checkbox" checked /> 상세입력 학기 안에서 학점 가중</label><p class="field-hint toggle-hint">과목별로 입력한 학기에서 학점이 큰 과목이 평균에 더 크게 반영돼요. 끄면 모든 과목을 같은 비중으로 계산해요.</p><button id="goal-calculate-button" class="primary-button">목표 시뮬레이션</button></div><div id="goal-result" class="goal-result"></div></section>
         <div class="flow-column">
@@ -61,10 +61,10 @@
       </section>
 
       <section class="panel"><div class="panel-heading compact"><div><p class="eyebrow">교과별 확인</p><h2>교과군 평균</h2></div></div><div id="subject-summary" class="subject-grid"></div></section>
-      </section>
+      </details>
 
-      <section class="step-section" aria-labelledby="admission-section-title">
-      <div class="step-section-heading"><div class="step-title"><span class="step-badge">STEP 4 / 4</span><h2 id="admission-section-title">공개 입시결과와 내신 비교</h2></div></div>
+      <details class="step-section step-collapsible" id="admission-section">
+      <summary class="step-section-heading"><h2 class="step-title" id="admission-section-title"><span class="step-badge">STEP 4 / 4</span>공개 입시결과와 내신 비교</h2><span class="step-hint step-hint-locked">내신을 계산하면 열려요</span><span class="step-hint step-hint-ready">눌러서 열기</span><span class="step-chevron" aria-hidden="true"></span></summary>
       <section class="panel admission-reference-panel" id="admission-reference-panel">
         <div class="panel-heading compact"><div><p>대학별 산출방식이 다르므로 전년도 최종등록자 결과를 참고용으로만 비교해요.</p></div></div>
         <div class="admission-overview">
@@ -90,7 +90,7 @@
         <section class="admission-interests"><div class="section-title"><div><h3>관심 대학</h3><p class="muted">저장한 항목은 현재 화면과 백업 파일에만 보관되고 결과표에 포함돼요.</p></div></div><div id="admission-interests"></div></section>
         <details class="admission-disclaimer"><summary>입시결과 이용 안내</summary><p>본 결과는 전년도 공개 입시결과와 현재 입력 내신을 단순 비교한 참고자료예요. 실제 합격 가능성을 의미하지 않아요. 대학별 학생부 반영 교과, 학년별 반영 비율, 진로선택과목 처리, 가산점 및 전형방법에 따라 결과가 달라질 수 있어요.</p></details>
       </section>
-      </section>
+      </details>
 
       <footer><p>이 도구는 성적 계산을 위한 시뮬레이션이며 대학 합격 가능성을 의미하지 않아요.</p><p>입력 데이터는 현재 화면을 닫거나 새로고침하면 사라져요.</p><p id="app-version" class="app-version" aria-label="앱 버전"></p></footer>
     </main>
@@ -108,6 +108,6 @@
     </dialog>
     <section id="print-report" class="print-report" aria-label="학생 성적 결과표"></section>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./src/app.mjs?v=20261030-steps2"></script>
+    <script type="module" src="./src/app.mjs?v=20261030-collapse1"></script>
   </body>
 </html>

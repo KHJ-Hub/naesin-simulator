@@ -4911,3 +4911,42 @@ h3:not(.hero-grid h2),
 
 .field-hint { margin: .45rem 0 0; color: var(--muted); font-size: .85rem; line-height: 1.5; }
 .toggle-hint { margin: -2px 0 0; }
+
+/* STEP 3·4 접고 펴기 */
+.step-collapsible > summary.step-section-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-height: 56px;
+  padding: 12px 52px 12px 18px;
+  border: 2px solid var(--pink-200);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: var(--shadow);
+  list-style: none;
+  cursor: pointer;
+}
+.step-collapsible > summary::-webkit-details-marker { display: none; }
+.step-collapsible > summary::marker { content: ''; }
+.step-collapsible > summary:focus-visible { outline: 3px solid var(--lavender-500); outline-offset: 2px; }
+.step-collapsible > summary .step-title { margin: 0; font-size: clamp(1.05rem, 1.5vw, 1.25rem); font-weight: 800; line-height: 1.35; }
+.step-hint { display: none; color: var(--muted); font-size: .85rem; font-weight: 700; }
+.step-collapsible:not([open]) > summary .step-hint-locked { display: inline; }
+.step-collapsible:not([open])[data-ready] > summary .step-hint-locked { display: none; }
+.step-collapsible:not([open])[data-ready] > summary .step-hint-ready { display: inline; }
+.step-chevron {
+  position: absolute;
+  top: 50%;
+  right: 22px;
+  width: 10px;
+  height: 10px;
+  margin-top: -7px;
+  border-right: 2.5px solid var(--accent-strong);
+  border-bottom: 2.5px solid var(--accent-strong);
+  transform: rotate(45deg);
+  transition: transform .15s ease;
+}
+.step-collapsible[open] > summary .step-chevron { margin-top: -3px; transform: rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { .step-chevron { transition: none; } }

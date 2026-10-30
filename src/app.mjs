@@ -56,7 +56,8 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261030-steps2';
+import { APP_VERSION } from './app-version.mjs?v=20261030-collapse1';
+import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
@@ -632,9 +633,18 @@ function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, (char
 function gradeInputRows() { return activeDetailedRecords().filter((record) => ['grade', 'both'].includes(record.gradingType) && record.fiveLevelEligible !== false); }
 function validRows() { return gradeInputRows().filter((record) => record.subjectName?.trim() && Number(record.credit) > 0 && Number(record.gradeValue) >= 1 && Number(record.gradeValue) <= 5); }
 
+const stepSections = {
+  analysis: document.getElementById(COLLAPSIBLE_STEP_IDS.analysis),
+  admission: document.getElementById(COLLAPSIBLE_STEP_IDS.admission),
+};
+const stepSectionList = Object.values(stepSections);
+function isCalculationReady() {
+  return state.calculated && Number.isFinite(buildStudentGradeModels(gradeCalculationState()).current.average);
+}
 function renderCurrentGradeResult() {
   const model = buildStudentGradeModels(gradeCalculationState()).current;
   const current = state.calculated ? model.average : null;
+  markStepsReady(stepSectionList, state.calculated && Number.isFinite(current));
   const container = $('#current-grade-result');
   if (!state.calculated || !Number.isFinite(current)) {
     container.classList.remove('calculated');
@@ -1249,7 +1259,7 @@ semesterCards.addEventListener('change', (event) => {
   if (field === 'gradeValue' && event.target.value && (Number(event.target.value) < 1 || Number(event.target.value) > 5)) { record[field] = ''; showToast('등급은 1~5등급만 입력할 수 있어요.', 'error'); }
   state.calculated = false; state.goalCalculated = false; saveState(); renderSemesterCards(); renderGradeDerivedViews();
 });
-$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderSemesterCards(); renderGradeDerivedViews(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개예요.`); });
+$('#calculate-button').addEventListener('click', () => { state.calculated = true; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderSemesterCards(); renderGradeDerivedViews(); showToast(`내신 계산을 완료했어요. 아직 등급을 입력하지 않은 과목은 ${gradeInputRows().length - validRows().length}개예요.`); if (isCalculationReady()) { openStep(stepSections.analysis); window.requestAnimationFrame(() => scrollStepIntoView(stepSections.analysis)); } });
 $('#goal-calculate-button').addEventListener('click', () => { state.goalCalculated = true; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#target-average').addEventListener('input', (event) => { state.targetAverage = event.target.value; state.goalCalculated = false; resetAdmissionViewPaging(); saveState(); renderGoal(); renderPrintReport(); });
 $('#weighted-toggle').addEventListener('change', (event) => { state.weighted = event.target.checked; state.calculated = false; state.goalCalculated = false; saveState(); renderCurrentGradeResult(); renderSemesterSummary(); renderGradePosition(); renderSubjectSummary(); renderGoal(); renderPrintReport(); });
@@ -1557,6 +1567,7 @@ $('#import-input').addEventListener('change', async (event) => {
     render();
     setBackupBaseline();
     showToast('백업 데이터를 불러왔어요.');
+    if (isCalculationReady()) openStep(stepSections.analysis);
   } catch (error) {
     console.error(error);
     if (restoreApplied && previousState) {
@@ -1586,6 +1597,7 @@ $('#reset-button').addEventListener('click', () => {
   closeDepartmentSuggestions();
   resetAdmissionViewPaging();
   render();
+  closeSteps(stepSectionList);
   setBackupBaseline();
   showToast('입력한 학생 데이터와 성적을 초기화했어요.');
 });
@@ -1620,3 +1632,4 @@ $('#app-version').textContent = `v${APP_VERSION}`;
 setupStudentFeedback();
 setBackupBaseline();
 render();
+bindPrintExpansion(stepSectionList, window);
