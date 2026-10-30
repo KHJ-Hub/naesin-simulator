@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.6.1';
+export const APP_VERSION = '1.7.0';
 export const APP_BUILD_DATE = '2026.10.30';
 
 export function appVersionLabel() {
