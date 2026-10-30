@@ -4950,3 +4950,5 @@ h3:not(.hero-grid h2),
 }
 .step-collapsible[open] > summary .step-chevron { margin-top: -3px; transform: rotate(-135deg); }
 @media (prefers-reduced-motion: reduce) { .step-chevron { transition: none; } }
+
+#semester-visibility-note { margin-bottom: .7rem; }

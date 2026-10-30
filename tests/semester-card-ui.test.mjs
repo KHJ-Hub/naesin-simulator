@@ -13,7 +13,8 @@ test('성적 입력은 별도 간편·상세 섹션 대신 학기별 카드 한 
   assert.match(html, /id="semester-cards" class="semester-card-list"/);
   assert.doesNotMatch(html, /id="semester-tabs"/);
   assert.doesNotMatch(html, /id="semester-input-mode"/);
-  assert.match(app, /SEMESTERS\.map\(\(semester\) =>/);
+  assert.match(app, /visibleSemesters\(SEMESTERS, semesterOptions\)/);
+  assert.match(app, /visibleList\.map\(\(semester\) =>/);
   assert.match(app, /학기 평균으로 간단히 입력/);
   assert.match(app, /과목별로 자세히 입력/);
 });

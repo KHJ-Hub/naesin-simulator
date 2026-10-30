@@ -56,8 +56,9 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261030-collapse1';
+import { APP_VERSION } from './app-version.mjs?v=20261031-semfilter1';
 import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
+import { hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261031-semfilter1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
@@ -498,6 +499,13 @@ function courseSelectionHtml(semesterId) {
   return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
 }
 
+function semesterHasContent(semesterId) {
+  return Boolean(semesterSelectedMode(semesterId))
+    || state.actual.some((record) => record.semesterId === semesterId && (record.courseRank || record.courseRankTotal));
+}
+function visibleSemesterList() {
+  return visibleSemesters(SEMESTERS, { grade: studentCatalogContext().grade, hasContent: semesterHasContent });
+}
 function renderSemesterCards() {
   const catalogContext = studentCatalogContext();
   const detailedSupported = catalogContext.status === 'supported';
@@ -517,7 +525,15 @@ function renderSemesterCards() {
       status.textContent = '학번을 입력하면 입학생 연도에 맞는 과목 정보를 확인해요. 학기 평균 간편입력은 바로 이용할 수 있어요.';
     }
   }
-  $('#semester-cards').innerHTML = SEMESTERS.map((semester) => {
+  const semesterOptions = { grade: catalogContext.grade, hasContent: semesterHasContent };
+  const visibleList = visibleSemesters(SEMESTERS, semesterOptions);
+  const visibilityNote = $('#semester-visibility-note');
+  if (visibilityNote) {
+    const hidden = hiddenSemesterCount(SEMESTERS, semesterOptions);
+    visibilityNote.hidden = hidden === 0;
+    visibilityNote.textContent = hidden === 0 ? '' : `학번의 학년(${catalogContext.grade}학년)에 맞는 학기만 보여요. 이미 입력한 학기는 계속 보여요.`;
+  }
+  $('#semester-cards').innerHTML = visibleList.map((semester) => {
     const semesterId = semester.id;
     const isExpanded = expandedSemesterId === semesterId;
     const selectedMode = semesterSelectedMode(semesterId);
@@ -621,8 +637,7 @@ function completeSemesterInput(semesterId) {
   saveState();
   renderSemesterCards();
   renderGradeDerivedViews();
-  const semesterIndex = SEMESTERS.findIndex(({ id }) => id === semesterId);
-  const nextSemesterId = SEMESTERS[semesterIndex + 1]?.id;
+  const nextSemesterId = nextVisibleSemesterId(visibleSemesterList(), semesterId);
   window.requestAnimationFrame(() => {
     const nextCard = nextSemesterId ? semesterCards.querySelector(`[data-semester-card="${nextSemesterId}"]`) : null;
     (nextCard ?? semesterCards.querySelector(`[data-semester-card="${semesterId}"]`))?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
