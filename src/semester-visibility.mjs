@@ -6,6 +6,17 @@
 export const VALID_STUDENT_GRADES = Object.freeze([1, 2, 3]);
 
 /**
+ * 학번 첫 자리에서 보여 줄 학년을 읽는다. 5자리를 다 쓰지 않아도 첫 자리만으로 정한다.
+ * 비어 있으면 1학년, 첫 자리가 1~3이 아니면 알 수 없음(null)이다.
+ */
+export function gradeFromStudentId(studentId) {
+  const digits = String(studentId ?? '').replace(/\D/g, '');
+  if (!digits) return 1;
+  const grade = Number(digits[0]);
+  return VALID_STUDENT_GRADES.includes(grade) ? grade : null;
+}
+
+/**
  * @param {Array<{id: string, grade: number}>} semesters 전체 학기 목록
  * @param {{ grade?: number | null, hasContent?: (semesterId: string) => boolean }} options
  *   grade: 학번에서 읽은 현재 학년(알 수 없으면 null), hasContent: 이미 입력한 내용이 있는 학기인지

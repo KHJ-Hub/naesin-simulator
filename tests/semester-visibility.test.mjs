@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { SEMESTERS } from '../src/grade-calculator.mjs';
-import { hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from '../src/semester-visibility.mjs';
+import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from '../src/semester-visibility.mjs';
 
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../src/app.mjs', import.meta.url), 'utf8');
@@ -45,8 +45,21 @@ test('원본 학기 목록은 바뀌지 않고 걸러낸 결과는 새 배열이
 
 test('화면 연결: 걸러낸 목록으로 카드를 만들고 안내 문구 자리가 있으며 계산·저장 코드는 SEMESTERS 전체를 쓴다', () => {
   assert.match(html, /id="semester-visibility-note"[^>]*hidden/);
-  assert.match(app, /grade: catalogContext\.grade, hasContent: semesterHasContent/);
+  assert.match(app, /grade: visibleGrade, hasContent: semesterHasContent/);
   assert.match(app, /nextVisibleSemesterId\(visibleSemesterList\(\), semesterId\)/);
   assert.match(app, /semesterId: SEMESTERS\.some\(\(semester\) => semester\.id === record\.semesterId\)/);
   assert.match(app, /activeSemester: SEMESTERS\.some\(/);
+});
+
+test('학번이 비어 있으면 1학년, 첫 자리만으로도 학년을 정하고, 1~3이 아니면 알 수 없다', () => {
+  assert.equal(gradeFromStudentId(''), 1);
+  assert.equal(gradeFromStudentId(undefined), 1);
+  assert.equal(gradeFromStudentId('1'), 1);
+  assert.equal(gradeFromStudentId('2'), 2);
+  assert.equal(gradeFromStudentId('30101'), 3);
+  for (const id of ['0', '4', '9', '49999']) assert.equal(gradeFromStudentId(id), null, id);
+});
+
+test('앱은 학번 첫 자리로 학기 카드를 걸러 낸다', () => {
+  assert.match(app, /gradeFromStudentId\(state\.student\?\.studentId\)/);
 });

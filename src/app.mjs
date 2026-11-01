@@ -56,9 +56,9 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261031-semfilter1';
+import { APP_VERSION } from './app-version.mjs?v=20261102-firstdigit1';
 import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
-import { hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261031-semfilter1';
+import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261102-firstdigit1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
@@ -504,7 +504,7 @@ function semesterHasContent(semesterId) {
     || state.actual.some((record) => record.semesterId === semesterId && (record.courseRank || record.courseRankTotal));
 }
 function visibleSemesterList() {
-  return visibleSemesters(SEMESTERS, { grade: studentCatalogContext().grade, hasContent: semesterHasContent });
+  return visibleSemesters(SEMESTERS, { grade: gradeFromStudentId(state.student?.studentId), hasContent: semesterHasContent });
 }
 function renderSemesterCards() {
   const catalogContext = studentCatalogContext();
@@ -525,13 +525,14 @@ function renderSemesterCards() {
       status.textContent = '학번을 입력하면 입학생 연도에 맞는 과목 정보를 확인해요. 학기 평균 간편입력은 바로 이용할 수 있어요.';
     }
   }
-  const semesterOptions = { grade: catalogContext.grade, hasContent: semesterHasContent };
+  const visibleGrade = gradeFromStudentId(state.student?.studentId);
+  const semesterOptions = { grade: visibleGrade, hasContent: semesterHasContent };
   const visibleList = visibleSemesters(SEMESTERS, semesterOptions);
   const visibilityNote = $('#semester-visibility-note');
   if (visibilityNote) {
     const hidden = hiddenSemesterCount(SEMESTERS, semesterOptions);
     visibilityNote.hidden = hidden === 0;
-    visibilityNote.textContent = hidden === 0 ? '' : `학번의 학년(${catalogContext.grade}학년)에 맞는 학기만 보여요. 이미 입력한 학기는 계속 보여요.`;
+    visibilityNote.textContent = hidden === 0 ? '' : (state.student?.studentId ? `학번의 학년(${visibleGrade}학년)에 맞는 학기만 보여요. 이미 입력한 학기는 계속 보여요.` : '처음에는 1학년 칸만 보여요. 학번을 입력하면 학년에 맞는 학기가 나타나요.');
   }
   $('#semester-cards').innerHTML = visibleList.map((semester) => {
     const semesterId = semester.id;
