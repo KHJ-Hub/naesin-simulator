@@ -36,7 +36,7 @@ jobs:
           cp index.html teacher.html teacher-consult.html styles.css _site/
           cp favicon.ico favicon-32x32.png favicon-64x64.png apple-touch-icon.png _site/
           cp -R src _site/src
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _site
       - id: deployment
