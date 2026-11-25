@@ -56,10 +56,11 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261126-groups1';
+import { APP_VERSION } from './app-version.mjs?v=20261126-offer1';
 import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
 import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261126-track1';
 import { TRACK_OPTIONS, designatedCoursesForTrack, hasTrackDesignation, isTrackId } from './track-designation.mjs?v=20261126-track1';
+import { isOfferedInSemester } from './semester-offerings.mjs?v=20261126-offer1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
@@ -550,7 +551,7 @@ function courseSelectionHtml(semesterId) {
   const used = new Set(allDetailed.filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
   const usedChoiceSubjects = new Set(allDetailed.filter((record) => record.requirement === 'elective' && record.subjectName).map((record) => record.subjectName));
   const classNumber = classNumberForSemester(semesterId);
-  const available = selectableCoursesForSemester(semesterId, context.entryYear, { classNumber }).filter((course) => !used.has(course.id) && !(course.duplicateSelectionWarning && usedChoiceSubjects.has(course.subjectName)));
+  const available = selectableCoursesForSemester(semesterId, context.entryYear, { classNumber }).filter(isOfferedInSemester).filter((course) => !used.has(course.id) && !(course.duplicateSelectionWarning && usedChoiceSubjects.has(course.subjectName)));
   const firstGradeNote = !semesterId.startsWith('1-') ? ''
     : context.grade > 1
       ? '<p class="muted first-grade-class-note">음악·미술·보건·진로는 성적표를 보고 들은 학기에 직접 추가해 주세요.</p>'
