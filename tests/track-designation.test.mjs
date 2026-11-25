@@ -106,3 +106,10 @@ test('화면 연결: 지난 학년은 반을 쓰지 않고, 계열 선택은 sta
   // 예전 백업에 중국어가 있으면 같은 학기 일본어를 또 넣지 않는다(택1 묶음).
   assert.match(app, /course\.requirement === 'school-designated' && course\.selectionGroup && record\.semesterId === semesterId && record\.selectionGroup === course\.selectionGroup/);
 });
+
+test('과목 추가 목록은 내신 반영(등급) 과목과 미반영(성취도·P/F) 과목을 따로 묶는다', () => {
+  assert.match(app, /<optgroup label="내신 반영 과목 \(등급\)">/);
+  assert.match(app, /<optgroup label="내신 미반영 \(성취도·P\/F\)">\$\{ungraded\.map\(\(course\) => option\(course, ' · 미반영'\)\)/);
+  assert.match(app, /const graded = courses\.filter\(isGradeInputCourse\);/);
+  assert.match(app, /data-course-picker="\$\{semesterId\}"><option value="">과목 선택<\/option>\$\{coursePickerGroupsHtml\(available\)\}<\/select>/);
+});

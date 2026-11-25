@@ -6,7 +6,7 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20261126-track1';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, isGradeInputCourse, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20261126-track1';
 import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20261016-course-rank1';
 import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20261126-track1';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20261030-steps1';
@@ -56,7 +56,7 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261126-track1';
+import { APP_VERSION } from './app-version.mjs?v=20261126-groups1';
 import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
 import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261126-track1';
 import { TRACK_OPTIONS, designatedCoursesForTrack, hasTrackDesignation, isTrackId } from './track-designation.mjs?v=20261126-track1';
@@ -533,6 +533,16 @@ function applySemesterTrack(semesterId, track) {
   });
   return added;
 }
+/** 과목 추가 목록을 등급이 나오는 과목과 내신에 반영되지 않는 성취도·P/F 과목으로 나눠 보여 준다. */
+function coursePickerGroupsHtml(courses) {
+  const option = (course, suffix = '') => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점${suffix}</option>`;
+  const graded = courses.filter(isGradeInputCourse);
+  const ungraded = courses.filter((course) => !isGradeInputCourse(course));
+  return [
+    graded.length ? `<optgroup label="내신 반영 과목 (등급)">${graded.map((course) => option(course)).join('')}</optgroup>` : '',
+    ungraded.length ? `<optgroup label="내신 미반영 (성취도·P/F)">${ungraded.map((course) => option(course, ' · 미반영')).join('')}</optgroup>` : '',
+  ].join('');
+}
 function courseSelectionHtml(semesterId) {
   const context = studentCatalogContext();
   if (context.status !== 'supported') return '<p class="muted">이 입학생 연도는 과목별 상세입력을 아직 지원하지 않아요.</p>';
@@ -545,7 +555,7 @@ function courseSelectionHtml(semesterId) {
     : context.grade > 1
       ? '<p class="muted first-grade-class-note">음악·미술·보건·진로는 성적표를 보고 들은 학기에 직접 추가해 주세요.</p>'
       : '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택해 주세요.</p>';
-  return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
+  return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${coursePickerGroupsHtml(available)}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
 }
 
 function semesterHasContent(semesterId) {
