@@ -4952,3 +4952,11 @@ h3:not(.hero-grid h2),
 @media (prefers-reduced-motion: reduce) { .step-chevron { transition: none; } }
 
 #semester-visibility-note { margin-bottom: .7rem; }
+
+/* 2학년 계열 선택: 지정 과목 채우기 도우미 */
+.track-picker { margin: .2rem 0 .9rem; padding: .75rem .85rem; border: 1px solid var(--line); border-radius: 14px; background: var(--pink-50); }
+.track-picker-title { margin: 0 0 .5rem; font-weight: 800; }
+.track-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.track-option { flex: 1 1 0; min-width: 5.5rem; }
+.track-option.is-selected { color: #fff; border-color: transparent; background: linear-gradient(120deg, var(--lavender-500), var(--indigo-500)); }
+.track-picker .field-hint { margin: .55rem 0 0; }

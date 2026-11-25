@@ -6,9 +6,9 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20260928-achievement-pe-arts1';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20261126-track1';
 import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20261016-course-rank1';
-import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20260928-achievement-pe-arts1';
+import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20261126-track1';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20261030-steps1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
@@ -56,9 +56,10 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261102-firstdigit1';
+import { APP_VERSION } from './app-version.mjs?v=20261126-track1';
 import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
-import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261102-firstdigit1';
+import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261126-track1';
+import { TRACK_OPTIONS, designatedCoursesForTrack, hasTrackDesignation, isTrackId } from './track-designation.mjs?v=20261126-track1';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({
@@ -438,6 +439,8 @@ function showToast(message, tone = 'success') {
 }
 
 let expandedSemesterId = state.activeSemester;
+// 계열 선택은 과목을 채우는 도우미라서 state(백업 대상)에 넣지 않는다.
+let semesterTrackChoices = {};
 
 function semesterSelectedMode(semesterId) {
   const explicit = state.inputModes?.[semesterId];
@@ -486,16 +489,62 @@ function courseRankInputsHtml(record) {
   return `<div class="course-rank-reference"><span>석차<small>(선택)</small></span><div><label><span class="sr-only">${escapeHtml(record.subjectName)} 실제 석차</span><input data-course-rank="courseRank" type="text" inputmode="numeric" value="${rank}" aria-label="${escapeHtml(record.subjectName)} 실제 석차" /> <b>등</b></label><em>/</em><label><span class="sr-only">${escapeHtml(record.subjectName)} 석차 산출 인원</span><input data-course-rank="courseRankTotal" type="text" inputmode="numeric" value="${total}" aria-label="${escapeHtml(record.subjectName)} 석차 산출 인원" /> <b>명</b></label></div><small class="course-rank-error" role="alert">${escapeHtml(error)}</small></div>`;
 }
 
+/** 반별 학기 배치는 지금 학년의 학기에만 학번의 반을 쓴다. 지난 학년의 반은 지금 반과 다를 수 있다. */
+function classNumberForSemester(semesterId) {
+  const studentId = String(state.student?.studentId ?? '');
+  if (!/^\d{5}$/.test(studentId)) return null;
+  const semesterGrade = Number(String(semesterId).split('-')[0]);
+  return semesterGrade === studentCatalogContext().grade ? Number(studentId.slice(1, 3)) : null;
+}
+function trackPickerHtml(semesterId) {
+  const context = studentCatalogContext();
+  if (context.status !== 'supported' || !hasTrackDesignation(semesterId, context.entryYear)) return '';
+  const selected = semesterTrackChoices[semesterId] ?? '';
+  const buttons = TRACK_OPTIONS.map(({ id, label }) => `<button type="button" class="secondary-button track-option ${selected === id ? 'is-selected' : ''}" data-track="${escapeHtml(id)}" data-semester-id="${semesterId}" aria-pressed="${selected === id}">${escapeHtml(label)}</button>`).join('');
+  return `<div class="track-picker" role="group" aria-label="${semesterLabel(semesterId)} 계열 선택"><p class="track-picker-title">계열을 고르면 지정 과목을 채워 드려요</p><div class="track-options">${buttons}</div><p class="field-hint">듣지 않은 과목은 삭제해 주세요. 표시된 과목의 등급을 모두 입력해야 이 학기가 계산에 반영돼요.</p></div>`;
+}
+const hasRecordInput = (record) => Boolean(record.gradeValue || record.achievement || record.courseRank || record.courseRankTotal);
+/** 계열 지정 과목을 채운다. 이미 있는 과목은 다시 넣지 않고, 점수가 들어간 과목은 지우지 않는다. */
+function applySemesterTrack(semesterId, track) {
+  const context = studentCatalogContext();
+  if (context.status !== 'supported' || !isTrackId(track)) return 0;
+  const courses = catalogCourses();
+  const options = { entryYear: context.entryYear, semesterId, classNumber: classNumberForSemester(semesterId) };
+  const nextCourses = designatedCoursesForTrack(courses, { ...options, track });
+  const nextIds = new Set(nextCourses.map((course) => course.id));
+  const previous = semesterTrackChoices[semesterId];
+  if (previous && previous !== track) {
+    const previousIds = new Set(designatedCoursesForTrack(courses, { ...options, track: previous }).map((course) => course.id));
+    state.actual = records().filter((record) => !(record.semesterId === semesterId
+      && recordEntryYear(record, courses) === context.entryYear
+      && previousIds.has(record.courseId) && !nextIds.has(record.courseId) && !hasRecordInput(record)));
+  }
+  semesterTrackChoices[semesterId] = track;
+  let added = 0;
+  nextCourses.forEach((course) => {
+    const existing = activeDetailedRecords();
+    // 같은 학기 같은 과목, 학기 상관없이 같은 선택 과목, 같은 학기의 택1 묶음(예전 백업의 중국어 등)은 다시 넣지 않는다.
+    const duplicate = existing.some((record) => (record.semesterId === semesterId && (record.courseId === course.id || record.subjectName === course.subjectName))
+      || (course.requirement === 'elective' && record.requirement === 'elective' && record.subjectName === course.subjectName)
+      || (course.requirement === 'school-designated' && course.selectionGroup && record.semesterId === semesterId && record.selectionGroup === course.selectionGroup));
+    if (duplicate) return;
+    records().push(recordFromCourse(course, makeId()));
+    added += 1;
+  });
+  return added;
+}
 function courseSelectionHtml(semesterId) {
   const context = studentCatalogContext();
   if (context.status !== 'supported') return '<p class="muted">이 입학생 연도는 과목별 상세입력을 아직 지원하지 않아요.</p>';
   const allDetailed = activeDetailedRecords();
   const used = new Set(allDetailed.filter((record) => record.semesterId === semesterId).map((record) => record.courseId));
   const usedChoiceSubjects = new Set(allDetailed.filter((record) => record.requirement === 'elective' && record.subjectName).map((record) => record.subjectName));
-  const studentId = String(state.student?.studentId ?? '');
-  const classNumber = /^\d{5}$/.test(studentId) ? Number(studentId.slice(1, 3)) : null;
+  const classNumber = classNumberForSemester(semesterId);
   const available = selectableCoursesForSemester(semesterId, context.entryYear, { classNumber }).filter((course) => !used.has(course.id) && !(course.duplicateSelectionWarning && usedChoiceSubjects.has(course.subjectName)));
-  const firstGradeNote = semesterId.startsWith('1-') ? '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택해 주세요.</p>' : '';
+  const firstGradeNote = !semesterId.startsWith('1-') ? ''
+    : context.grade > 1
+      ? '<p class="muted first-grade-class-note">음악·미술·보건·진로는 성적표를 보고 들은 학기에 직접 추가해 주세요.</p>'
+      : '<p class="muted">1학년 공통 과목은 자동 생성되며, 반별 이수 과목은 실제 이수 학기에 맞게 선택해 주세요.</p>';
   return available.length ? `${firstGradeNote}<label>학교 개설 과목 <select class="input" data-course-picker="${semesterId}"><option value="">과목 선택</option>${available.map((course) => `<option value="${course.id}">${escapeHtml(course.subjectName)} · ${course.credit}학점</option>`).join('')}</select></label><button type="button" class="add-button" data-add-course="${semesterId}">선택 과목 추가</button>` : firstGradeNote || '<p class="muted">이 학기에 추가할 학교 개설 과목이 없어요.</p>';
 }
 
@@ -547,7 +596,7 @@ function renderSemesterCards() {
     const inputBody = mode === 'quick'
       ? `<div class="quick-entry semester-quick-entry"><label>이 학기 평균 내신 <input class="input" data-quick-average="${semesterId}" type="number" min="1" max="5" step="0.01" value="${quickValue}" placeholder="예: 2.14" /></label><p class="muted">성적표의 학기 종합 평균을 1.00~5.00 범위로 입력해 주세요.</p>${modeNote}${completeButton}</div>`
       : mode === 'detailed'
-        ? `<div class="semester-detailed-entry"><div class="semester-detail-heading"><strong>과목별 성적</strong><span>${detailedRows(semesterId).length}개 과목</span></div><div class="grade-list">${gradeRowsHtml(semesterId)}</div><div class="course-selection">${courseSelectionHtml(semesterId)}</div>${modeNote}${completeButton}</div>`
+        ? `<div class="semester-detailed-entry"><div class="semester-detail-heading"><strong>과목별 성적</strong><span>${detailedRows(semesterId).length}개 과목</span></div>${trackPickerHtml(semesterId)}<div class="grade-list">${gradeRowsHtml(semesterId)}</div><div class="course-selection">${courseSelectionHtml(semesterId)}</div>${modeNote}${completeButton}</div>`
         : '<div class="semester-mode-prompt">입력 방식을 선택하면 해당 학기의 입력란이 나타나요.</div>';
     return `<article class="semester-card ${isExpanded ? 'is-open' : ''}" data-semester-card="${semesterId}">
       <button type="button" class="semester-card-header" data-semester-toggle="${semesterId}" aria-expanded="${isExpanded}" aria-controls="semester-card-body-${semesterId}">
@@ -1204,6 +1253,13 @@ semesterCards.addEventListener('click', (event) => {
     saveState(); renderSemesterCards();
     return;
   }
+  const trackButton = event.target.closest('[data-track][data-semester-id]');
+  if (trackButton) {
+    const added = applySemesterTrack(trackButton.dataset.semesterId, trackButton.dataset.track);
+    state.calculated = false; state.goalCalculated = false; saveState(); render();
+    showToast(added ? `지정 과목 ${added}개를 채웠어요.` : '채울 새 과목이 없어요. 이미 있는 과목은 그대로 두었어요.');
+    return;
+  }
   const addButton = event.target.closest('[data-add-course]');
   if (addButton) {
     const semesterId = addButton.dataset.addCourse;
@@ -1577,6 +1633,7 @@ $('#import-input').addEventListener('change', async (event) => {
     previousUiState = collectStudentBackupUiState();
     previousExpandedSemesterId = expandedSemesterId;
     state = normalizeState(imported);
+    semesterTrackChoices = {};
     restoreApplied = true;
     expandedSemesterId = state.activeSemester;
     await restoreStudentBackupUiState(imported.admissionUi);
@@ -1600,6 +1657,7 @@ $('#import-input').addEventListener('change', async (event) => {
 $('#reset-button').addEventListener('click', () => {
   if (!confirm('입력한 학생 데이터와 성적을 초기화할까요?')) return;
   state = defaultState();
+  semesterTrackChoices = {};
   expandedSemesterId = state.activeSemester;
   admissionViewMode = null;
   admissionFilters.region = '';
