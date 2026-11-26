@@ -53,3 +53,11 @@ test('과목 추가 목록에만 개설 필터를 쓴다', () => {
   assert.match(app, /selectableCoursesForSemester\(semesterId, context\.entryYear, \{ classNumber \}\)\.filter\(isOfferedInSemester\)/);
   assert.equal((app.match(/isOfferedInSemester/g) || []).length, 2);
 });
+
+test('노란색 칸(편성 학기 추가 수정)도 개설 과목으로 본다: 2026 입학생 3학년', () => {
+  assert.ok(offeredNames(2026, '3-1').includes('확률과 통계'));
+  assert.ok(offeredNames(2026, '3-1').includes('영어Ⅱ'));
+  assert.ok(offeredNames(2026, '3-2').includes('영어 독해와 작문'));
+  assert.ok(offeredNames(2026, '2-2').includes('확률과 통계'));
+  assert.ok(!offeredNames(2025, '3-1').includes('확률과 통계'));
+});
