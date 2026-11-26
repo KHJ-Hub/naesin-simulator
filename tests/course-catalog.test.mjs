@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import { ENTRY_YEAR_CATALOG_METADATA, OFFICIAL_CURRICULUM_SOURCES, SCHOOL_COURSES, commonCourses, coursesForSemester, gradingInputs, recordFromCourse } from '../src/course-catalog.mjs';
 import { calculateOverallAverage } from '../src/grade-calculator.mjs';
 
-test('2025·2026 카탈로그는 공식 편성표 출처를 각각 보존하고 2027 학생용 과목은 등록하지 않는다', () => {
+test('2025·2026 카탈로그는 공식 편성표 출처를 각각 보존하고 2027은 확정 전(draft) 데이터로만 등록한다', () => {
   assert.equal(OFFICIAL_CURRICULUM_SOURCES[2025].sourceDate, '2026-09-03');
   assert.equal(OFFICIAL_CURRICULUM_SOURCES[2026].status, 'confirmed');
-  assert.equal(SCHOOL_COURSES.some((course) => course.entryYear === 2027), false);
+  assert.equal(OFFICIAL_CURRICULUM_SOURCES[2027].status, 'draft');
+  assert.ok(SCHOOL_COURSES.some((course) => course.entryYear === 2027));
+  assert.equal(ENTRY_YEAR_CATALOG_METADATA[2027].studentChoiceCredits['2-1'], 18);
   assert.equal(ENTRY_YEAR_CATALOG_METADATA[2025].studentChoiceCredits['3-1'], 24);
   assert.equal(ENTRY_YEAR_CATALOG_METADATA[2026].studentChoiceCredits['3-1'], 27);
   const keys = SCHOOL_COURSES.map((course) => `${course.entryYear}:${course.id}`);

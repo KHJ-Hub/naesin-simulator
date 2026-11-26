@@ -6,9 +6,9 @@ import {
   describeGoalDifficulty,
   validAverageInput,
 } from './grade-calculator.mjs?v=20260919-student-tone1';
-import { commonCourses, catalogCourseById as courseById, catalogCourses, isGradeInputCourse, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20261126-track1';
+import { commonCourses, catalogCourseById as courseById, catalogCourses, isGradeInputCourse, selectableCoursesForSemester } from './course-catalog-store.mjs?v=20261126-y2027';
 import { ENTRY_YEAR_CATALOG_METADATA, gradingInputs, recordFromCourse } from './course-catalog.mjs?v=20261016-course-rank1';
-import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20261126-track1';
+import { buildCatalogAwareGradeState, getSupportedEntryYears, recordEntryYear, resolveEntryYear } from './student-course-catalog.mjs?v=20261126-y2027';
 import { ADMISSION_CONVERSION_NOTICE, admissionDifference, describeAdmissionDifference, isComparableAdmissionRecord, isStudentRecordComprehensive, normalizeAdmissionReferenceData } from './admission-reference-core.mjs?v=20261030-steps1';
 import { admissionResultRegions, admissionResultRegionKey, loadAdmissionResultsByRegion } from './admission-results-loader.mjs?v=20260919-readiness1';
 import { getAdmissionPrimaryReference } from './admission-card-summary.mjs?v=20260917-dual-grade-display1';
@@ -56,11 +56,11 @@ import { buildGradePositionModel } from './grade-position.mjs?v=20261016-grade-c
 import { buildCourseRelativePosition, validateCourseRankReference } from './course-relative-position.mjs?v=20261016-course-rank1';
 import { renderCourseRankPosition, renderCourseRankGrade5Marker } from './course-rank-position-view.mjs?v=20261026-grade5-rank-marker2';
 import { ENABLE_TEACHER_QUICK_MODE } from './feature-flags.mjs';
-import { APP_VERSION } from './app-version.mjs?v=20261126-yellow1';
+import { APP_VERSION } from './app-version.mjs?v=20261126-y2027';
 import { COLLAPSIBLE_STEP_IDS, bindPrintExpansion, closeSteps, markStepsReady, openStep, scrollStepIntoView } from './step-sections.mjs?v=20261030-collapse1';
 import { gradeFromStudentId, hiddenSemesterCount, nextVisibleSemesterId, visibleSemesters } from './semester-visibility.mjs?v=20261126-track1';
 import { TRACK_OPTIONS, designatedCoursesForTrack, hasTrackDesignation, isTrackId } from './track-designation.mjs?v=20261126-track1';
-import { isOfferedInSemester } from './semester-offerings.mjs?v=20261126-yellow1';
+import { isOfferedInSemester } from './semester-offerings.mjs?v=20261126-y2027';
 import { setupStudentFeedback } from './student-feedback.mjs?v=20260921-service-settings1';
 
 const defaultState = () => ({

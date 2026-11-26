@@ -1,21 +1,23 @@
 /**
- * 학생용 과목 카탈로그. 2025·2026 입학생은 학교 공식 편성표를 각각 따른다.
- * 2027 입학생 편성표는 미확정이므로 이 모듈에 포함하지 않는다.
+ * 학생용 과목 카탈로그. 2025·2026·2027 입학생은 학교 공식 편성표를 각각 따른다.
+ * 2027 입학생 편성표는 거의 확정된 안이라 과목 데이터만 미리 넣어 두고, 학생 화면에서는 아직 쓰지 않는다.
  */
 export const COURSE_CATALOG_VERSION = 3;
 export const ACTIVE_ENTRY_YEAR = 2026;
-/** 공식 표에 있으나 학교 수정 중이라 학생용 과목 데이터로 등록하지 않은 연도다. */
+/** 과목 데이터는 있으나 최종 확정 전이라 학생 화면에서 쓰지 않는 연도다. 확정되면 학생 지원 연도로 옮긴다. */
 export const UNCONFIRMED_ENTRY_YEARS = Object.freeze([2027]);
 
 export const OFFICIAL_CURRICULUM_SOURCES = Object.freeze({
   2025: Object.freeze({ type: 'school-curriculum-plan', document: '2027학년도 교육과정 운영표 및 편성표 (260903)', sourceDate: '2026-09-03', section: '2025학년도 신입생 3개년 교육과정 편성표', status: 'confirmed' }),
   2026: Object.freeze({ type: 'school-curriculum-plan', document: '2027학년도 교육과정 운영표 및 편성표 (260903)', sourceDate: '2026-09-03', section: '2026학년도 신입생 3개년 교육과정 편성표', status: 'confirmed' }),
+  2027: Object.freeze({ type: 'school-curriculum-plan', document: '2027학년도 교육과정 운영표 및 편성표 (260903)', sourceDate: '2026-09-03', section: '2027학년도 신입생 3개년 교육과정 편성표', status: 'draft' }),
 });
 
 /** 안내·검증용 선택량이며 미래 학기 가중치에는 사용하지 않는다. */
 export const ENTRY_YEAR_CATALOG_METADATA = Object.freeze({
   2025: Object.freeze({ source: OFFICIAL_CURRICULUM_SOURCES[2025], studentChoiceCredits: Object.freeze({ '2-1': 24, '2-2': 24, '3-1': 24, '3-2': 15 }) }),
   2026: Object.freeze({ source: OFFICIAL_CURRICULUM_SOURCES[2026], studentChoiceCredits: Object.freeze({ '2-1': 21, '2-2': 21, '3-1': 27, '3-2': 18 }) }),
+  2027: Object.freeze({ source: OFFICIAL_CURRICULUM_SOURCES[2027], studentChoiceCredits: Object.freeze({ '2-1': 18, '2-2': 18, '3-1': 21, '3-2': 21 }) }),
 });
 
 const rules = {
@@ -89,8 +91,9 @@ const UPPER_CHOICE_POOL = [
   ['기술·가정/정보', 'career', ['인공지능 기초']],
   ['기술·가정/정보', 'fusion', ['소프트웨어와 생활']],
 ];
-const upperChoices = (entryYear, extraPool = []) => [2, 3].flatMap((grade) => [1, 2].flatMap((semester) => [...UPPER_CHOICE_POOL, ...extraPool].flatMap(([group, category, names, rule = 'five']) => elective(
-  entryYear, grade, semester, group, category, names, rule, { selectionGroup: 'student-choice-pool', semesterAssignment: 'curriculum-choice-pool' },
+/** excludedNames: 그 입학 연도에 학교 지정으로 옮겨져 학생 선택 풀에서 빠지는 과목. */
+const upperChoices = (entryYear, extraPool = [], excludedNames = []) => [2, 3].flatMap((grade) => [1, 2].flatMap((semester) => [...UPPER_CHOICE_POOL, ...extraPool].flatMap(([group, category, names, rule = 'five']) => elective(
+  entryYear, grade, semester, group, category, names.filter((name) => !excludedNames.includes(name)), rule, { selectionGroup: 'student-choice-pool', semesterAssignment: 'curriculum-choice-pool' },
 ))));
 /** 학교 R&E 연구 과목은 이수/미이수(P/F)로만 처리하며 내신 평균에는 반영하지 않는다. */
 const researchCourses = (entryYear, schedule) => schedule.map(([id, name, grade, semester, credit]) => make(entryYear, id, name, grade, semester, '교양', credit, 'fusion', 'elective', 'pass', { selectionGroup: 'research-elective' }));
@@ -119,7 +122,31 @@ const build2025 = () => {
   ];
 };
 
-export const SCHOOL_COURSES = [...build2025(), ...build2026()].map((item, displayOrder) => normalizeOfficialCourseGrading({ ...item, active: item.active !== false, enabled: item.enabled !== false, displayOrder, duplicateSelectionWarning: item.requirement === 'elective' })).sort((a, b) => a.displayOrder - b.displayOrder);
+/**
+ * 2027 입학생: 문학·미적분Ⅰ·영어Ⅱ가 학교 지정으로 바뀌고, 1학년 반별 과목에 정보가, 2학년 반별 과목에 보건이 들어간다.
+ * 1학년 1~3반은 1학기 음악·정보, 2학기 미술·진로와 직업 / 4~6반은 반대.
+ * 2학년 1~3반은 1학기 미술 창작·일본어, 2학기 음악 연주와 창작·보건 / 4~6반은 반대.
+ */
+const build2027 = () => {
+  const firstClasses = ['1', '2', '3']; const secondClasses = ['4', '5', '6'];
+  return [
+    ...FIRST_GRADE_CORE(2027),
+    firstGrade(2027, 'music-1', '음악', 1, '예술', 2, 'ac', { classConditions: firstClasses }), firstGrade(2027, 'music-2', '음악', 2, '예술', 2, 'ac', { classConditions: secondClasses }),
+    firstGrade(2027, 'art-1', '미술', 1, '예술', 2, 'ac', { classConditions: secondClasses }), firstGrade(2027, 'art-2', '미술', 2, '예술', 2, 'ac', { classConditions: firstClasses }),
+    designated(2027, 'info-1', '정보', 1, 1, '정보', 3, 'general', 'five', { classConditions: firstClasses }), designated(2027, 'info-2', '정보', 1, 2, '정보', 3, 'general', 'five', { classConditions: secondClasses }),
+    firstGrade(2027, 'career-1', '진로와 직업', 1, '교양', 3, 'pass', { classConditions: secondClasses }), firstGrade(2027, 'career-2', '진로와 직업', 2, '교양', 3, 'pass', { classConditions: firstClasses }),
+    designated(2027, 'calculus-1', '미적분Ⅰ', 2, 1, '수학', 4, 'general'), designated(2027, 'literature', '문학', 2, 2, '국어', 4, 'general'), designated(2027, 'english-2', '영어Ⅱ', 3, 1, '영어', 4, 'general'),
+    designated(2027, 'sports-life-1', '스포츠 생활1', 2, 1, '체육', 2, 'fusion', 'ac'), designated(2027, 'sports-life-2', '스포츠 생활2', 2, 2, '체육', 2, 'fusion', 'ac'), designated(2027, 'sports-culture', '스포츠 문화', 3, 1, '체육', 1, 'career', 'ac'), designated(2027, 'sports-science', '스포츠 과학', 3, 2, '체육', 1, 'career', 'ac'),
+    designated(2027, 'art-create-a', '미술 창작', 2, 1, '예술', 3, 'career', 'ac', { classConditions: firstClasses }), designated(2027, 'music-create-a', '음악 연주와 창작', 2, 1, '예술', 3, 'career', 'ac', { classConditions: secondClasses }), designated(2027, 'music-create-b', '음악 연주와 창작', 2, 2, '예술', 3, 'career', 'ac', { classConditions: firstClasses }), designated(2027, 'art-create-b', '미술 창작', 2, 2, '예술', 3, 'career', 'ac', { classConditions: secondClasses }),
+    designated(2027, 'japanese-a', '일본어', 2, 1, '제2외국어', 3, 'general', 'five', { classConditions: firstClasses, selectionGroup: 'second-language' }), designated(2027, 'chinese-a', '중국어', 2, 1, '제2외국어', 3, 'general', 'five', { classConditions: firstClasses, selectionGroup: 'second-language', active: false, enabled: false }), designated(2027, 'japanese-b', '일본어', 2, 2, '제2외국어', 3, 'general', 'five', { classConditions: secondClasses, selectionGroup: 'second-language' }), designated(2027, 'chinese-b', '중국어', 2, 2, '제2외국어', 3, 'general', 'five', { classConditions: secondClasses, selectionGroup: 'second-language', active: false, enabled: false }),
+    designated(2027, 'health-a', '보건', 2, 1, '교양', 3, 'career', 'pass', { classConditions: secondClasses }), designated(2027, 'health-b', '보건', 2, 2, '교양', 3, 'career', 'pass', { classConditions: firstClasses }),
+    designated(2027, 'ecology', '생태와 환경', 3, 2, '교양', 2, 'general', 'pass'), designated(2027, 'psychology', '인간과 심리', 3, 2, '교양', 2, 'career', 'pass'),
+    ...upperChoices(2027, [['기술·가정/정보', 'career', ['데이터 과학']]], ['문학', '미적분Ⅰ', '영어Ⅱ']),
+    ...researchCourses(2027, [['research-basic', '주제 탐구(R&E) 기초', 1, 1, 1], ['research-advanced', '주제 탐구(R&E) 심화', 1, 2, 1], ['research-project-1', '탐구 프로젝트(R&E) Ⅰ', 2, 1, 2], ['research-project-2', '탐구 프로젝트(R&E) Ⅱ', 2, 2, 2], ['research-question', '질문 기반 주제 탐구', 3, 1, 2]]),
+  ];
+};
+
+export const SCHOOL_COURSES = [...build2025(), ...build2026(), ...build2027()].map((item, displayOrder) => normalizeOfficialCourseGrading({ ...item, active: item.active !== false, enabled: item.enabled !== false, displayOrder, duplicateSelectionWarning: item.requirement === 'elective' })).sort((a, b) => a.displayOrder - b.displayOrder);
 
 export const coursesForSemester = (semesterId, entryYear = ACTIVE_ENTRY_YEAR) => SCHOOL_COURSES.filter((course) => course.entryYear === entryYear && course.semesterId === semesterId);
 export const commonCourses = (entryYear = ACTIVE_ENTRY_YEAR, classNumber = null) => SCHOOL_COURSES.filter((course) => course.entryYear === entryYear && course.autoGenerate && (!course.classConditions.length || course.classConditions.includes(String(classNumber))));
